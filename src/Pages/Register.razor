@@ -1,0 +1,29 @@
+@page "/register"
+@using Invenire.Components.Forms
+
+<h1>@HeaderText</h1>
+
+<label>Vyberte typ registrace:</label>
+<select @bind="SelectedRole">
+    <option value="Employee">Zaměstnanec</option>
+    <option value="Admin">Admin</option>
+</select>
+
+@if (SelectedRole == "Employee")
+{
+    <EmployeeRegistrationForm></EmployeeRegistrationForm>
+}
+else if (SelectedRole == "Admin")
+{
+    <AdminRegistrationForm></AdminRegistrationForm>
+}
+
+@code {
+    private string SelectedRole { get; set; } = "Employee";
+    private string HeaderText => SelectedRole switch
+    {
+        "Admin" => "Zaregistrujte se jako admin",
+        "Employee" => "Zaregistrujte se jako zaměstnanec",
+        _ => throw new Exception()
+    };
+}
