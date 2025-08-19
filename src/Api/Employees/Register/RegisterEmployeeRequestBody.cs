@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace Invenire.Api.Admin.Register;
+namespace Invenire.Api.Employees.Register;
 
-public class RegisterAdminRequest
+public class RegisterEmployeeRequestBody
 {
     [JsonPropertyName("first_name")]
     public string FirstName { get; set; } = string.Empty;

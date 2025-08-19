@@ -2,35 +2,35 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Admin.Register
 
-<EditForm Model="request" OnSubmit="HandleRegistration" @ref="form">
+<EditForm Model="body" OnSubmit="HandleRegistration" @ref="form">
     <div>
         <label>Křestní jméno:</label>
-        <InputText @bind-Value="request.FirstName" />
-        <ValidationMessage For="@(() => request.FirstName)" />
+        <InputText @bind-Value="body.FirstName" />
+        <ValidationMessage For="@(() => body.FirstName)" />
     </div>
 
     <div>
         <label>Příjmení:</label>
-        <InputText @bind-Value="request.LastName" />
-        <ValidationMessage For="@(() => request.LastName)" />
+        <InputText @bind-Value="body.LastName" />
+        <ValidationMessage For="@(() => body.LastName)" />
     </div>
 
     <div>
         <label>Emailová adresa:</label>
-        <InputText @bind-Value="request.EmailAddress" type="email" />
-        <ValidationMessage For="@(() => request.EmailAddress)" />
+        <InputText @bind-Value="body.EmailAddress" type="email" />
+        <ValidationMessage For="@(() => body.EmailAddress)" />
     </div>
 
     <div>
         <label>Heslo:</label>
-        <InputText @bind-Value="request.Password" type="password" />
-        <ValidationMessage For="@(() => request.Password)" />
+        <InputText @bind-Value="body.Password" type="password" />
+        <ValidationMessage For="@(() => body.Password)" />
     </div>
 
     <div>
         <label>Potvrzení hesla:</label>
-        <InputText @bind-Value="request.PasswordConfirm" type="password" />
-        <ValidationMessage For="@(() => request.PasswordConfirm)" />
+        <InputText @bind-Value="body.PasswordConfirm" type="password" />
+        <ValidationMessage For="@(() => body.PasswordConfirm)" />
     </div>
 
     <button type="submit">Registrovat</button>
@@ -50,7 +50,7 @@
     private ValidationMessageStore errorValidationMessages = null!;
 
     private EditForm form = null!;
-    private RegisterAdminRequest request = new();
+    private RegisterAdminRequestBody body = new();
 
     protected override void OnAfterRender(bool rendered)
     {
@@ -65,7 +65,7 @@
         errorGeneralMessage = null;
         errorValidationMessages.Clear();
 
-        var response = await Client.PostAsJsonAsync("/api/admins/register", request);
+        var response = await Client.PostAsJsonAsync("/api/admins/register", body);
 
         if (response.StatusCode == HttpStatusCode.Created)
         {
@@ -81,11 +81,11 @@
                 {
                     var field = error switch
                     {
-                        var e when e.Contains("first_name") => form.EditContext!.Field(nameof(request.FirstName)),
-                        var e when e.Contains("last_name") => form.EditContext!.Field(nameof(request.LastName)),
-                        var e when e.Contains("email_address") => form.EditContext!.Field(nameof(request.EmailAddress)),
-                        var e when e.Contains("password_confirm") => form.EditContext!.Field(nameof(request.PasswordConfirm)),
-                        var e when e.Contains("password") => form.EditContext!.Field(nameof(request.Password)),
+                        var e when e.Contains("first_name") => form.EditContext!.Field(nameof(body.FirstName)),
+                        var e when e.Contains("last_name") => form.EditContext!.Field(nameof(body.LastName)),
+                        var e when e.Contains("email_address") => form.EditContext!.Field(nameof(body.EmailAddress)),
+                        var e when e.Contains("password_confirm") => form.EditContext!.Field(nameof(body.PasswordConfirm)),
+                        var e when e.Contains("password") => form.EditContext!.Field(nameof(body.Password)),
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
