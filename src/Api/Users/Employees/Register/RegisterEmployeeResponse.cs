@@ -1,7 +1,7 @@
 using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
 
-namespace Invenire.Api.Employees.Register;
+namespace Invenire.Api.Users.Employees.Register;
 
 public class RegisterEmployeeResponse
 {

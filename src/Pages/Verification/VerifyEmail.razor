@@ -1,0 +1,55 @@
+@using Invenire.Api.Users
+@using Invenire.Common.Extensions
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Threading.Tasks
+@using System.Net
+
+@page "/verify-email"
+
+<h1>Emailová verifikace</h1>
+
+@if (IsLoading)
+{
+    <p>Probíhá načítání...</p>
+}
+else
+{
+    <p class="mb-6">
+        Vše proběhlo vpořádku, nyní se můžete přihlásit.
+    </p>
+
+    <NavLink href="/login">Přihlásit se</NavLink>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string? Token { get; set; }
+    private JwtRole? Role { get; set; }
+    private bool IsLoading { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        if (Role is null)
+            Role = (await (await Client.GetAsync("/api/server/auth/role")).Content.ReadAsStringAsync()).ToEnum<JwtRole>();
+
+        if (Token is null)
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("token", out var token))
+            {
+                Token = token;
+            }
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/{(Role == JwtRole.Admin ? "admins" : "employees")}/email-verification/confirm");
+        request.Headers.Add("Authorization", $"Bearer {Token}");
+        var response = await Client.SendAsync(request);
+
+        IsLoading = false;
+    }
+}

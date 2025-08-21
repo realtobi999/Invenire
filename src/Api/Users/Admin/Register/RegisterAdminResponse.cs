@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Invenire.Common.Errors;
 
-namespace Invenire.Api.Admin.Register;
+namespace Invenire.Api.Users.Admin.Register;
 
 public class RegisterAdminResponse
 {

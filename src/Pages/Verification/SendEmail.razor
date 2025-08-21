@@ -1,0 +1,74 @@
+@using Invenire.Api.Users
+@using Invenire.Api.Users.Admin
+@using Invenire.Common.Extensions
+@using Invenire.Api.Users.Employees
+@using System.Net
+
+@page "/send-email"
+
+<h1>Emailová verifikace</h1>
+
+@if (IsLoading)
+{
+    <p>Probíhá načítání...</p>
+}
+else
+{
+    <p class="mb-6">
+        Na e-mail <strong>@EmailAddress</strong> jsme poslali ověřovací odkaz.
+        Klikněte na odkaz v e-mailu pro dokončení registrace.
+    </p>
+
+    <button @onclick="SendEmailAsync">Poslat znovu</button>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private JwtRole? Role { get; set; }
+    private bool IsLoading { get; set; }
+    private string? EmailAddress { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SendEmailAsync();
+    }
+
+    private async Task SendEmailAsync()
+    {
+        IsLoading = true;
+
+        if (Role is null)
+            Role = (await (await Client.GetAsync("/api/server/auth/role")).Content.ReadAsStringAsync()).ToEnum<JwtRole>();
+
+        if (Role == JwtRole.Admin)
+        {
+            if (EmailAddress is null)
+            {
+                var admin = await (await Client.GetAsync("/api/admins/profile")).Content.ReadFromJsonAsync<AdminDto>();
+
+                if (admin is null) throw new NullReferenceException();
+
+                EmailAddress = admin.EmailAddress;
+            }
+
+            await Client.PostAsync("/api/admins/email-verification/send", null);
+        }
+        else if (Role == JwtRole.Employee)
+        {
+            if (EmailAddress is null)
+            {
+                var employee = await (await Client.GetAsync("/api/employees/profile")).Content.ReadFromJsonAsync<EmployeeDto>();
+
+                if (employee is null) throw new NullReferenceException();
+
+                EmailAddress = employee.EmailAddress;
+            }
+
+            await Client.PostAsync("/api/employees/email-verification/send", null);
+        }
+
+        IsLoading = false;
+    }
+}

@@ -1,75 +1,76 @@
 @using System.Net
 @using Invenire.Common.Errors
-@using Invenire.Api.Employees.Register
+@using Invenire.Api.Users.Employees.Register
 
-<EditForm Model="body" OnSubmit="HandleRegistration" @ref="form">
+<EditForm Model="Body" OnSubmit="HandleRegistration" @ref="Form">
     <div>
         <label>Křestní jméno:</label>
-        <InputText @bind-Value="body.FirstName" />
-        <ValidationMessage For="@(() => body.FirstName)" />
+        <InputText @bind-Value="Body.FirstName" />
+        <ValidationMessage For="@(() => Body.FirstName)" />
     </div>
 
     <div>
         <label>Příjmení:</label>
-        <InputText @bind-Value="body.LastName" />
-        <ValidationMessage For="@(() => body.LastName)" />
+        <InputText @bind-Value="Body.LastName" />
+        <ValidationMessage For="@(() => Body.LastName)" />
     </div>
 
     <div>
         <label>Emailová adresa:</label>
-        <InputText @bind-Value="body.EmailAddress" type="email" />
-        <ValidationMessage For="@(() => body.EmailAddress)" />
+        <InputText @bind-Value="Body.EmailAddress" type="email" />
+        <ValidationMessage For="@(() => Body.EmailAddress)" />
     </div>
 
     <div>
         <label>Heslo:</label>
-        <InputText @bind-Value="body.Password" type="password" />
-        <ValidationMessage For="@(() => body.Password)" />
+        <InputText @bind-Value="Body.Password" type="password" />
+        <ValidationMessage For="@(() => Body.Password)" />
     </div>
 
     <div>
         <label>Potvrzení hesla:</label>
-        <InputText @bind-Value="body.PasswordConfirm" type="password" />
-        <ValidationMessage For="@(() => body.PasswordConfirm)" />
+        <InputText @bind-Value="Body.PasswordConfirm" type="password" />
+        <ValidationMessage For="@(() => Body.PasswordConfirm)" />
     </div>
 
     <button type="submit">Registrovat</button>
 </EditForm>
 
-@if (errorGeneralMessage is not null)
+@if (ErrorGeneralMessage is not null)
 {
     <div>
-        @errorGeneralMessage
+        @ErrorGeneralMessage
     </div>
 }
 
 @code {
     [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    private string? errorGeneralMessage;
-    private ValidationMessageStore errorValidationMessages = null!;
+    private string? ErrorGeneralMessage;
+    private ValidationMessageStore ErrorValidationMessages = null!;
 
-    private EditForm form = null!;
-    private RegisterEmployeeRequestBody body = new();
+    private EditForm Form = null!;
+    private RegisterEmployeeRequestBody Body = new();
 
     protected override void OnAfterRender(bool rendered)
     {
-        if (rendered && form is not null)
+        if (rendered && Form is not null)
         {
-            errorValidationMessages = new ValidationMessageStore(form?.EditContext!);
+            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
         }
     }
 
     private async Task HandleRegistration()
     {
-        errorGeneralMessage = null;
-        errorValidationMessages.Clear();
+        ErrorGeneralMessage = null;
+        ErrorValidationMessages.Clear();
 
-        var response = await Client.PostAsJsonAsync("/api/employees/register", body);
+        var response = await Client.PostAsJsonAsync("/api/employees/register", Body);
 
         if (response.StatusCode == HttpStatusCode.Created)
         {
-            Console.WriteLine("Employee registration successful.");
+            Navigation.NavigateTo("/send-email");
         }
         else
         {
@@ -81,22 +82,22 @@
                 {
                     var field = error switch
                     {
-                        var e when e.Contains("first_name") => form.EditContext!.Field(nameof(body.FirstName)),
-                        var e when e.Contains("last_name") => form.EditContext!.Field(nameof(body.LastName)),
-                        var e when e.Contains("email_address") => form.EditContext!.Field(nameof(body.EmailAddress)),
-                        var e when e.Contains("password_confirm") => form.EditContext!.Field(nameof(body.PasswordConfirm)),
-                        var e when e.Contains("password") => form.EditContext!.Field(nameof(body.Password)),
+                        var e when e.Contains("first_name") => Form.EditContext!.Field(nameof(Body.FirstName)),
+                        var e when e.Contains("last_name") => Form.EditContext!.Field(nameof(Body.LastName)),
+                        var e when e.Contains("email_address") => Form.EditContext!.Field(nameof(Body.EmailAddress)),
+                        var e when e.Contains("password_confirm") => Form.EditContext!.Field(nameof(Body.PasswordConfirm)),
+                        var e when e.Contains("password") => Form.EditContext!.Field(nameof(Body.Password)),
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    errorValidationMessages.Add(field, ErrorTranslator.Translate(error, RegisterEmployeeResponse.ErrorTranslations));
+                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, RegisterEmployeeResponse.ErrorTranslations));
                 }
 
-                form.EditContext!.NotifyValidationStateChanged();
+                Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                errorGeneralMessage = ErrorTranslator.Translate(content.Detail, RegisterEmployeeResponse.ErrorTranslations);
+                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, RegisterEmployeeResponse.ErrorTranslations);
             }
         }
     }
