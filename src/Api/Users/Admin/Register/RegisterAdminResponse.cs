@@ -3,7 +3,7 @@ using Invenire.Common.Errors;
 
 namespace Invenire.Api.Users.Admin.Register;
 
-public class RegisterAdminResponse
+public record RegisterAdminResponse
 {
     // Errors.
 

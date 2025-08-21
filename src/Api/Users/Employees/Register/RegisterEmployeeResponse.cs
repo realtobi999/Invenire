@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Invenire.Api.Users.Employees.Register;
 
-public class RegisterEmployeeResponse
+public record RegisterEmployeeResponse
 {
     // Errors.
 

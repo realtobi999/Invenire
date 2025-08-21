@@ -1,0 +1,84 @@
+@using System.Net
+@using Invenire.Common.Errors
+@using Invenire.Api.Users.Admin.Login
+
+<EditForm Model="Body" OnSubmit="HandleRegistration" @ref="Form">
+    <div>
+        <label>Emailová adresa:</label>
+        <InputText @bind-Value="Body.EmailAddress" type="email" />
+        <ValidationMessage For="@(() => Body.EmailAddress)" />
+    </div>
+
+    <div>
+        <label>Heslo:</label>
+        <InputText @bind-Value="Body.Password" type="password" />
+        <ValidationMessage For="@(() => Body.Password)" />
+    </div>
+
+    @if (ErrorGeneralMessage is not null)
+    {
+        <div>
+            @ErrorGeneralMessage
+        </div>
+    }
+
+    <button type="submit">Přihlásit se</button>
+</EditForm>
+
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string? ErrorGeneralMessage;
+    private ValidationMessageStore ErrorValidationMessages = null!;
+
+    private EditForm Form = null!;
+    private LoginAdminRequestBody Body = new();
+
+    protected override void OnAfterRender(bool rendered)
+    {
+        if (rendered && Form is not null)
+        {
+            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+        }
+    }
+
+    private async Task HandleRegistration()
+    {
+        ErrorGeneralMessage = null;
+        ErrorValidationMessages.Clear();
+
+        var response = await Client.PostAsJsonAsync("/api/admins/login", Body);
+
+        if (response.StatusCode == HttpStatusCode.NoContent)
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+        else
+        {
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (content.Type == "ValidationException")
+            {
+                foreach (var error in content.Errors!)
+                {
+                    var field = error switch
+                    {
+                        var e when e.Contains("email_address") => Form.EditContext!.Field(nameof(Body.EmailAddress)),
+                        var e when e.Contains("password") => Form.EditContext!.Field(nameof(Body.Password)),
+                        _ => throw new Exception($"Unknown error field: {error}")
+                    };
+
+                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, LoginAdminResponse.ErrorTranslations));
+                }
+
+                Form.EditContext!.NotifyValidationStateChanged();
+            }
+            else
+            {
+                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, LoginAdminResponse.ErrorTranslations);
+            }
+        }
+    }
+}

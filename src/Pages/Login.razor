@@ -1,9 +1,9 @@
-@using Invenire.Components.Forms.Register
-@page "/register"
+@page "/login"
+@using Invenire.Components.Forms.Login
 
 <h1>@HeaderText</h1>
 
-<label>Vyberte typ registrace:</label>
+<label>Vyberte typ přihlášení:</label>
 <select @bind="SelectedRole">
     <option value="Employee">Zaměstnanec</option>
     <option value="Admin">Admin</option>
@@ -11,19 +11,19 @@
 
 @if (SelectedRole == "Employee")
 {
-    <EmployeeRegistrationForm></EmployeeRegistrationForm>
+    <EmployeeLoginForm></EmployeeLoginForm>
 }
 else if (SelectedRole == "Admin")
 {
-    <AdminRegistrationForm></AdminRegistrationForm>
+    <AdminLoginForm></AdminLoginForm>
 }
 
 @code {
     private string SelectedRole { get; set; } = "Employee";
     private string HeaderText => SelectedRole switch
     {
-        "Admin" => "Zaregistrujte se jako admin",
-        "Employee" => "Zaregistrujte se jako zaměstnanec",
+        "Admin" => "Přihlaste se jako admin",
+        "Employee" => "Přihlaste se jako zaměstnanec",
         _ => throw new Exception()
     };
 }

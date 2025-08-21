@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Invenire.Api.Users.Admin.Register;
 
-public class RegisterAdminRequestBody
+public record RegisterAdminRequestBody
 {
     [JsonPropertyName("first_name")]
     public string FirstName { get; set; } = string.Empty;
