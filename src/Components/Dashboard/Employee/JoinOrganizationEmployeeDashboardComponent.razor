@@ -1,0 +1,114 @@
+@using System.Net
+@using System.Threading.Tasks
+@using Invenire.Api.Organizations
+@using Invenire.Api.Organizations.Invitations
+@using Invenire.Api.Organizations.Invitations.IndexByEmployee
+@using System.Security.AccessControl
+
+@if (Invitations.Count == 0)
+{
+    <div>
+        <h4>Momentálně nemáte žádné pozvánky.</h4>
+    </div>
+}
+else
+{
+    @foreach (var invitation in Invitations)
+    {
+        <div>
+            <h5>Pozvánka</h5>
+            <ul>
+                <li><strong>ID:</strong> @invitation.Id</li>
+                @if (invitation.OrganizationDto is not null)
+                {
+                    <li><strong>Jméno organizace:</strong> @invitation.OrganizationDto.Name</li>
+                    @if (invitation.OrganizationDto.Admin is not null)
+                    {
+                        <li><strong>Jméno admina:</strong> @invitation.OrganizationDto.Admin.FullName</li>
+                    }
+                }
+                <li><strong>Text:</strong> @invitation.Description</li>
+                <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToString("g")</li>
+                @if (invitation.LastUpdatedAt is not null)
+                {
+                    <li><strong>Naposledy upraveno:</strong> @invitation.LastUpdatedAt?.ToString("g")</li>
+                }
+                @if (invitation.Employee is not null)
+                {
+                    <li><strong>Pro:</strong> @invitation.Employee.FullName</li>
+                }
+            </ul>
+            <button @onclick="() => AcceptInvitation(invitation)">Připojit se</button>
+            <button @onclick="() => DeclineInvitation(invitation)">Odstranit</button>
+        </div>
+    }
+
+    <div class="pagination">
+        <button @onclick="() => SetInvitations(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
+            Předchozí
+        </button>
+        <span>Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalCount / Limit))</span>
+        <button @onclick="() => SetInvitations(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
+            Další
+        </button>
+    </div>
+}
+
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnSuccessfulJoin { get; set; }
+
+    private int Limit { get; set; } = 1;
+    private int TotalCount { get; set; }
+    private int CurrentOffset { get; set; }
+    private List<OrganizationInvitationDto> Invitations { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetInvitations();
+    }
+
+    private async Task SetInvitations(int offset = 0)
+    {
+        CurrentOffset = offset;
+
+        var response = await Client.GetAsync($"/api/employees/invitations?limit={Limit}&offset={CurrentOffset}");
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to index the invitations.");
+
+        var content = await response.Content.ReadFromJsonAsync<IndexByEmployeeOrganizationInvitationResponse>() ?? throw new NullReferenceException();
+
+        Invitations.Clear();
+        Invitations.AddRange(content.Data);
+
+        foreach (var invitation in Invitations)
+        {
+            invitation.OrganizationDto = await (await Client.GetAsync($"/api/organizations/{invitation.OrganizationId}")).Content.ReadFromJsonAsync<OrganizationDto>();
+        }
+
+        TotalCount = content.TotalCount;
+    }
+
+    private bool CanGoPrev => CurrentOffset > 0;
+    private bool CanGoNext => CurrentOffset + Limit < TotalCount;
+
+    private async Task AcceptInvitation(OrganizationInvitationDto invitation)
+    {
+        var response = await Client.PutAsync($"/api/organizations/invitations/{invitation.Id}/accept", null);
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to accept the invitation.");
+
+        await OnSuccessfulJoin.InvokeAsync(true);
+    }
+
+    private async Task DeclineInvitation(OrganizationInvitationDto invitation)
+    {
+        var response = await Client.DeleteAsync($"/api/organizations/invitations/{invitation.Id}");
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to delete the invitation.");
+
+        Invitations.Remove(invitation);
+
+        StateHasChanged();
+    }
+}

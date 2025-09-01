@@ -1,0 +1,44 @@
+using Invenire.Common.Errors;
+using System.Text.RegularExpressions;
+
+namespace Invenire.Api.Organizations.Create;
+
+public record CreateOrganizationResponse
+{
+    // Errors.
+
+    public static readonly List<ErrorTranslation> ErrorTranslations =
+    [
+        // Name
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"'name' must not be empty\."),
+            Translate = _ => "Jméno organizace nesmí být prázdné."
+        },
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"'name' must be unique among all organizations\."),
+            Translate = _ => "Jméno organizace již bylo zabráno někým jiným."
+        },
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The length of 'name' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
+            Translate = m => $"Jméno organizace musí mít maximálně {m.Groups[1].Value} {PluralizeChar(int.Parse(m.Groups[1].Value))}. Zadali jste {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}."
+        },
+        // General.
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"An unexpected internal error occurred\."),
+            Translate = _ => "Objevila se nečekaná chyba."
+        }
+    ];
+
+    private static string PluralizeChar(int count)
+    {
+        if (count == 0) return "znaků";
+        else if (count == 1) return "znak";
+        else if (count <= 4) return "znaky";
+        else return "znaků";
+    }
+}
+

@@ -1,0 +1,94 @@
+@using System.Net
+@using Invenire.Api.Users
+@using Invenire.Api.Users.Admin
+@using Invenire.Components.Forms
+@using Invenire.Common.Extensions
+@using Invenire.Api.Users.Employees
+@using Invenire.Components.Dashboard.Employee
+
+@page "/dashboard"
+
+@if (Role == JwtRole.Admin)
+{
+    @if (IsOrganizationNull is true)
+    {
+        <h1>Vytvoření organizace</h1>
+        <CreateOrganizationForm OnSuccessfulCreation="OnSuccessfulCreation"></CreateOrganizationForm>
+    }
+    else
+    {
+        <h1>Dashboard</h1>
+    }
+}
+else if (Role == JwtRole.Employee)
+{
+    @if (IsOrganizationNull is true)
+    {
+        <h1>Připojte se k organizaci</h1>
+        <JoinOrganizationEmployeeDashboardComponent OnSuccessfulJoin="OnSuccessfulJoin"></JoinOrganizationEmployeeDashboardComponent>
+    }
+    else
+    {
+        <h1>Dashboard</h1>
+    }
+}
+
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private bool? IsOrganizationNull { get; set; }
+    private JwtRole? Role { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Role is null)
+        {
+            var response = await Client.GetAsync("/api/server/auth/role");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            Role = (await response.Content.ReadAsStringAsync()).ToEnum<JwtRole>();
+        }
+
+        if (Role == JwtRole.Admin)
+        {
+            var admin = await (await Client.GetAsync("/api/admins/profile")).Content.ReadFromJsonAsync<AdminDto>();
+
+            if (admin is null) throw new NullReferenceException();
+
+            if (admin.OrganizationId is null)
+            {
+                IsOrganizationNull = true;
+            }
+        }
+        else if (Role == JwtRole.Employee)
+        {
+            var employee = await (await Client.GetAsync("/api/employees/profile")).Content.ReadFromJsonAsync<EmployeeDto>();
+
+            if (employee is null) throw new NullReferenceException();
+
+            if (employee.OrganizationId is null)
+            {
+                IsOrganizationNull = true;
+            }
+        }
+    }
+
+    private void OnSuccessfulCreation()
+    {
+        IsOrganizationNull = false;
+        StateHasChanged();
+    }
+
+    private void OnSuccessfulJoin()
+    {
+        IsOrganizationNull = false;
+        StateHasChanged();
+    }
+}
