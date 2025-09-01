@@ -4,7 +4,7 @@
 
 <EditForm Model="Body" OnSubmit="HandleCreation" @ref="Form">
     <div>
-        <label>Jméno organizace:</label>
+        <label>Název:</label>
         <InputText @bind-Value="Body.Name" />
         <ValidationMessage For="@(() => Body.Name)" />
     </div>
@@ -32,7 +32,7 @@
 
     protected override void OnAfterRender(bool rendered)
     {
-        if (rendered && Form is not null)
+        if (Form is not null && rendered)
         {
             ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
         }

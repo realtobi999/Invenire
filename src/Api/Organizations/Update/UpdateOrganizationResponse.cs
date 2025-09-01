@@ -1,9 +1,9 @@
 using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
 
-namespace Invenire.Api.Organizations.Create;
+namespace Invenire.Api.Organizations.Update;
 
-public record CreateOrganizationResponse
+public record UpdateOrganizationResponse
 {
     // Errors.
 
@@ -41,4 +41,3 @@ public record CreateOrganizationResponse
         else return "znaků";
     }
 }
-

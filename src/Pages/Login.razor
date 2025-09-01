@@ -1,5 +1,7 @@
+@using Invenire.Components.Forms.Users.Admins
+@using Invenire.Components.Forms.Users.Employees
+
 @page "/login"
-@using Invenire.Components.Forms.Login
 
 <h1>@HeaderText</h1>
 
@@ -11,12 +13,14 @@
 
 @if (SelectedRole == "Employee")
 {
-    <EmployeeLoginForm></EmployeeLoginForm>
+    <LoginEmployeeForm></LoginEmployeeForm>
 }
 else if (SelectedRole == "Admin")
 {
-    <AdminLoginForm></AdminLoginForm>
+    <LoginAdminForm></LoginAdminForm>
 }
+
+<p>Nemáte ještě účet? <NavLink class="nav-link" href="/register">Zaregistrujte se zde</NavLink>.</p>
 
 @code {
     private string SelectedRole { get; set; } = "Employee";

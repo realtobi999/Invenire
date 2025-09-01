@@ -1,10 +1,12 @@
 @using System.Net
 @using Invenire.Api.Users
 @using Invenire.Api.Users.Admin
-@using Invenire.Components.Forms
 @using Invenire.Common.Extensions
 @using Invenire.Api.Users.Employees
-@using Invenire.Components.Dashboard.Employee
+@using Invenire.Components.Forms.Organizations
+@using Invenire.Components.Dashboard.Organizations
+@using Invenire.Components.Dashboard.Users.Admins
+@using Invenire.Components.Dashboard.Users.Employee
 
 @page "/dashboard"
 
@@ -18,6 +20,11 @@
     else
     {
         <h1>Dashboard</h1>
+        <h2>Přehled vás</h2>
+        <AdminOverviewDashboardComponent></AdminOverviewDashboardComponent>
+        <h2>Přehled organizace</h2>
+        <OrganizationOverviewDashboardComponent></OrganizationOverviewDashboardComponent>
+        <h2>Přehled majetku</h2>
     }
 }
 else if (Role == JwtRole.Employee)
@@ -25,7 +32,8 @@ else if (Role == JwtRole.Employee)
     @if (IsOrganizationNull is true)
     {
         <h1>Připojte se k organizaci</h1>
-        <JoinOrganizationEmployeeDashboardComponent OnSuccessfulJoin="OnSuccessfulJoin"></JoinOrganizationEmployeeDashboardComponent>
+        <JoinOrganizationEmployeeDashboardComponent OnSuccessfulJoin="OnSuccessfulJoin">
+        </JoinOrganizationEmployeeDashboardComponent>
     }
     else
     {

@@ -1,4 +1,6 @@
-@using Invenire.Components.Forms.Register
+@using Invenire.Components.Forms.Users.Admins
+@using Invenire.Components.Forms.Users.Employees
+
 @page "/register"
 
 <h1>@HeaderText</h1>
@@ -11,12 +13,14 @@
 
 @if (SelectedRole == "Employee")
 {
-    <EmployeeRegistrationForm></EmployeeRegistrationForm>
+    <RegisterEmployeeForm></RegisterEmployeeForm>
 }
 else if (SelectedRole == "Admin")
 {
-    <AdminRegistrationForm></AdminRegistrationForm>
+    <RegisterAdminForm></RegisterAdminForm>
 }
+
+<p>Máte již účet? <NavLink class="nav-link" href="/login">Přihlaste se zde</NavLink>.</p>
 
 @code {
     private string SelectedRole { get; set; } = "Employee";

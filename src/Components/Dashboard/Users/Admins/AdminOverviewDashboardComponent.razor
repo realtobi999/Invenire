@@ -1,0 +1,62 @@
+@using System.Net
+@using Invenire.Api.Users.Admin
+@using Invenire.Components.Forms.Users.Admins
+
+@if (Admin is not null)
+{
+    <ul>
+        <li><strong>Id:</strong> @Admin.Id</li>
+        <li><strong>Jméno:</strong> @Admin.FullName</li>
+        <li><strong>Email:</strong> @Admin.EmailAddress</li>
+        <li><strong>Vytvořen:</strong> @Admin.CreatedAt.ToString("g")</li>
+        @if (Admin.LastUpdatedAt is not null)
+        {
+            <li><strong>Naposledy upraven:</strong> @Admin.LastUpdatedAt?.ToString("g")</li>
+        }
+    </ul>
+
+    <button @onclick="() => ShowModal = true">Upravit informace</button>
+}
+@if (Admin is not null && ShowModal)
+{
+    <div>
+        <div>
+            <h4 style="display: inline-block; margin: 0;">Upravit svoje informace</h4>
+            <button style="display: inline-block;" @onclick="() => ShowModal = false">X</button>
+        </div>
+        <UpdateAdminForm Admin="Admin" OnClose="() => ShowModal = false" OnSuccessfulUpdate="OnSuccessfulOrganizationUpdate"></UpdateAdminForm>
+    </div>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+
+    private bool ShowModal { get; set; } = false;
+    private AdminDto? Admin { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetAdmin();
+    }
+
+    private async Task SetAdmin()
+    {
+        var response = await Client.GetAsync("/api/admins/profile");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the admin."); 
+
+        Admin = await response.Content.ReadFromJsonAsync<AdminDto>();
+    }
+
+    private async Task ReloadAdmin()
+    {
+        await SetAdmin();
+        StateHasChanged();
+    }
+
+    private async Task OnSuccessfulOrganizationUpdate()
+    {
+        ShowModal = false;
+        await ReloadAdmin();
+    }
+}
