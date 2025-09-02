@@ -1,0 +1,101 @@
+@using System.Net
+@using Invenire.Api.Organizations
+@using Invenire.Api.Users.Employees
+
+@if (Organization is not null)
+{
+    @if (Organization.Employees is not null && Organization.Employees.Any())
+    {
+        <input type="text" @bind="SearchTerm" placeholder="Hledat zaměstnance..." />
+
+        <ul>
+            @foreach (var employee in PagedEmployees)
+            {
+                <li>
+                    <strong>@employee.FullName</strong> (@employee.EmailAddress)
+                    <button @onclick="() => SelectEmployee(employee)">X</button>
+                </li>
+            }
+        </ul>
+
+        <div class="pagination">
+            <button @onclick="() => SetCurrentOffset(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
+                Předchozí
+            </button>
+            <span>
+                Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalEmployeesCount / Limit))
+            </span>
+            <button @onclick="() => SetCurrentOffset(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
+                Další
+            </button>
+        </div>
+
+        @if (ShowModal)
+        {
+            <div>
+                <div>
+                    <h4>Opravdu chcete odebrat zaměstnance?</h4>
+                    <p><strong>@SelectedEmployee!.FullName</strong> (@SelectedEmployee!.EmailAddress)</p>
+                    <button @onclick="RemoveEmployee">Ano, odebrat</button>
+                    <button @onclick="() => ShowModal = false">Ne</button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p>Žádní zaměstnanci nebyli nalezeni.</p>
+    }
+}
+
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Parameter] public OrganizationDto? Organization { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set; }
+
+    private bool ShowModal { get; set; }
+    private string SearchTerm { get; set; } = string.Empty;
+    private EmployeeDto? SelectedEmployee { get; set; }
+
+    private int Limit { get; } = 5;
+    private int CurrentOffset { get; set; }
+    private int TotalEmployeesCount => FilteredEmployees.Count();
+
+    private IEnumerable<EmployeeDto> FilteredEmployees =>
+        (Organization?.Employees ?? Enumerable.Empty<EmployeeDto>())
+        .Where(e =>
+            string.IsNullOrWhiteSpace(SearchTerm) ||
+            (!string.IsNullOrEmpty(e.FullName) && e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrEmpty(e.EmailAddress) && e.EmailAddress.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+
+    private IEnumerable<EmployeeDto> PagedEmployees => FilteredEmployees.Skip(CurrentOffset).Take(Limit);
+
+    private bool CanGoPrev => CurrentOffset > 0;
+    private bool CanGoNext => CurrentOffset + Limit < TotalEmployeesCount;
+
+    private void SetCurrentOffset(int offset)
+    {
+        if (offset >= 0 && offset < TotalEmployeesCount)
+            CurrentOffset = offset;
+    }
+
+    private void SelectEmployee(EmployeeDto employee)
+    {
+        SelectedEmployee = employee;
+        ShowModal = true;
+    }
+
+    private async Task RemoveEmployee()
+    {
+        if (SelectedEmployee is null) return;
+
+        var response = await Client.DeleteAsync($"/api/organizations/employees/{SelectedEmployee.Id}");
+        
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Failed to remove employee from the organization.");
+
+        ShowModal = false;
+        SelectedEmployee = null;
+        await OnSuccessfulDeletion.InvokeAsync(true);
+    }
+}

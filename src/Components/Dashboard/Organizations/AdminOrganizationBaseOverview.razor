@@ -1,0 +1,41 @@
+@using Invenire.Api.Organizations
+@using Invenire.Components.Forms.Organizations
+
+@if (Organization is not null)
+{
+    <ul>
+        <li><strong>Id:</strong> @Organization.Id</li>
+        <li><strong>Název:</strong> @Organization.Name</li>
+        <li><strong>Vytvořeno:</strong> @Organization.CreatedAt.ToString("g")</li>
+        @if (Organization.LastUpdatedAt is not null)
+        {
+            <li><strong>Naposledy upraveno:</strong> @Organization.LastUpdatedAt?.ToString("g")</li>
+        }
+    </ul>
+
+    <button @onclick="() => ShowModal = true">Upravit informace</button>
+
+    @if (ShowModal)
+    {
+        <div>
+            <div>
+                <h4 style="display: inline-block; margin: 0;">Upravit informace organizace</h4>
+                <button style="display: inline-block;" @onclick="() => ShowModal = false">X</button>
+            </div>
+            <UpdateOrganizationForm Organization="Organization" OnClose="() => ShowModal = false" OnSuccessfulUpdate="OnSuccessfulOrganizationUpdate" />
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public OrganizationDto? Organization { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulUpdate { get; set; }
+
+    private bool ShowModal { get; set; } = false;
+
+    private async Task OnSuccessfulOrganizationUpdate()
+    {
+        ShowModal = false;
+        await OnSuccessfulUpdate.InvokeAsync(true);
+    }
+}

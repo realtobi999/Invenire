@@ -1,0 +1,22 @@
+@using Invenire.Api.Organizations.Invitations
+@using System.Net
+<h4>Opravdu chcete smazat pozvánku?</h4>
+<button @onclick="DeleteInvitation">Ano, smazat</button>
+<button @onclick="() => OnClose.InvokeAsync(true)">Ne</button>
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set; }
+    [Parameter] public OrganizationInvitationDto? Invitation { get; set; }
+
+    public async Task DeleteInvitation()
+    {
+        var response = await Client.DeleteAsync($"/api/organizations/invitations/{Invitation!.Id}");
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to delete the invitation.");
+
+        await OnClose.InvokeAsync(true);
+        await OnSuccessfulDeletion.InvokeAsync(true);
+    }
+}

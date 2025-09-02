@@ -1,0 +1,46 @@
+@using System.Net
+@using Invenire.Api.Organizations
+@using Invenire.Api.Users.Employees
+@using Invenire.Components.Forms.Organizations
+
+@if (Organization is not null)
+{
+    <h3>Základní informace</h3>
+
+    <AdminOrganizationBaseOverview Organization="Organization" OnSuccessfulUpdate="ReloadOrganization" />
+
+    <h3>Zaměstnanci</h3>
+
+    <AdminOrganizationEmployeesOverview Organization="Organization" OnSuccessfulDeletion="ReloadOrganization"/>
+
+    <h3>Pozvánky</h3>
+
+    <AdminOrganizationInvitationOverview Organization="Organization" OnChange="ReloadOrganization"/>
+}
+
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+
+    private OrganizationDto? Organization { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await SetOrganization();
+    }
+
+    private async Task SetOrganization()
+    {
+        var response = await Client.GetAsync("/api/organizations");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the organization.");
+
+        Organization = await response.Content.ReadFromJsonAsync<OrganizationDto>();
+    }
+
+    private async Task ReloadOrganization()
+    {
+        await SetOrganization();
+        StateHasChanged();
+    }
+}

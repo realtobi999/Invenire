@@ -27,7 +27,7 @@ else
                         <li><strong>Jméno admina:</strong> @invitation.OrganizationDto.Admin.FullName</li>
                     }
                 }
-                <li><strong>Text:</strong> @invitation.Description</li>
+                <li><strong>Popis:</strong> @invitation.Description</li>
                 <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToString("g")</li>
                 @if (invitation.LastUpdatedAt is not null)
                 {
@@ -61,7 +61,7 @@ else
 
     private int Limit { get; set; } = 1;
     private int TotalCount { get; set; }
-    private int CurrentOffset { get; set; }
+    private int CurrentOffset { get; set; } = 0;
     private List<OrganizationInvitationDto> Invitations { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
