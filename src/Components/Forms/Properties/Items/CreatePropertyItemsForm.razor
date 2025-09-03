@@ -1,0 +1,71 @@
+@using System.Net
+@using System.Text
+@using Invenire.Common.Errors
+@using Invenire.Api.Properties.Items.Create
+
+<button @onclick="OpenJsonFile">Načíst ze JSON souboru</button>
+<InputFile id="HiddenJsonFileInput" OnChange="HandleFileSelected" style="display:none" />
+
+@if (Errors.Any())
+{
+    <ul>
+        @foreach (var error in Errors)
+        {
+            <li>@error</li>
+        }
+    </ul>
+}
+
+
+@code {
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
+
+    private List<string> Errors { get; set; } = [];
+
+    private async Task OpenJsonFile()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('HiddenJsonFileInput').click()");
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        using var stream = e.File.OpenReadStream();
+        using var reader = new StreamReader(stream);
+
+        var content = await reader.ReadToEndAsync();
+
+        await CreatePropertyItems(content);
+    }
+
+    private async Task CreatePropertyItems(string body)
+    {
+        Errors.Clear();
+
+        var response = await Client.PostAsync("/api/properties/items", new StringContent(body, Encoding.UTF8, "application/json"));
+
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            await OnSuccessfulCreation.InvokeAsync(true);
+        }
+        else
+        {
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            Console.WriteLine("Here");
+
+            if (content.Type == "ValidationException")
+            {
+                foreach (var error in content.Errors!)
+                {
+                    Errors.Add(ErrorTranslator.Translate(error, CreatePropertyItemsResponse.ErrorTranslations));
+                }
+            }
+            else
+            {
+                Errors.Add(ErrorTranslator.Translate(content.Detail, CreatePropertyItemsResponse.ErrorTranslations));
+            }
+        }
+    }
+}

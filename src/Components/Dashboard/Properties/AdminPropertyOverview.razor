@@ -1,0 +1,58 @@
+@using System.Net
+@using Invenire.Api.Properties
+@using Invenire.Common.Errors
+@using Invenire.Components.Forms.Properties
+@using Invenire.Components.Dashboard.Properties
+
+@if (Property is not null)
+{
+    <h3>Základní informace</h3>
+    <AdminPropertyBaseOverview Property="Property" />
+    <h3>Položky</h3>
+    <h4>Přehled položek</h4>
+    <AdminPropertyItemOverview Property="Property" OnChange="ReloadProperty"/>
+}
+else
+{
+    <p>Zatím jste nevytvořil majetek k organizaci.</p>
+    <CreatePropertyForm OnSuccessfulCreation="ReloadProperty"/>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+
+
+    private PropertyDto? Property { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetProperty();
+    }
+
+    private async Task SetProperty()
+    {
+        var response = await Client.GetAsync("/api/properties");
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (error.Detail == "The organization doesn't have a property.")
+            {
+                return;
+            }
+            else
+            {
+                throw new Exception("Something went wrong during the request to get the property.");
+            }
+        }
+
+        Property = await response.Content.ReadFromJsonAsync<PropertyDto>();
+    }
+
+    private async Task ReloadProperty()
+    {
+        await SetProperty();
+        StateHasChanged();
+    }
+}

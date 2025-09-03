@@ -4,8 +4,9 @@
 @using Invenire.Common.Extensions
 @using Invenire.Api.Users.Employees
 @using Invenire.Components.Forms.Organizations
-@using Invenire.Components.Dashboard.Organizations
+@using Invenire.Components.Dashboard.Properties
 @using Invenire.Components.Dashboard.Users.Admins
+@using Invenire.Components.Dashboard.Organizations
 @using Invenire.Components.Dashboard.Users.Employee
 
 @page "/dashboard"
@@ -25,6 +26,7 @@
         <h2>Přehled organizace</h2>
         <AdminOrganizationOverview/>
         <h2>Přehled majetku</h2>
+        <AdminPropertyOverview/>
     }
 }
 else if (Role == JwtRole.Employee)

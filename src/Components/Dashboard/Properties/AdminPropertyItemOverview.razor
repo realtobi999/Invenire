@@ -1,0 +1,34 @@
+@using Invenire.Api.Properties
+@using Invenire.Components.Forms.Properties.Items
+
+@if (Property is not null && Property.ItemsSummary is not null)
+{
+    <ul>
+        <li><strong>Celkový počet:</strong> @Property.ItemsSummary.TotalItems</li>
+        <li><strong>Celková hodnota:</strong> @Property.ItemsSummary.TotalValue Kč</li>
+    </ul>
+}
+else
+{
+    <p>Zatím nebyli přidané žádné položky</p>
+}
+
+<button @onclick="() => ShowAdditionItemsModal = true">Přidat položky</button>
+
+@if (ShowAdditionItemsModal)
+{
+    <div>
+        <div>
+            <h4 style="display: inline-block; margin: 0;">Přidat položky</h4>
+            <button style="display: inline-block;" @onclick="() => ShowAdditionItemsModal = false">X</button>
+        </div>
+        <CreatePropertyItemsForm OnSuccessfulCreation="() => {OnChange.InvokeAsync(true); ShowAdditionItemsModal=false;}"/>
+    </div>
+}
+
+@code {
+    [Parameter] public PropertyDto? Property { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private bool ShowAdditionItemsModal { get; set; }
+}

@@ -1,0 +1,17 @@
+@using Invenire.Api.Properties
+
+@if (Property is not null)
+{
+    <ul>
+        <li><strong>Id:</strong> @Property.Id</li>
+        <li><strong>Vytvořeno:</strong> @Property.CreatedAt.ToString("g")</li>
+        @if (Property.LastUpdatedAt is not null)
+        {
+            <li><strong>Naposledy upraveno:</strong> @Property.LastUpdatedAt?.ToString("g")</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public PropertyDto? Property { get; set; }
+}

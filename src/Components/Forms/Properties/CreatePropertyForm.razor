@@ -1,0 +1,29 @@
+@using System.Net
+
+<button @onclick="() => ShowModal = true">Vytvořit</button>
+
+@if (ShowModal)
+{
+    <div>
+        <h4>Opravdu chcete vytvořit majetek?</h4>
+        <button @onclick="CreateProperty">Ano, vytvořit</button>
+        <button @onclick="() => ShowModal = false">Zrušit</button>
+    </div>
+}
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
+
+    private bool ShowModal { get; set; }
+
+    private async Task CreateProperty()
+    {
+        var response = await Client.PostAsJsonAsync("/api/properties", new object{});
+
+        if (response.StatusCode != HttpStatusCode.Created ) throw new Exception("Something went wrong during the request to create the property.");
+
+        ShowModal = false;
+        await OnSuccessfulCreation.InvokeAsync(true);
+    }
+}
