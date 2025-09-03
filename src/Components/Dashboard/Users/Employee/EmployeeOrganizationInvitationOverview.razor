@@ -38,8 +38,8 @@ else
                     <li><strong>Pro:</strong> @invitation.Employee.FullName</li>
                 }
             </ul>
-            <button @onclick="() => AcceptInvitation(invitation)">Připojit se</button>
-            <button @onclick="() => DeclineInvitation(invitation)">Odstranit</button>
+            <button @onclick="() => {ShowAcceptInvitationConfirmationModal = true; SelectedInvitation = invitation;}">Připojit se</button>
+            <button @onclick="() => {ShowDeleteInvitationConfirmationModal = true; SelectedInvitation = invitation;}">Odstranit</button>
         </div>
     }
 
@@ -47,11 +47,31 @@ else
         <button @onclick="() => SetInvitations(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
             Předchozí
         </button>
-        <span>Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalCount / Limit))</span>
+        <span>Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationsCount / Limit))</span>
         <button @onclick="() => SetInvitations(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
             Další
         </button>
     </div>
+
+    @if (ShowAcceptInvitationConfirmationModal && SelectedInvitation is not null)
+    {
+        <div>
+            <h4>Opravdu se chcete připojit k organizaci?</h4>
+            <p>Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
+            <button @onclick="() => AcceptInvitation(SelectedInvitation)">Ano, připojit se</button>
+            <button @onclick="() => {ShowAcceptInvitationConfirmationModal = false; SelectedInvitation = null;}">Zrušit</button>
+        </div>
+    }
+
+    @if (ShowDeleteInvitationConfirmationModal && SelectedInvitation is not null)
+    {
+        <div>
+            <h4>Opravdu chcete smazat pozvánku?</h4>
+            <p>Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
+            <button @onclick="() => DeleteInvitation(SelectedInvitation)">Ano, smazat</button>
+            <button @onclick="() => {ShowDeleteInvitationConfirmationModal = false; SelectedInvitation = null;}">Zrušit</button>
+        </div>
+    }
 }
 
 
@@ -60,8 +80,13 @@ else
     [Parameter] public EventCallback<bool> OnSuccessfulJoin { get; set; }
 
     private int Limit { get; set; } = 1;
-    private int TotalCount { get; set; }
     private int CurrentOffset { get; set; } = 0;
+    private int TotalInvitationsCount { get; set; }
+
+    private bool ShowAcceptInvitationConfirmationModal { get; set; }
+    private bool ShowDeleteInvitationConfirmationModal { get; set; }
+
+    private OrganizationInvitationDto? SelectedInvitation { get; set;}
     private List<OrganizationInvitationDto> Invitations { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
@@ -86,11 +111,11 @@ else
             invitation.OrganizationDto = await (await Client.GetAsync($"/api/organizations/{invitation.OrganizationId}")).Content.ReadFromJsonAsync<OrganizationDto>();
         }
 
-        TotalCount = content.TotalCount;
+        TotalInvitationsCount = content.TotalCount;
     }
 
     private bool CanGoPrev => CurrentOffset > 0;
-    private bool CanGoNext => CurrentOffset + Limit < TotalCount;
+    private bool CanGoNext => CurrentOffset + Limit < TotalInvitationsCount;
 
     private async Task AcceptInvitation(OrganizationInvitationDto invitation)
     {
@@ -101,7 +126,7 @@ else
         await OnSuccessfulJoin.InvokeAsync(true);
     }
 
-    private async Task DeclineInvitation(OrganizationInvitationDto invitation)
+    private async Task DeleteInvitation(OrganizationInvitationDto invitation)
     {
         var response = await Client.DeleteAsync($"/api/organizations/invitations/{invitation.Id}");
 
