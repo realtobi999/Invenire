@@ -62,12 +62,9 @@
     private int CurrentOffset { get; set; }
     private int TotalEmployeesCount => FilteredEmployees.Count();
 
-    private IEnumerable<EmployeeDto> FilteredEmployees =>
-        (Organization?.Employees ?? Enumerable.Empty<EmployeeDto>())
-        .Where(e =>
-            string.IsNullOrWhiteSpace(SearchTerm) ||
-            (!string.IsNullOrEmpty(e.FullName) && e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-            (!string.IsNullOrEmpty(e.EmailAddress) && e.EmailAddress.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<EmployeeDto> FilteredEmployees => (Organization?.Employees ?? Enumerable.Empty<EmployeeDto>()).Where(e => 
+            e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            e.EmailAddress.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
 
     private IEnumerable<EmployeeDto> PagedEmployees => FilteredEmployees.Skip(CurrentOffset).Take(Limit);
 

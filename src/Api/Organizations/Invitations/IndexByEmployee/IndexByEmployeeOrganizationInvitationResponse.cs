@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Invenire.Api.Organizations.Invitations.IndexByEmployee;
 
-public class IndexByEmployeeOrganizationInvitationResponse
+public record IndexByEmployeeOrganizationInvitationResponse
 {
     [JsonPropertyName("data")]
     public required List<OrganizationInvitationDto> Data { get; set; }

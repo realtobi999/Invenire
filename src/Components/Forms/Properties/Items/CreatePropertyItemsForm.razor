@@ -1,10 +1,20 @@
 @using System.Net
 @using System.Text
+@using System.Text.Json
 @using Invenire.Common.Errors
+@using System.Net.Http.Headers
+@using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.Create
 
-<button @onclick="OpenJsonFile">Načíst ze JSON souboru</button>
-<InputFile id="HiddenJsonFileInput" OnChange="HandleFileSelected" style="display:none" />
+@if (!IsProcessing)
+{
+    <button @onclick="OpenJsonFile">Načíst ze JSON souboru</button>
+    <InputFile id="HiddenJsonFileInput" OnChange="HandleFileSelected" style="display:none" />
+}
+else
+{
+    <p>Žádost se zpracovává... Může to chvíli trvat.</p>
+}
 
 @if (Errors.Any())
 {
@@ -16,11 +26,12 @@
     </ul>
 }
 
-
 @code {
     [Inject] public IJSRuntime JS { get; set; } = default!;
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
+
+    private bool IsProcessing { get; set; }
 
     private List<string> Errors { get; set; } = [];
 
@@ -31,29 +42,29 @@
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
-        using var stream = e.File.OpenReadStream();
-        using var reader = new StreamReader(stream);
-
-        var content = await reader.ReadToEndAsync();
-
-        await CreatePropertyItems(content);
-    }
-
-    private async Task CreatePropertyItems(string body)
-    {
         Errors.Clear();
 
-        var response = await Client.PostAsync("/api/properties/items", new StringContent(body, Encoding.UTF8, "application/json"));
+        if (e.File == null) return;
+
+        if (e.File.Size > 1024 * 1024)
+            IsProcessing = true;
+
+        using var stream = new MemoryStream();
+        await e.File.OpenReadStream(1024 * 1024 * 100).CopyToAsync(stream);
+        stream.Position = 0;
+
+        var body = new MultipartFormDataContent { { new StreamContent(stream) { Headers = { ContentType = new MediaTypeHeaderValue(e.File.ContentType) } }, "file", e.File.Name } };
+        var response = await Client.PostAsync("/api/properties/items", body);
 
         if (response.StatusCode == HttpStatusCode.Created)
         {
+            IsProcessing = false;
             await OnSuccessfulCreation.InvokeAsync(true);
         }
         else
         {
+            IsProcessing = false;
             var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-
-            Console.WriteLine("Here");
 
             if (content.Type == "ValidationException")
             {

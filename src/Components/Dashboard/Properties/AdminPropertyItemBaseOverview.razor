@@ -1,0 +1,50 @@
+@using System.Net
+@using Invenire.Api.Properties
+@using Invenire.Api.Properties.Items
+@using Invenire.Api.Properties.Items.IndexByAdmin
+@using Invenire.Components.Forms.Properties.Items
+
+<h4>Přehled položek</h4>
+
+@if (Property is not null && Property.ItemsSummary is not null)
+{
+    <ul>
+        <li><strong>Celkový počet:</strong> @Property.ItemsSummary.TotalItems</li>
+        <li><strong>Celková hodnota:</strong> @Property.ItemsSummary.TotalValue Kč</li>
+        <li><strong>Průměrná cena položky:</strong> @Property.ItemsSummary.AveragePrice Kč</li>
+        <li><strong>Průměrné stáří položky:</strong> @Property.ItemsSummary.AverageAge.ToString("g") let</li>
+    </ul>
+
+    <button @onclick="() => ShowAllItemsModal = true">Zobrazit</button>
+
+    @if (ShowAllItemsModal)
+    {
+        <AdminPropertyItemOverview OnClose="() => ShowAllItemsModal = false" OnChange="() => OnChange.InvokeAsync(true)"/>
+    }
+}
+else
+{
+    <p>Zatím nebyli přidané žádné položky</p>
+}
+
+<button @onclick="() => ShowAdditionItemsModal = true">Přidat položky</button>
+
+@if (ShowAdditionItemsModal)
+{
+    <div>
+        <div>
+            <h4 style="display: inline-block; margin: 0;">Přidat položky</h4>
+            <button style="display: inline-block;" @onclick="() => ShowAdditionItemsModal = false">X</button>
+        </div>
+        <CreatePropertyItemsForm OnSuccessfulCreation="() => { OnChange.InvokeAsync(true); ShowAdditionItemsModal = false; }" />
+    </div>
+}
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public PropertyDto? Property { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private bool ShowAllItemsModal { get; set; }
+    private bool ShowAdditionItemsModal { get; set; }
+}

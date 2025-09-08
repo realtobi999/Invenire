@@ -16,17 +16,17 @@
     @if (IsOrganizationNull is true)
     {
         <h1>Vytvoření organizace</h1>
-        <CreateOrganizationForm OnSuccessfulCreation="OnSuccessfulCreation"/>
+        <CreateOrganizationForm OnSuccessfulCreation="OnSuccessfulCreation" />
     }
     else
     {
         <h1>Dashboard</h1>
         <h2>Přehled vás</h2>
-        <AdminOverview/>
+        <AdminOverview />
         <h2>Přehled organizace</h2>
-        <AdminOrganizationOverview/>
+        <AdminOrganizationOverview />
         <h2>Přehled majetku</h2>
-        <AdminPropertyOverview/>
+        <AdminPropertyOverview />
     }
 }
 else if (Role == JwtRole.Employee)
@@ -34,7 +34,7 @@ else if (Role == JwtRole.Employee)
     @if (IsOrganizationNull is true)
     {
         <h1>Připojte se k organizaci</h1>
-        <EmployeeOrganizationInvitationOverview OnSuccessfulJoin="OnSuccessfulJoin"/>
+        <EmployeeOrganizationInvitationOverview OnSuccessfulJoin="OnSuccessfulJoin" />
     }
     else
     {

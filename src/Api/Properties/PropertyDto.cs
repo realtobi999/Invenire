@@ -33,6 +33,12 @@ public record PropertyDtoItemsSummary
 
     [JsonPropertyName("total_value")]
     public required double TotalValue { get; set; }
+
+    [JsonPropertyName("average_price")]
+    public required double AveragePrice { get; set; }
+
+    [JsonPropertyName("average_age")]
+    public required double AverageAge { get; set; }
 }
 
 public record PropertyDtoScansSummary
