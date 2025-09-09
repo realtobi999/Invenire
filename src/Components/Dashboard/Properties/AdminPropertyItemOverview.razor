@@ -3,39 +3,68 @@
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.IndexByAdmin
 @using Invenire.Components.Forms.Properties.Items
+@using System.Threading.Tasks
+
+<div>
+    <h4 style="display:inline-block;">Všechny položky</h4>
+    <button style="display:inline-block;" @onclick="() => OnClose.InvokeAsync(true)">X</button>
+</div>
+
+<label for="OrderSelect">Řazení: </label>
+<select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItems(CurrentOffset)">
+    @foreach (var option in OrderOptions)
+    {
+        <option value="@option.Value">@option.Label</option>
+    }
+</select>
+
+<div>
+    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await LoadItems(CurrentOffset);}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
+    @if (ShowFilteringOptions)
+    {
+        <div>
+            <label for="PriceMin">Cena od:</label>
+            <input id="PriceMin" type="number" @bind="PriceMin" />
+
+            <label for="PriceMax">do:</label>
+            <input id="PriceMax" type="number" @bind="PriceMax" />
+
+            <br />
+
+            <label for="DateOfPurchaseFrom">Datum nákupu od:</label>
+            <input id="DateOfPurchaseFrom" type="date" @bind="DateOfPurchaseFrom" />
+
+            <label for="DateOfPurchaseTo">do:</label>
+            <input id="DateOfPurchaseTo" type="date" @bind="DateOfPurchaseTo" />
+
+            <br />
+
+            <label for="CreatedAtFrom">Datum přidání od:</label>
+            <input id="CreatedAtFrom" type="date" @bind="CreatedAtFrom" />
+
+            <label for="CreatedAtTo">do:</label>
+            <input id="CreatedAtTo" type="date" @bind="CreatedAtTo" />
+
+            <br />
+
+            <br />
+
+            <button @onclick="() => LoadItems(CurrentOffset)">Použít</button>
+            <button @onclick="ClearFilters">Vymazat</button>
+        </div>
+    }
+</div>
+    
+<br />
 
 @if (Items.Any())
 {
     <div>
-        <h4 style="display:inline-block;">Všechny položky</h4>
-        <button style="display:inline-block;" @onclick="Close">X</button>
-    </div>
-
-    <div>
-        @if (AllSelected)
-        {
-            <button @onclick="DeselectAllSelectedCurrentItems">Zrušit výběr na stránce</button>
-        }
-        else if (ItemsToDelete.Count != Limit && ItemsToUpdate.Count != Limit)
-        {
-            <button @onclick="SelectAllAsSelected">Vybrat vše na stránce</button>
-        }
-
-        @if (AnySelected)
-        {
-           <button @onclick="DeselectAllSelected">Zrušit výběr všech položek</button>
-            <button @onclick="SelectAllAsDeleted">Označit vybrané za smazané</button>
-        }
-        @if (ItemsToDelete.Count > 0)
-        {
-            <button @onclick="DeselectAllDeleted">Zrušit všechny smazané položky</button>
-        }
-
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;">
             @foreach (var item in Items)
             {
-                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@GetItemColor(item);">
-                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;" @onclick="() => SelectItem(item)">
+                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem;">
+                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;">
                         <li><strong>ID:</strong> @item.Id</li>
                         <li><strong>Název:</strong> @item.Name</li>
                         <li><strong>Cena:</strong> @item.Price Kč</li>
@@ -54,30 +83,12 @@
                         }
                         <li><strong>Popis:</strong> @item.Description</li>
                         <li><strong>Dokument:</strong> @item.DocumentNumber</li>
-                        <li><strong>Vytvořeno:</strong> @item.CreatedAt:g</li>
+                        <li><strong>Přidáno:</strong> @item.CreatedAt:g</li>
                         @if (item.LastUpdatedAt is not null)
                         {
                             <li><strong>Upraveno:</strong> @item.LastUpdatedAt:g</li>
                         }
                     </ul>
-                    @if (!ItemsToUpdate.Any(i => i.Id == item.Id))
-                    {
-                        <button @onclick="() => SelectItemAsUpdated(item)">Upravit</button>
-                    }
-                    else
-                    {
-                        <button @onclick="() => CancelUpdate(item)">Zrušit úpravy</button>
-                    }
-                    
-                    @if (!ItemsToDelete.Any(i => i.Id == item.Id))
-                    {
-                        <button @onclick="() => SelectItemAsDeleted(item)">Smazat</button>
-                    }
-                    else
-                    {
-                        <button @onclick="() => CancelDelete(item)">Zrušit smazání</button>
-                    }
-
                 </div>
             }
         </div>
@@ -89,6 +100,10 @@
         </div>
     </div>
 }
+else
+{
+    <p>Žádné položky nebyly nalezeny.</p>
+}
 
 @code {
     [Inject] public HttpClient Client { get; set; } = default!;
@@ -99,93 +114,87 @@
     private int CurrentOffset { get; set; }
     private int TotalItemsCount { get; set; }
 
+    private bool ShowFilteringOptions { get; set; }
+
     private List<PropertyItemDto> Items { get; set; } = [];
-    private HashSet<PropertyItemDto> ItemsToDelete = new();
-    private HashSet<PropertyItemDto> ItemsToUpdate = new();
-    private HashSet<PropertyItemDto> SelectedItems { get; set; } = [];
 
-    private void SelectItemAsDeleted(PropertyItemDto item)
+    private string SelectedOrderOption { get; set; } = "name_asc";
+    private readonly List<(string Value, string Label)> OrderOptions = new()
     {
-        SelectedItems.Remove(item);
-        ItemsToUpdate.Remove(item);
-        
-        if (!ItemsToDelete.Any(i => i.Id == item.Id))
-            ItemsToDelete.Add(item);
-    }
+        ("name_asc", "Název (A-Z)"),
+        ("name_desc", "Název (Z-A)"),
+        ("price_asc", "Cena (nejnižší první)"),
+        ("price_desc", "Cena (nejvyšší první)"),
+        ("dateofpurchase_asc", "Datum nákupu (nejstarší první)"),
+        ("dateofpurchase_desc", "Datum nákupu (nejnovější první)"),
+        ("createdat_asc", "Datum přidání (nejstarší první)"),
+        ("createdat_desc", "Datum přidání (nejnovější první)")
+    };
 
-    private void CancelDelete(PropertyItemDto item)
-    {
-        ItemsToDelete.RemoveWhere(i => i.Id == item.Id);
-    }
-
-    private void SelectItemAsUpdated(PropertyItemDto item)
-    {
-        SelectedItems.Remove(item);
-        ItemsToDelete.Remove(item);
-        
-        if (!ItemsToUpdate.Any(i => i.Id == item.Id))
-            ItemsToUpdate.Add(item);
-    }
-
-    private void CancelUpdate(PropertyItemDto item)
-    {
-        ItemsToUpdate.RemoveWhere(i => i.Id == item.Id);
-    }
-
-    private bool AnySelected => SelectedItems.Count > 0;
-    private bool AllSelected => Items.All(i => SelectedItems.Any(s => s.Id == i.Id));
-
-    protected override async Task OnInitializedAsync() => await LoadItems(CurrentOffset);
-
-    private void SelectItem(PropertyItemDto item)
-    {
-        if (ItemsToDelete.Any(i => i.Id == item.Id))
-        {
-            ItemsToDelete.Remove(item);
-            return;
-        }
-        if (!SelectedItems.Remove(item) && !ItemsToDelete.Any(i => i.Id == item.Id))
-        {
-           SelectedItems.Add(item);
-           return;
-        }
-    }
+    protected override async Task OnInitializedAsync() => await LoadItems(0);
 
     private async Task LoadItems(int offset)
     {
         CurrentOffset = Math.Max(0, offset);
 
-        var response = await Client.GetAsync($"/api/properties/items?limit={Limit}&offset={CurrentOffset}");
+        var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
+
+        var parameters = new List<string>
+        {
+            $"limit={Limit}",
+            $"offset={CurrentOffset}",
+            $"order={sort}",
+            $"desc={descending}"
+        };
+
+        if (ShowFilteringOptions)
+        {
+            if (PriceMin is not null)
+                parameters.Add($"minPrice={PriceMin}");
+            if (PriceMax is not null)
+                parameters.Add($"maxPrice={PriceMax}");
+            if (CreatedAtFrom is not null)
+                parameters.Add($"createdAtFrom={new DateTimeOffset(CreatedAtFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (CreatedAtTo is not null)
+                parameters.Add($"createdAtTo={new DateTimeOffset(CreatedAtTo.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (DateOfPurchaseFrom is not null)
+                parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (DateOfPurchaseTo is not null)
+                parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
+        }
+
+        var response = await Client.GetAsync($"/api/properties/items?{string.Join("&", parameters)}");
+
         if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the items.");
 
-        var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertyItemResponse>()
-        ?? throw new NullReferenceException();
+        var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertyItemResponse>() ?? throw new NullReferenceException();
 
         Items = content.Data;
         Limit = content.Limit;
         TotalItemsCount = content.TotalCount;
     }
 
-    private bool CanGoPrev => CurrentOffset > 0;
+    private bool CanGoPrev => CurrentOffset > 0; 
     private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
 
-    private async Task ReloadAfterDeletion()
+    private decimal? PriceMin { get; set; }
+    private decimal? PriceMax { get; set; }
+
+    private DateTime? CreatedAtFrom { get; set; }
+    private DateTime? CreatedAtTo { get; set; }
+
+    private DateTime? DateOfPurchaseFrom { get; set; }
+    private DateTime? DateOfPurchaseTo { get; set; }
+
+    private async Task ClearFilters()
     {
-        await OnChange.InvokeAsync(true);
-        SelectedItems.Clear();
-        CurrentOffset = 0;
-        await LoadItems(CurrentOffset);
+        PriceMin = null;
+        PriceMax = null;
+        CreatedAtFrom = null;
+        CreatedAtTo = null;
+        DateOfPurchaseFrom = null;
+        DateOfPurchaseTo = null;
+
+        await LoadItems(0);
     }
-
-    private void Close() => OnClose.InvokeAsync(true);
-    private void SelectAllAsSelected() => SelectedItems.UnionWith(Items);
-    private void SelectAllAsDeleted() { ItemsToDelete.UnionWith(SelectedItems); DeselectAllSelected(); }
-    private void DeselectAllDeleted() => ItemsToDelete.Clear();
-    private void DeselectAllSelected() => SelectedItems.Clear();
-    private void DeselectAllSelectedCurrentItems() => SelectedItems.RemoveWhere(si => Items.Any(i => i.Id == si.Id));
-
-    private string GetItemColor(PropertyItemDto item) => 
-        ItemsToUpdate.Any(i => i.Id == item.Id) ? "#bbff99" :
-        ItemsToDelete.Any(i => i.Id == item.Id) ? "#ff5b5b" : 
-        SelectedItems.Any(i => i.Id == item.Id) ? "#e0e0e0" : "ffffff";
 }
