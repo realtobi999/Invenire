@@ -1,9 +1,11 @@
 @using System.Net
+@using System.Threading.Tasks
 @using Invenire.Api.Properties
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.IndexByAdmin
+@using Invenire.Api.Users.Employees
+@using Invenire.Common.Errors
 @using Invenire.Components.Forms.Properties.Items
-@using System.Threading.Tasks
 
 <div>
     <h4 style="display:inline-block;">Všechny položky</h4>
@@ -25,15 +27,15 @@
 </div>
 
 <div>
-    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await LoadItems(0);}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
+    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await ClearFilters();}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
     @if (ShowFilteringOptions)
     {
         <div>
             <label for="PriceMin">Cena od:</label>
-            <input id="PriceMin" type="number" @bind="PriceMin" />
+            <input id="PriceMin" type="number" @bind="PriceMin" min="0" />
 
             <label for="PriceMax">do:</label>
-            <input id="PriceMax" type="number" @bind="PriceMax" />
+            <input id="PriceMax" type="number" @bind="PriceMax" min="0" />
 
             <br />
 
@@ -62,11 +64,16 @@
             <br />
 
             <label for="Employee">Spravuje:</label>
-            <input id="Employee" type="text" @bind="Employee" />
+            <input id="Employee" type="email" @bind="EmployeeEmailAddress" @bind:after="() => GetEmployee()"/>
+
+            @if (EmployeeErrorMessage is not null)
+            {
+                <span> @EmployeeErrorMessage</span>
+            }
 
             <br />
 
-            <button @onclick="() => LoadItems(CurrentOffset)">Použít</button>
+            <button @onclick="() => LoadItems(CurrentOffset)" disabled="@(EmployeeErrorMessage is not null)" >Použít</button>
             <button @onclick="() => ClearFilters()">Vymazat</button>
         </div>
     }
@@ -87,7 +94,7 @@
                         <li><strong>Cena:</strong> @item.Price Kč</li>
                         <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
                         <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
-                        <li><strong>Sériové číslo:</strong> @item.SerialNumber</li>
+                        <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
                         <li><strong>Datum nákupu:</strong> @item.DateOfPurchase:d</li>
                         @if (item.DateOfSale is not null)
                         {
@@ -98,10 +105,7 @@
                         {
                             <li><strong>Poznámka:</strong> @item.Location.AdditionalNote</li>
                         }
-                        @if (item.Employee is not null)
-                        {
-                            <li><strong>Spravuje:</strong> @item.Employee.FullName</li>
-                        }
+                        <li><strong>Spravuje:</strong> @(item.Employee?.FullName ?? "-----")</li>
                         <li><strong>Popis:</strong> @item.Description</li>
                         <li><strong>Dokument:</strong> @item.DocumentNumber</li>
                         <li><strong>Přidáno:</strong> @item.CreatedAt:g</li>
@@ -185,12 +189,12 @@ else
                 parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
             if (DateOfPurchaseTo is not null)
                 parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (EmployeeId is not null)
+                parameters.Add($"employeeId={EmployeeId}");
             if (!string.IsNullOrEmpty(Room))
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
-            if (!string.IsNullOrEmpty(Employee))
-                parameters.Add($"employee={Employee}");
         }
 
         var response = await Client.GetAsync($"/api/properties/items?{string.Join("&", parameters)}");
@@ -221,7 +225,37 @@ else
     private string? Room { get; set; }
     private string? Building { get; set; }
 
-    private string? Employee { get; set; }
+    private Guid? EmployeeId { get; set; }
+    private string? EmployeeErrorMessage { get; set; }
+    private string? EmployeeEmailAddress { get; set; }
+
+    private async Task GetEmployee()
+    {
+        EmployeeErrorMessage = null;
+
+        if (string.IsNullOrEmpty(EmployeeEmailAddress))
+            return;
+
+        var response = await Client.GetAsync($"/api/organizations/employees/{EmployeeEmailAddress}");
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.") 
+                EmployeeErrorMessage = "Zaměstnanec s touto adresou nebyl nalezen.";
+            else if (exception.Type == "NotAuthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.") 
+                EmployeeErrorMessage = "Zaměstnanec s touto adresou nepatří k vaší organizaci.";
+            else
+                throw new Exception("Something went wrong during the request to get the employee.");
+
+            return;
+        }
+
+        var content = await response.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
+
+        EmployeeId = content.Id;
+    }
 
     private async Task ClearFilters()
     {
@@ -233,7 +267,9 @@ else
         DateOfPurchaseTo = null;
         Room = null;
         Building = null;
-        Employee = null;
+        EmployeeId = null;
+        EmployeeErrorMessage = null;
+        EmployeeEmailAddress = null;
 
         await LoadItems(0);
     }

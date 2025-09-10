@@ -74,11 +74,11 @@
         }
         else
         {
-            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
 
-            if (content.Type == "ValidationException")
+            if (exception.Type == "ValidationException")
             {
-                foreach (var error in content.Errors!)
+                foreach (var error in exception.Errors!)
                 {
                     var field = error switch
                     {
@@ -97,7 +97,7 @@
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, RegisterAdminResponse.ErrorTranslations);
+                ErrorGeneralMessage = ErrorTranslator.Translate(exception.Detail, RegisterAdminResponse.ErrorTranslations);
             }
         }
     }
