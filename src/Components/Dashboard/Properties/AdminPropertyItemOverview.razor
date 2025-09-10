@@ -10,16 +10,22 @@
     <button style="display:inline-block;" @onclick="() => OnClose.InvokeAsync(true)">X</button>
 </div>
 
-<label for="OrderSelect">Řazení: </label>
-<select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItems(CurrentOffset)">
-    @foreach (var option in OrderOptions)
-    {
-        <option value="@option.Value">@option.Label</option>
-    }
-</select>
+<div>
+    <input type="text" @bind="SearchTerm" @bind:after="() => LoadItems(CurrentOffset)" placeholder="Hledat ..." />
+</div>
 
 <div>
-    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await LoadItems(CurrentOffset);}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
+    <label for="OrderSelect">Řazení: </label>
+    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItems(CurrentOffset)">
+        @foreach (var option in OrderOptions)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+</div>
+
+<div>
+    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await LoadItems(0);}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
     @if (ShowFilteringOptions)
     {
         <div>
@@ -47,10 +53,21 @@
 
             <br />
 
+            <label for="Building">V budově:</label>
+            <input id="Building" type="text" @bind="Building" />
+
+            <label for="Room">V místnosti:</label>
+            <input id="Room" type="text" @bind="Room" />
+
+            <br />
+
+            <label for="Employee">Spravuje:</label>
+            <input id="Employee" type="text" @bind="Employee" />
+
             <br />
 
             <button @onclick="() => LoadItems(CurrentOffset)">Použít</button>
-            <button @onclick="ClearFilters">Vymazat</button>
+            <button @onclick="() => ClearFilters()">Vymazat</button>
         </div>
     }
 </div>
@@ -76,10 +93,14 @@
                         {
                             <li><strong>Datum prodeje:</strong> @item.DateOfSale:d</li>
                         }
-                        <li><strong>Umístění:</strong> @item.Location.Building, @item.Location.Room</li>
+                        <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
                         @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
                         {
                             <li><strong>Poznámka:</strong> @item.Location.AdditionalNote</li>
+                        }
+                        @if (item.Employee is not null)
+                        {
+                            <li><strong>Spravuje:</strong> @item.Employee.FullName</li>
                         }
                         <li><strong>Popis:</strong> @item.Description</li>
                         <li><strong>Dokument:</strong> @item.DocumentNumber</li>
@@ -114,7 +135,7 @@ else
     private int CurrentOffset { get; set; }
     private int TotalItemsCount { get; set; }
 
-    private bool ShowFilteringOptions { get; set; }
+    private string? SearchTerm { get; set; }
 
     private List<PropertyItemDto> Items { get; set; } = [];
 
@@ -147,6 +168,9 @@ else
             $"desc={descending}"
         };
 
+        if (!string.IsNullOrEmpty(SearchTerm))
+            parameters.Add($"searchQuery={SearchTerm}");
+
         if (ShowFilteringOptions)
         {
             if (PriceMin is not null)
@@ -161,6 +185,12 @@ else
                 parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
             if (DateOfPurchaseTo is not null)
                 parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (!string.IsNullOrEmpty(Room))
+                parameters.Add($"room={Room}");
+            if (!string.IsNullOrEmpty(Building))
+                parameters.Add($"building={Building}");
+            if (!string.IsNullOrEmpty(Employee))
+                parameters.Add($"employee={Employee}");
         }
 
         var response = await Client.GetAsync($"/api/properties/items?{string.Join("&", parameters)}");
@@ -177,6 +207,8 @@ else
     private bool CanGoPrev => CurrentOffset > 0; 
     private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
 
+    private bool ShowFilteringOptions { get; set; }
+
     private decimal? PriceMin { get; set; }
     private decimal? PriceMax { get; set; }
 
@@ -186,6 +218,11 @@ else
     private DateTime? DateOfPurchaseFrom { get; set; }
     private DateTime? DateOfPurchaseTo { get; set; }
 
+    private string? Room { get; set; }
+    private string? Building { get; set; }
+
+    private string? Employee { get; set; }
+
     private async Task ClearFilters()
     {
         PriceMin = null;
@@ -194,6 +231,9 @@ else
         CreatedAtTo = null;
         DateOfPurchaseFrom = null;
         DateOfPurchaseTo = null;
+        Room = null;
+        Building = null;
+        Employee = null;
 
         await LoadItems(0);
     }

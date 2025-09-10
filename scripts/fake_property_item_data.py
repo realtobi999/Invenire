@@ -5,7 +5,7 @@ import random
 import json
 
 PROPERTY_ID = "9a1b0126-710d-47c1-aa76-8f140a9f34b6"
-EMPLOYEES_IDS = ["55e48efe-c451-453a-876d-8fc6fe55a48e"]
+EMPLOYEES_IDS = ["5aa2972d-13f7-43e5-bfbf-6f6c001466e7"]
 
 fake = Faker("cs_CZ")
 
@@ -31,8 +31,8 @@ def fake_property_item():
         "date_of_purchase": iso_datetimeoffset(purchase_date),
         "date_of_sale": iso_datetimeoffset(sale_date) if sale_date else None,
         "location": {
-            "room": f"Místnost {fake.random_int(1, 50)}",
-            "building": f"Budova {fake.random_int(1, 10)}",
+            "room": f"{fake.random_int(1, 50)}",
+            "building": f"{fake.random_int(1, 10)}",
             "additional_note": fake.sentence(nb_words=5) if random.choice([True, False]) else None,
         },
         "description": fake.text(max_nb_chars=50),
@@ -42,7 +42,7 @@ def fake_property_item():
     }
 
 
-items = [fake_property_item() for _ in range(100_000)]
+items = [fake_property_item() for _ in range(1000)]
 
 data = {"items": items}
 

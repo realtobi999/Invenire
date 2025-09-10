@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Invenire.Api.Users.Employees;
 
 namespace Invenire.Api.Properties.Items;
 
@@ -12,6 +13,9 @@ public record PropertyItemDto
 
     [JsonPropertyName("employee_id")]
     public required Guid? EmployeeId { get; set; }
+
+    [JsonPropertyName("employee")]
+    public EmployeeDto? Employee { get; set; }
 
     [JsonPropertyName("inventory_number")]
     public required string InventoryNumber { get; set; }
