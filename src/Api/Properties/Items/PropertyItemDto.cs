@@ -52,6 +52,63 @@ public record PropertyItemDto
 
     [JsonPropertyName("last_updated_at")]
     public required DateTimeOffset? LastUpdatedAt { get; set; }
+
+    public static PropertyItemDto CloneThis(PropertyItemDto item)
+    {
+        return new PropertyItemDto
+        {
+            Id = item.Id,
+            PropertyId = item.PropertyId,
+            EmployeeId = item.EmployeeId,
+            Name = item.Name,
+            Price = item.Price,
+            InventoryNumber = item.InventoryNumber,
+            RegistrationNumber = item.RegistrationNumber,
+            SerialNumber = item.SerialNumber,
+            DateOfPurchase = item.DateOfPurchase,
+            DateOfSale = item.DateOfSale,
+            Location = new PropertyItemLocationDto
+            {
+                Building = item.Location.Building,
+                Room = item.Location.Room,
+                AdditionalNote = item.Location.AdditionalNote
+            },
+            Description = item.Description,
+            DocumentNumber = item.DocumentNumber,
+            CreatedAt = item.CreatedAt,
+            LastUpdatedAt = item.LastUpdatedAt
+        };
+    }
+
+    public virtual bool Equals(PropertyItemDto? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return Id == other.Id &&
+               PropertyId == other.PropertyId &&
+               EmployeeId == other.EmployeeId &&
+               Name == other.Name &&
+               Price.Equals(other.Price) &&
+               InventoryNumber == other.InventoryNumber &&
+               RegistrationNumber == other.RegistrationNumber &&
+               SerialNumber == other.SerialNumber &&
+               DateOfPurchase.Equals(other.DateOfPurchase) &&
+               Nullable.Equals(DateOfSale, other.DateOfSale) &&
+               Location == other.Location &&
+               Description == other.Description &&
+               DocumentNumber == other.DocumentNumber &&
+               CreatedAt.Equals(other.CreatedAt) &&
+               Nullable.Equals(LastUpdatedAt, other.LastUpdatedAt);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(
+            HashCode.Combine(Id, PropertyId, EmployeeId, Name, Price, InventoryNumber, RegistrationNumber, SerialNumber),
+            HashCode.Combine(DateOfPurchase, DateOfSale, Location, Description, DocumentNumber, CreatedAt, LastUpdatedAt)
+        );
+    }
 }
 
 public record PropertyItemLocationDto
@@ -64,4 +121,19 @@ public record PropertyItemLocationDto
 
     [JsonPropertyName("additional_note")]
     public required string? AdditionalNote { get; set; }
+
+    public virtual bool Equals(PropertyItemLocationDto? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return Room == other.Room &&
+               Building == other.Building &&
+               AdditionalNote == other.AdditionalNote;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Room, Building, AdditionalNote);
+    }
 }
