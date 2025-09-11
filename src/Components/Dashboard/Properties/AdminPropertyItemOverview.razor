@@ -84,11 +84,22 @@
 @if (Items.Any())
 {
     <div>
+        <div>
+            <button @onclick="() => SelectItems(Items)" disabled="@(Items.Except(DeletedItems).All(i => SelectedItems.Contains(i)))" >Vybrat vše</button>
+            <button @onclick="() => ClearSelectedItems()" disabled="@(!SelectedItems.Any())">Zrušit výběr</button>
+        </div>
+        <div>
+            <button @onclick="() => DeleteSelectedItems()" disabled="@(Items.All(i => DeletedItems.Contains(i)) || !SelectedItems.Any())">Označit vybrané jako smazané</button>
+            <button @onclick="() => ClearDeletedItems()" disabled="@(!DeletedItems.Any())">Ponechat všechny smazané položky</button>
+        </div>
+
+        <br /> <br />
+
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.5rem;">
             @foreach (var item in Items)
             {
-                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem;">
-                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;">
+                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@GetItemColor(item);">
+                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;" @onclick="() => SelectItem(item)">
                         <li><strong>ID:</strong> @item.Id</li>
                         <li><strong>Název:</strong> @item.Name</li>
                         <li><strong>Cena:</strong> @item.Price Kč</li>
@@ -114,14 +125,19 @@
                             <li><strong>Upraveno:</strong> @item.LastUpdatedAt:g</li>
                         }
                     </ul>
+
+                    <button @onclick="() => DeleteItem(item)">@(!DeletedItems.Contains(item) ? "Smazat" : "Zrušit Smazání")</button>
                 </div>
             }
         </div>
 
         <div class="pagination">
-            <button @onclick="() => LoadItems(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">Předchozí</button>
+            <button @onclick="() => LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">Předchozí</button>
             <span>Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
-            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@( !CanGoNext )">Další</button>
+            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">Další</button>
+        </div>
+        <div>
+            <button @onclick="() => SaveChanges()" disabled="@(!DeletedItems.Any())">Uložit změny</button>
         </div>
     </div>
 }
@@ -143,7 +159,7 @@ else
 
     private List<PropertyItemDto> Items { get; set; } = [];
 
-    private string SelectedOrderOption { get; set; } = "name_asc";
+    private string SelectedOrderOption { get; set; } = "createdat_asc";
     private readonly List<(string Value, string Label)> OrderOptions = new()
     {
         ("name_asc", "Název (A-Z)"),
@@ -271,6 +287,72 @@ else
         EmployeeErrorMessage = null;
         EmployeeEmailAddress = null;
 
+        await LoadItems(0);
+    }
+
+    /* Selecting, Deleting and Updating Items.*/
+
+    private HashSet<PropertyItemDto> DeletedItems { get; set; } = [];
+    private HashSet<PropertyItemDto> SelectedItems { get; set; } = [];
+
+    /* Selecting */
+
+    public void SelectItem(PropertyItemDto item)
+    {
+        if (DeletedItems.Contains(item)) return;
+
+        if (!SelectedItems.Remove(item)) SelectedItems.Add(item);
+    }
+
+    public void SelectItems(IEnumerable<PropertyItemDto> items)
+    {
+        foreach (var item in items)
+        {
+            if (DeletedItems.Contains(item)) continue;
+
+            SelectedItems.Add(item);
+        }
+    }
+
+    public void ClearSelectedItems()
+    {
+        SelectedItems.Clear();
+    }
+
+    /* Deleting */
+
+    public void DeleteItem(PropertyItemDto item)
+    {
+        if (!DeletedItems.Remove(item)) DeletedItems.Add(item);
+    }
+
+    public void DeleteSelectedItems()
+    {
+        DeletedItems.UnionWith(SelectedItems);
+        ClearSelectedItems(); 
+    }
+
+    public void ClearDeletedItems()
+    {
+        DeletedItems.Clear();
+    }
+
+    /* Others */
+
+    public string GetItemColor(PropertyItemDto item)
+    {
+        return DeletedItems.Any(i => i.Id == item.Id) ? "#FF5B5B" :
+            SelectedItems.Any(i => i.Id == item.Id) ? "#E0E0E0" : "FFFFFF";
+    }
+
+    public async Task SaveChanges()
+    {
+        var response = await Client.DeleteAsync("/api/properties/items?ids=" + string.Join("&ids=",  DeletedItems.Select(i => i.Id.ToString())));
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the requests to delete items.");
+
+
+        ClearDeletedItems();
         await LoadItems(0);
     }
 }
