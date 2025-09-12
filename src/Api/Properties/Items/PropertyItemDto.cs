@@ -15,7 +15,7 @@ public record PropertyItemDto
     public required Guid? EmployeeId { get; set; }
 
     [JsonPropertyName("employee")]
-    public EmployeeDto? Employee { get; set; }
+    public EmployeeDto Employee { get; set; } = new EmployeeDto();
 
     [JsonPropertyName("inventory_number")]
     public required string InventoryNumber { get; set; }
@@ -60,6 +60,7 @@ public record PropertyItemDto
             Id = item.Id,
             PropertyId = item.PropertyId,
             EmployeeId = item.EmployeeId,
+            Employee = EmployeeDto.CloneThis(item.Employee),
             Name = item.Name,
             Price = item.Price,
             InventoryNumber = item.InventoryNumber,
@@ -88,6 +89,7 @@ public record PropertyItemDto
         return Id == other.Id &&
                PropertyId == other.PropertyId &&
                EmployeeId == other.EmployeeId &&
+               Nullable.Equals(Employee, other.Employee) &&
                Name == other.Name &&
                Price.Equals(other.Price) &&
                InventoryNumber == other.InventoryNumber &&
