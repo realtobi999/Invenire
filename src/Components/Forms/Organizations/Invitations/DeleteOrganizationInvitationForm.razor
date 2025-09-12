@@ -1,7 +1,7 @@
 @using System.Net
 @using Invenire.Api.Organizations.Invitations
 
-<h4>Opravdu chcete smazat pozvánku?</h4>
+<h4 style="margin-top: 0; margin-bottom: 10px;">Opravdu chcete smazat pozvánku?</h4>
 <button @onclick="DeleteInvitation">Ano, smazat</button>
 <button @onclick="() => OnClose.InvokeAsync(true)">Ne</button>
 

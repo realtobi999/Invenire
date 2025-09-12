@@ -6,7 +6,6 @@
 {
     @if (Organization.Employees is not null && Organization.Employees.Any())
     {
-        <!-- Ordering. -->
         <label for="OrderSelect">Řazení: </label>
         <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => CurrentOffset = 0">
             @foreach (var option in OrderOptions)
@@ -15,10 +14,8 @@
             }
         </select>
 
-        <!-- Searching. -->
         <input type="text" @bind="SearchTerm" placeholder="Hledat zaměstnance..." />
 
-        <!-- Employees. -->
         <ul>
             @foreach (var employee in PagedEmployees)
             {
@@ -29,7 +26,6 @@
             }
         </ul>
 
-        <!-- Pagination. -->
         <div class="pagination">
             <button @onclick="() => SetCurrentOffset(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
                 Předchozí
@@ -42,13 +38,30 @@
             </button>
         </div>
 
-        <!-- Removing employee from a organization. -->
         @if (ShowDeletionModal)
         {
-            <div class="modal">
-                <div class="modal-content">
-                    <h4>Opravdu chcete odebrat zaměstnance?</h4>
-                    <p><strong>@SelectedEmployee!.FullName</strong> (@SelectedEmployee!.EmailAddress)</p>
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;">
+                <div style="
+                    background-color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    width: 400px;
+                    max-width: 90%;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+
+                    <h4 style="margin: 0 0 10px 0;">Opravdu chcete odebrat zaměstnance?</h4>
+                    <p style="margin: 0 0 10px 0;"><strong>@SelectedEmployee!.FullName</strong> (@SelectedEmployee!.EmailAddress)</p>
+
                     <button @onclick="RemoveEmployee">Ano, odebrat</button>
                     <button @onclick="() => ShowDeletionModal = false">Ne</button>
                 </div>

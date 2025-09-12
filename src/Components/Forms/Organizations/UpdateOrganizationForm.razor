@@ -8,7 +8,7 @@
     <EditForm Model="Body" OnSubmit="HandleUpdate" @ref="Form">
         <div>
             <label>Název:</label>
-            <InputText @bind-Value="Body.Name" />
+            <InputText @bind-Value="Body.Name" style="width:80%"/>
             <ValidationMessage For="@(() => Body.Name)" />
         </div>
 

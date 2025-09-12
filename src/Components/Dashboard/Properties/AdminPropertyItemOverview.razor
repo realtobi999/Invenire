@@ -9,9 +9,9 @@
 @using Invenire.Api.Properties.Items.IndexByAdmin
 @using Invenire.Components.Forms.Properties.Items
 
-<div>
-    <h4 style="display:inline-block;">Všechny položky</h4>
-    <button style="display:inline-block;" @onclick="() => OnClose.InvokeAsync(true)">X</button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h4 style="margin:0;">Všechny položky</h4>
+    <button @onclick="() => OnClose.InvokeAsync(true)">X</button>
 </div>
 
 <div>
@@ -97,7 +97,7 @@
 
         <br /> <br />
 
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
             @foreach (var item in Items.Select(i => UpdatedItems.FirstOrDefault(u => u.Id == i.Id) ?? i))
             {
                 <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@GetItemColor(item);">
@@ -326,7 +326,7 @@ else
 
             if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.") 
                 FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nebyl nalezen.";
-            else if (exception.Type == "NotAuthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.") 
+            else if (exception.Type == "Unauthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.") 
                 FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nepatří k vaší organizaci.";
             else
                 throw new Exception("Something went wrong during the request to get the employee.");
