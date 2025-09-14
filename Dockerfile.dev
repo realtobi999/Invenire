@@ -1,0 +1,15 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dev
+WORKDIR /app
+
+COPY Invenire.sln ./
+COPY src/Invenire.csproj ./src/
+
+RUN dotnet restore
+
+COPY . .
+
+EXPOSE 5170
+
+ENV DOTNET_RUNNING_URL=http://0.0.0.0:5170
+
+CMD ["sh", "-c", "dotnet run --project src/Invenire.csproj --urls $DOTNET_RUNNING_URL"]

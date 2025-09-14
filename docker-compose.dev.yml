@@ -1,0 +1,9 @@
+services:
+  blazor-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5170:5170"
+    volumes:
+      - ./src:/app/src
