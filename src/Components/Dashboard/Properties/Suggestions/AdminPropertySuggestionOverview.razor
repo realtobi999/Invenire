@@ -1,0 +1,90 @@
+@using System.Net
+@using Invenire.Api.Properties.Suggestions
+@using Invenire.Api.Properties.Suggestions.IndexByAdmin
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h4 style="margin:0;">Všechny návrhy</h4>
+    <button @onclick="() => OnClose.InvokeAsync(true)">X</button>
+</div>
+
+@if (Suggestions.Any())
+{
+    <div>
+        @foreach (var suggestion in Suggestions)
+        {
+            var (statusText, statusColor) = GetCzechStatus(suggestion.Status);
+
+            <div>
+                <ul>
+                    <li><strong>Název:</strong> @suggestion.Name</li>
+                    <li><strong>Předloženo:</strong> @suggestion.EmployeeId</li>
+                    @if (!string.IsNullOrEmpty(suggestion.Description))
+                    {
+                        <li><strong>Popis:</strong> @suggestion.Description</li>
+                    }
+                    @if (!string.IsNullOrEmpty(suggestion.Feedback))
+                    {
+                        <li><strong>Feedback:</strong> @suggestion.Feedback</li>
+                    }
+                    <li><strong>Status:</strong> <span style="color:@statusColor">@statusText</span></li>
+                    <li><strong>Vytvořeno:</strong> @suggestion.CreatedAt.ToString("g")</li>
+                    @if (suggestion.LastUpdatedAt is not null)
+                    {
+                        <li><strong>Upraveno:</strong> @suggestion.LastUpdatedAt.Value.ToString("g")</li>
+                    }
+                </ul>
+            </div>
+            <hr style="width:85%;"/>
+        }
+    </div>
+
+    <div class="pagination" style="margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <button @onclick="() => LoadSuggestions(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">Předchozí</button>
+        <span>Návrh @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+        <button @onclick="() => LoadSuggestions(CurrentOffset + Limit)" disabled="@(!CanGoNext)">Další</button>
+    </div>
+}
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private List<PropertySuggestionDto> Suggestions { get; set; } = [];
+
+    private int Limit { get; set; } = 1;
+    private int CurrentOffset { get; set; }
+    private int TotalItemsCount { get; set; }
+
+    private bool CanGoPrev => CurrentOffset > 0; 
+    private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
+
+    protected override async Task OnInitializedAsync() => await LoadSuggestions(0);
+
+    private async Task LoadSuggestions(int offset)
+    {
+        CurrentOffset = Math.Max(0, offset);
+
+        var response = await Client.GetAsync($"/api/properties/suggestions?limit={Limit}&offset={CurrentOffset}");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the suggestions.");
+
+        var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertySuggestionResponse>() ?? throw new NullReferenceException();
+
+        Suggestions = content.Data;
+        Limit = content.Limit;
+        TotalItemsCount = content.TotalCount;
+    }
+
+    // Helper function to translate status to Czech and assign a color
+    private (string, string) GetCzechStatus(PropertySuggestionDtoStatus status)
+    {
+        return status switch
+        {
+            PropertySuggestionDtoStatus.APPROVED => ("Přijatý", "green"),
+            PropertySuggestionDtoStatus.PENDING => ("Nevyřízený", "goldenrod"),
+            PropertySuggestionDtoStatus.DECLINED => ("Odmítnutý", "red"),
+            _ => ("Neznámý", "gray")
+        };
+    }
+}

@@ -51,4 +51,13 @@ public class PropertyDtoSuggestionsSummary
 {
     [JsonPropertyName("total_suggestions")]
     public required int TotalSuggestions { get; set; }
+
+    [JsonPropertyName("total_approved_suggestions")]
+    public required int TotalApprovedSuggestions { get; set; }
+
+    [JsonPropertyName("total_pending_suggestions")]
+    public required int TotalPendingSuggestions { get; set; }
+
+    [JsonPropertyName("total_declined_suggestions")]
+    public required int TotalDeclinedSuggestions { get; set; }
 }

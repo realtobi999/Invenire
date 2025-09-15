@@ -1,15 +1,18 @@
 @using System.Net
-@using Invenire.Api.Properties
 @using Invenire.Common.Errors
+@using Invenire.Api.Properties
 @using Invenire.Components.Forms.Properties
-@using Invenire.Components.Dashboard.Properties
+@using Invenire.Components.Dashboard.Properties.Items
+@using Invenire.Components.Dashboard.Properties.Suggestions
 
 @if (Property is not null)
 {
     <h3>Základní informace</h3>
     <AdminPropertyBaseOverview Property="Property" />
     <h3>Položky</h3>
-    <AdminPropertyItemBaseOverview Property="Property" OnChange="ReloadProperty"/>
+    <AdminPropertyItemBaseOverview Property="Property" OnChange="() => ReloadProperty()"/>
+    <h3>Návrhy</h3>
+    <AdminPropertySuggestionBaseOverview Property="Property" OnChange="() => ReloadProperty()" /> 
 }
 else
 {
