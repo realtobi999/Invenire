@@ -55,6 +55,6 @@ public record UpdatePropertyItemCommandLocation
     [JsonPropertyName("building")]
     public required string Building { get; init; }
 
-    [JsonPropertyName("note")]
+    [JsonPropertyName("additional_note")]
     public string? AdditionalNote { get; init; }
 }

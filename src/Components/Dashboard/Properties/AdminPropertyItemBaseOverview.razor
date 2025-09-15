@@ -20,29 +20,29 @@
     @if (ShowAllItemsModal)
     {
         <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: auto; /* allow modal to scroll if too tall */
-            padding: 1rem;  /* optional: spacing around modal */
-        ">
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                    z-index: 9999;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    overflow: auto; /* allow modal to scroll if too tall */
+                    padding: 1rem;  /* optional: spacing around modal */
+                ">
             <div style="
-                background: white;
-                border-radius: 6px;
-                max-height: 90vh;  /* don't exceed viewport height */
-                overflow-y: auto;  /* scroll inside modal */
-                padding: 1rem;
-                min-width: 300px;
-                max-width: 90%;
-            ">
-                <AdminPropertyItemOverview OnClose="() => ShowAllItemsModal = false" OnChange="() => OnChange.InvokeAsync(true)"/>
+                        background: white;
+                        border-radius: 6px;
+                        max-height: 90vh;  /* don't exceed viewport height */
+                        overflow-y: auto;  /* scroll inside modal */
+                        padding: 1rem;
+                        min-width: 300px;
+                        max-width: 90%;
+                    ">
+                <AdminPropertyItemOverview OnClose="() => ShowAllItemsModal = false" OnChange="() => OnChange.InvokeAsync(true)" />
             </div>
         </div>
     }
@@ -54,27 +54,61 @@ else
 
 <button @onclick="() => ShowAdditionItemsModal = true">Přidat položky</button>
 
+@if (Property is not null && Property.ItemsSummary is not null)
+{
+    <button @onclick="() => ShowDeletionItemsModal = true">Smazat všechny položky</button>
+
+    @if (ShowDeletionItemsModal)
+    {
+        <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                    z-index: 9999;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    overflow: auto; /* allow modal to scroll if too tall */
+                    padding: 1rem;  /* optional: spacing around modal */
+                ">
+            <div style="
+                        background: white;
+                        border-radius: 6px;
+                        max-height: 90vh;  /* don't exceed viewport height */
+                        overflow-y: auto;  /* scroll inside modal */
+                        padding: 1rem;
+                        min-width: 300px;
+                        max-width: 90%;
+                    ">
+                <DeleteAllPropertyItemsForm OnSuccessfulDeletion="() => { OnChange.InvokeAsync(true); ShowDeletionItemsModal = false;}" OnClose="() => ShowDeletionItemsModal = false" />
+            </div>
+        </div>
+    }
+}
+
 @if (ShowAdditionItemsModal)
 {
     <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;">
-        
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;">
         <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: 400px;
+                max-width: 90%;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h4 style="margin: 0;">Přidat položky</h4>
@@ -94,4 +128,5 @@ else
 
     private bool ShowAllItemsModal { get; set; }
     private bool ShowAdditionItemsModal { get; set; }
+    private bool ShowDeletionItemsModal { get; set; }
 }

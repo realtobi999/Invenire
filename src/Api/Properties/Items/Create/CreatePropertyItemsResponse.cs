@@ -15,6 +15,18 @@ public record CreatePropertyItemsResponse
             Translate = _ => "Seznam položek nesmí být prázdný."
         },
 
+        // Employee
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The employee was not found in the system\. \(key - (.+)\)"),
+            Translate = m => $"Zaměstnanec {NormalizeInventoryNumber(m.Groups[1].Value)}: Zaměstnanec s tímto identifikátorem nebyl nalezen."
+        },
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The employee isn't part of the organization\. \(key - (.+)\)"),
+            Translate = m => $"Zaměstnanec {NormalizeInventoryNumber(m.Groups[1].Value)}: Zaměstnanec s tímto identifikátorem není součástí vaší organizace."
+        },
+
         // Inventory number
         new ErrorTranslation
         {

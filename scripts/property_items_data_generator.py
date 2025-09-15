@@ -5,7 +5,7 @@ import random
 import json
 
 PROPERTY_ID = "9a1b0126-710d-47c1-aa76-8f140a9f34b6"
-EMPLOYEES_IDS = ["5aa2972d-13f7-43e5-bfbf-6f6c001466e7"]
+EMPLOYEES_IDS = ["c3fd30f8-89e0-48a3-a156-80bbdf67860c"]
 
 fake = Faker("cs_CZ")
 
@@ -42,7 +42,7 @@ def fake_property_item():
     }
 
 
-items = [fake_property_item() for _ in range(1000)]
+items = [fake_property_item() for _ in range(5000)]
 
 data = {"items": items}
 

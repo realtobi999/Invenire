@@ -6,6 +6,7 @@
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Organizations.Create
 @using Invenire.Api.Properties.Items.Update
+@using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.IndexByAdmin
 @using Invenire.Components.Forms.Properties.Items
 
@@ -122,7 +123,7 @@
                             </li>
                             @if (!string.IsNullOrWhiteSpace(edit.Location.AdditionalNote))
                             {
-                                <li><strong>Poznámka k lokaci:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
+                                <li><strong>Poznámka k umístění:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
                             }
                             <li><strong>Spravuje:</strong> <input @bind="edit.Employee.EmailAddress"/></li>
                             <li><strong>Popis:</strong> <input @bind="edit.Description" style="width:70%;"/></li>
@@ -149,7 +150,7 @@
                             <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
                             @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
                             {
-                                <li><strong>Poznámka:</strong> @item.Location.AdditionalNote</li>
+                                <li><strong>Poznámka k umístění:</strong> @item.Location.AdditionalNote</li>
                             }
                             <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                             <li><strong>Popis:</strong> @item.Description</li>
@@ -474,7 +475,13 @@ else
 
     public async Task SaveDeletedAsync()
     {
-        var response = await Client.DeleteAsync("/api/properties/items?ids=" + string.Join("&ids=",  DeletedItems.Select(i => i.Id.ToString())));
+        var response = await Client.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/properties/items")
+        {
+            Content = JsonContent.Create(new DeletePropertyItemsRequest
+            {
+                Ids = [.. DeletedItems.Select(i => i.Id)],
+            })
+        });
 
         if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the requests to delete the items.");
 
