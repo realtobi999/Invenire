@@ -27,7 +27,10 @@ else
                         <li><strong>Jméno admina:</strong> @invitation.OrganizationDto.Admin.FullName</li>
                     }
                 }
-                <li><strong>Popis:</strong> @invitation.Description</li>
+                @if (!string.IsNullOrEmpty(invitation.Description))
+                {
+                    <strong>Text:</strong> @invitation.Description <br />
+                }
                 <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToString("g")</li>
                 @if (invitation.LastUpdatedAt is not null)
                 {
@@ -55,25 +58,62 @@ else
 
     @if (ShowAcceptInvitationConfirmationModal && SelectedInvitation is not null)
     {
-        <div>
-            <h4>Opravdu se chcete připojit k organizaci?</h4>
-            <p>Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
-            <button @onclick="() => AcceptInvitation(SelectedInvitation)">Ano, připojit se</button>
-            <button @onclick="() => {ShowAcceptInvitationConfirmationModal = false; SelectedInvitation = null;}">Zrušit</button>
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;">
+            <div style="
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: 400px;
+                max-width: 100%;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+
+                <h4 style="margin: 0 0 10px 0;">Opravdu se chcete připojit k organizaci?</h4>
+                <p> Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
+                <button @onclick="() => AcceptInvitation(SelectedInvitation)">Ano, připojit se</button>
+                <button @onclick="() => { ShowAcceptInvitationConfirmationModal = false; SelectedInvitation = null; }">Zrušit</button>
+            </div>
         </div>
     }
 
     @if (ShowDeleteInvitationConfirmationModal && SelectedInvitation is not null)
     {
-        <div>
-            <h4>Opravdu chcete smazat pozvánku?</h4>
-            <p>Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
-            <button @onclick="() => DeleteInvitation(SelectedInvitation)">Ano, smazat</button>
-            <button @onclick="() => {ShowDeleteInvitationConfirmationModal = false; SelectedInvitation = null;}">Zrušit</button>
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;">
+            <div style="
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: 400px;
+                max-width: 90%;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+
+                <h4 style="margin: 0 0 10px 0;">Opravdu chcete smazat pozvánku?</h4>
+                <p> Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
+                <button @onclick="() => DeleteInvitation(SelectedInvitation)">Ano, smazat</button>
+                <button @onclick="() => { ShowDeleteInvitationConfirmationModal = false; SelectedInvitation = null; }">Zrušit</button>
+            </div>
         </div>
     }
 }
-
 
 @code {
     [Inject] private HttpClient Client { get; set; } = default!;

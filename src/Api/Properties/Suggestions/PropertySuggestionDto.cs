@@ -1,3 +1,4 @@
+using Invenire.Api.Users.Employees;
 using System.Text.Json.Serialization;
 using Invenire.Api.Properties.Items.Create;
 using Invenire.Api.Properties.Items.Update;
@@ -11,6 +12,9 @@ public record PropertySuggestionDto
 
     [JsonPropertyName("employee_id")]
     public required Guid? EmployeeId { get; set; }
+
+    [JsonPropertyName("employee")]
+    public EmployeeDto Employee { get; set; } = new EmployeeDto();
 
     [JsonPropertyName("property_id")]
     public required Guid? PropertyId { get; set; }

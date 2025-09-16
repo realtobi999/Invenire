@@ -16,12 +16,12 @@
 </div>
 
 <div>
-    <input type="text" @bind="SearchTerm" @bind:after="() => LoadItems(CurrentOffset)" placeholder="Hledat ..." />
+    <input type="text" @bind="SearchTerm" @bind:after="() => LoadItems(0)" placeholder="Hledat ..." />
 </div>
 
 <div>
     <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItems(CurrentOffset)">
+    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItems(0)">
         @foreach (var option in OrderOptions)
         {
             <option value="@option.Value">@option.Label</option>
@@ -76,7 +76,7 @@
 
             <br />
 
-            <button @onclick="() => LoadItems(CurrentOffset)" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
+            <button @onclick="() => LoadItems(0)" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
             <button @onclick="() => ClearFilters()">Vymazat</button>
         </div>
     }
@@ -183,14 +183,8 @@
                 </div>
             }
         </div>
-
-        <div class="pagination">
-            <button @onclick="() => LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">Předchozí</button>
-            <span>Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
-            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">Další</button>
-        </div>
         <br/>
-        <div>
+        <div style="margin-bottom:2%">
             <button @onclick="() => SaveChanges()" disabled="@(!DeletedItems.Any() && !UpdatedItems.Any())">Uložit změny</button>
 
             @if (SavingErrorMessages.Any())
@@ -205,7 +199,23 @@
                 <button @onclick="() => SavingErrorMessages.Clear()">Smazat</button>
             }
         </div>
-
+        <div style="
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            padding: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
+        ">
+            <button @onclick="() =>  LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">Předchozí</button>
+            <span>Návrh @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">Další</button>
+        </div>
     </div>
 }
 else

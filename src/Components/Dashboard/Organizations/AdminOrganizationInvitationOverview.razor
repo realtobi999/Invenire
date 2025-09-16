@@ -12,7 +12,10 @@
             <li>
                 <div>
                     <strong>Id:</strong> @invitation.Id <br />
-                    <strong>Popis:</strong> @invitation.Description <br />
+                    @if (!string.IsNullOrEmpty(invitation.Description))
+                    {
+                        <strong>Text:</strong> @invitation.Description <br />
+                    }
                     <strong>Vytvořeno:</strong> @invitation.CreatedAt.ToString("g") <br />
                     @if (invitation.LastUpdatedAt is not null)
                     {
