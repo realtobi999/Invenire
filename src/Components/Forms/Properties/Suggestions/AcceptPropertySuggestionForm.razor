@@ -1,0 +1,43 @@
+@using System.Net
+@using Invenire.Common.Errors
+@using Api.Properties.Suggestions.Decline
+@using Invenire.Api.Properties.Suggestions
+
+<h4 style="margin: 0 0 10px 0;">Opravdu chcete schválit návrh?</h4>
+<button @onclick="() => AcceptSuggestion()">Ano, schválit</button>
+<button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+
+@if (ErrorGeneralMessage is not null)
+{
+    <div>
+        <p>@ErrorGeneralMessage</p
+    </div>
+}
+@code 
+{
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public required PropertySuggestionDto Suggestion { get; set; } 
+
+    private string? ErrorGeneralMessage;
+
+    private async Task AcceptSuggestion()
+    {
+        ErrorGeneralMessage = null;
+
+        var response = await Client.PutAsJsonAsync($"/api/properties/suggestions/{Suggestion.Id}/accept", new object{});
+
+        if (response.StatusCode == HttpStatusCode.NoContent)
+        {
+            await OnClose.InvokeAsync(true);
+            await OnChange.InvokeAsync(true);
+        }
+        else
+        {
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, DeclinePropertySuggestionResponse.ErrorTranslations);
+        }
+    }
+}

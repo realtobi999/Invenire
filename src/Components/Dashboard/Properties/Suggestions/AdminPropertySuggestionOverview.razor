@@ -6,6 +6,7 @@
 @using Invenire.Api.Properties.Suggestions
 @using Invenire.Api.Properties.Suggestions.IndexByAdmin
 @using System.Runtime.InteropServices
+@using Invenire.Components.Forms.Properties.Suggestions
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h4 style="margin:0;">Všechny návrhy</h4>
@@ -25,25 +26,6 @@
         }
     </select>
 </div>
-
-<button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await ClearFilters();}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
-@if (ShowFilteringOptions)
-{
-    <div>
-        <label for="Status">Status:</label>
-        <select id="Status" @bind="Status">
-            <option value="">-- Vyberte --</option>
-            <option value="PENDING">Nevyřízený</option>
-            <option value="DECLINED">Odmítnutý</option>
-        </select>
-
-        <br />
-
-        <button @onclick="() => LoadSuggestions(0)">Použít</button>
-        <button @onclick="() => ClearFilters()">Vymazat</button>
-    </div>
-}
-
 
 @if (Suggestions.Any())
 {
@@ -75,13 +57,12 @@
                 </ul>
             </div>
 
-            <hr style="width:95%;"/>
-
             @if (suggestion.Payload is not null)
             {
-                <h4>Vytvořené položky</h4>
                 @if (suggestion.Payload.CreateCommands.Any())
                 {
+                    <hr style="width:95%;"/>
+                    <h4>Vytvořené položky</h4>
                     <div style="margin-left:2%; margin-right:2%; display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
                         @foreach (var command in suggestion.Payload.CreateCommands)
                         {
@@ -110,10 +91,10 @@
                     </div>
                 }
 
-                <hr style="width:95%;"/>
 
                 @if (UpdatedItems.Any())
                 {
+                <hr style="width:95%;"/>
                 <h4>Upravené položky</h4>
                 <div style="margin-left:2%; margin-right:2%; display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
                     @foreach (var kv in UpdatedItems)
@@ -255,10 +236,9 @@
                 </div>
                 }
 
-                <hr style="width:95%;"/>
-
                 @if (DeletedItems.Any())
                 {
+                   <hr style="width:95%; margin-top:2%;"/>
                     <h4>Smazané položky</h4>
                     <div style="margin-left:2%; margin-right:2%; display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
                         @foreach (var item in DeletedItems.Values)
@@ -296,9 +276,58 @@
                 }
 
                 <div style="margin-bottom:2%; margin-top:2%;">
-                    <button>Schválit</button>
-                    <button>Odmítnout</button>
+                    <button @onclick="() => ShowAcceptSuggestionModal=true">Schválit</button>
+                    <button @onclick="() => ShowDeclineSuggestionModal=true">Odmítnout</button>
                 </div>
+
+                @if (ShowAcceptSuggestionModal)
+                {
+                    <div style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background-color: rgba(0, 0, 0, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1500;">
+                        <div style="
+                            background-color: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            width: 500px;
+                            max-width: 90%;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                                <AcceptPropertySuggestionForm Suggestion="suggestion" OnChange="() => OnAcceptSuggestion()" OnClose="() => ShowDeclineSuggestionModal = false"/>
+                        </div>
+                    </div>
+                }
+                @if (ShowDeclineSuggestionModal)
+                {
+                    <div style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100vw;
+                        height: 100vh;
+                        background-color: rgba(0, 0, 0, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1500;">
+                        <div style="
+                            background-color: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            width: 500px;
+                            max-width: 90%;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                            <DeclinePropertySuggestionForm Suggestion="suggestion" OnChange="() => OnDeclineSuggestion()" OnClose="() => ShowDeclineSuggestionModal = false"/>
+                        </div>
+                    </div>
+                }
             }
         }
     </div>
@@ -358,17 +387,12 @@ else
             $"limit={Limit}",
             $"offset={CurrentOffset}",
             $"order={sort}",
-            $"desc={descending}"
+            $"desc={descending}",
+            $"status={PropertySuggestionDtoStatus.PENDING}"
         };
 
         if (!string.IsNullOrEmpty(SearchTerm))
             parameters.Add($"searchQuery={SearchTerm}");
-
-        if (ShowFilteringOptions)
-        {
-            if (Status is not null)
-                parameters.Add($"status={Status.Value}");
-        }
 
         var response = await Client.GetAsync($"/api/properties/suggestions?{string.Join("&", parameters)}");
 
@@ -406,18 +430,6 @@ else
         ("createdat_desc", "Datum přidání (nejnovější první)")
     };
 
-    private bool ShowFilteringOptions { get; set; }
-
-    private PropertySuggestionDtoStatus? Status { get; set; }
-
-    private async Task ClearFilters()
-    {
-        Status = null;
-
-        await LoadSuggestions(0);
-    }
-
-
     private async Task<PropertyItemDto> GetItem(Guid id)
     {
         var response = await Client.GetAsync($"/api/properties/items/{id}");
@@ -425,6 +437,23 @@ else
         if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the item.");
 
         return await response.Content.ReadFromJsonAsync<PropertyItemDto>() ?? throw new NullReferenceException();
+    }
+
+    private bool ShowAcceptSuggestionModal { get; set; }
+    private bool ShowDeclineSuggestionModal { get; set; }
+
+    private async Task OnAcceptSuggestion()
+    {
+        await LoadSuggestions(0);
+        await OnChange.InvokeAsync(true);
+        ShowAcceptSuggestionModal = false;
+    }
+
+    private async Task OnDeclineSuggestion()
+    {
+        await LoadSuggestions(0);
+        await OnChange.InvokeAsync(true);
+        ShowDeclineSuggestionModal = false;
     }
 
     private (string Text, string Color) GetCzechStatus(PropertySuggestionDtoStatus status)

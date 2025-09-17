@@ -22,7 +22,7 @@
         </li>
     </ul>
 
-    <button @onclick="() => ShowAllSuggestionModal = true">Zobrazit</button>
+    <button @onclick="() => ShowAllSuggestionModal = true">Zobrazit nevyřízené</button>
 
     @if (ShowAllSuggestionModal)
     {
@@ -49,7 +49,7 @@
                         min-width: 300px;
                         max-width: 90%;
                     ">
-                    <AdminPropertySuggestionOverview OnClose="() => ShowAllSuggestionModal = false"/>
+                    <AdminPropertySuggestionOverview OnClose="() => ShowAllSuggestionModal = false" OnChange="() => OnChange.InvokeAsync(true)"/>
             </div>
         </div>
     }

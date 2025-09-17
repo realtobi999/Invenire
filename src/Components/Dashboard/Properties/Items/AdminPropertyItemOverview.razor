@@ -114,17 +114,9 @@
                             <li><strong>Registrační číslo:</strong> <input @bind="edit.RegistrationNumber"/> </li>
                             <li><strong>Sériové číslo:</strong> <input @bind="edit.SerialNumber"/></li>
                             <li><strong>Datum nákupu:</strong> <input type="date" @bind="edit.DateOfPurchase"/></li>
-                            @if (edit.DateOfSale is not null)
-                            {
-                                <li><strong>Datum prodeje:</strong> <input type="date" @bind="edit.DateOfSale"/></li>
-                            }
-                            <li>
-                                <strong>Umístění:</strong> Budova <input @bind="edit.Location.Building"/> , Místnost <input @bind="edit.Location.Room"/>
-                            </li>
-                            @if (!string.IsNullOrWhiteSpace(edit.Location.AdditionalNote))
-                            {
-                                <li><strong>Poznámka k umístění:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
-                            }
+                            <li><strong>Datum prodeje:</strong> <input type="date" @bind="edit.DateOfSale"/></li>
+                            <li><strong>Umístění:</strong> Budova <input @bind="edit.Location.Building"/> , Místnost <input @bind="edit.Location.Room"/></li>
+                            <li><strong>Poznámka k umístění:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
                             <li><strong>Spravuje:</strong> <input @bind="edit.Employee.EmailAddress"/></li>
                             <li><strong>Popis:</strong> <input @bind="edit.Description" style="width:70%;"/></li>
                             <li><strong>Dokument:</strong> <input @bind="edit.DocumentNumber"/></li>
@@ -538,8 +530,8 @@ else
                 Name = item.Name,
                 Price = item.Price,
                 SerialNumber = item.SerialNumber,
-                DateOfPurchase = item.DateOfPurchase,
-                DateOfSale = item.DateOfSale,
+                DateOfPurchase = item.DateOfPurchase.ToUniversalTime(),
+                DateOfSale = item.DateOfSale is not null ? item.DateOfSale!.Value.ToUniversalTime() : null,
                 Location = new UpdatePropertyItemCommandLocation
                 {
                     Room = item.Location.Room,
