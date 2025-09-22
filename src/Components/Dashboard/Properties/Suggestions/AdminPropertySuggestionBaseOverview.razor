@@ -22,7 +22,7 @@
         </li>
     </ul>
 
-    <button @onclick="() => ShowAllSuggestionModal = true">Zobrazit nevyřízené</button>
+    <button @onclick="() => ShowAllSuggestionModal = true" disabled="@(Property.SuggestionsSummary.TotalPendingSuggestions == 0)">Zobrazit nevyřízené</button>
 
     @if (ShowAllSuggestionModal)
     {

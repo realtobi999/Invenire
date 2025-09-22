@@ -8,8 +8,33 @@
 
 @if (!IsProcessing)
 {
+    @if (!ShowColumnPickerModal)
+    {
     <button @onclick="OpenJsonFile">Načíst ze JSON souboru</button>
-    <InputFile id="HiddenJsonFileInput" OnChange="HandleFileSelected" style="display:none" />
+    <InputFile id="HiddenJsonFileInput" OnChange="HandleJsonFileSelected" style="display:none" />
+
+    <button @onclick="() => ShowColumnPickerModal = true">Načíst ze XLSX (Excel) souboru</button>
+    }
+
+    @if (ShowColumnPickerModal)
+    {
+        <h5 style="margin: 0;">Vyberte sloupce pro mapování dat</h5>
+
+        @foreach (var property in PropertyColumns.Keys.ToList())
+        {
+            <div class="form-group">
+                <label>@GetTranslatedPropertyName(property):</label>
+                <input type="text" @bind="PropertyColumns[property]" placeholder="A, B, C, AA, AB..." />
+            </div>
+        }
+
+        <div class="modal-buttons">
+            <button @onclick="OpenXlsxFile">Nahrát XLSX (Excel) soubor</button>
+            <button @onclick="() => ShowColumnPickerModal = false">Zrušit</button>
+        </div>
+
+        <InputFile id="HiddenXLSXFileInput" OnChange="HandleExcelFileSelected" style="display:none" />
+    }
 }
 else
 {
@@ -32,18 +57,60 @@ else
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
 
     private bool IsProcessing { get; set; }
-
     private List<string> Errors { get; set; } = [];
+
+    private bool ShowColumnPickerModal { get; set; }
+
+    private Dictionary<string, string> PropertyColumns { get; set; } = new()
+    {
+        { "InventoryNumber", "" },
+        { "RegistrationNumber", "" },
+        { "Name", "" },
+        { "Price", "" },
+        { "SerialNumber", "" },
+        { "DateOfPurchase", "" },
+        { "DateOfSale", "" },
+        { "LocationBuilding", "" },
+        { "LocationRoom", "" },
+        { "LocationAdditionalNote", "" },
+        { "Description", "" },
+        { "DocumentNumber", "" }
+    };
+
+    private readonly Dictionary<string, string> PropertyTranslations = new()
+    {
+        { "InventoryNumber", "Inventární číslo" },
+        { "RegistrationNumber", "Registrační číslo" },
+        { "Name", "Název" },
+        { "Price", "Cena" },
+        { "SerialNumber", "Sériové číslo" },
+        { "DateOfPurchase", "Datum nákupu" },
+        { "DateOfSale", "Datum prodeje" },
+        { "LocationBuilding", "Budova" },
+        { "LocationRoom", "Místnost" },
+        { "LocationAdditionalNote", "Poznámka k umístění" },
+        { "Description", "Popis" },
+        { "DocumentNumber", "Číslo dokumentu" }
+    };
+
+    private string GetTranslatedPropertyName(string propertyKey)
+    {
+        return PropertyTranslations.TryGetValue(propertyKey, out var translation) ? translation : propertyKey;
+    }
 
     private async Task OpenJsonFile()
     {
         await JS.InvokeVoidAsync("eval", "document.getElementById('HiddenJsonFileInput').click()");
     }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task OpenXlsxFile()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('HiddenXLSXFileInput').click()");
+    }
+
+    private async Task HandleJsonFileSelected(InputFileChangeEventArgs e)
     {
         Errors.Clear();
-
         if (e.File == null) return;
 
         if (e.File.Size > 1024 * 1024)
@@ -53,12 +120,64 @@ else
         await e.File.OpenReadStream(1024 * 1024 * 100).CopyToAsync(stream);
         stream.Position = 0;
 
-        var body = new MultipartFormDataContent { { new StreamContent(stream) { Headers = { ContentType = new MediaTypeHeaderValue(e.File.ContentType) } }, "file", e.File.Name } };
-        var response = await Client.PostAsync("/api/properties/items", body);
+        var body = new MultipartFormDataContent 
+        { 
+            { new StreamContent(stream) { Headers = { ContentType = new MediaTypeHeaderValue(e.File.ContentType) } }, "file", e.File.Name } 
+        };
+        var response = await Client.PostAsync("/api/properties/items/json-file", body);
 
         if (response.StatusCode == HttpStatusCode.Created)
         {
             IsProcessing = false;
+            await OnSuccessfulCreation.InvokeAsync(true);
+        }
+        else
+        {
+            IsProcessing = false;
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (content.Type == "ValidationException")
+            {
+                foreach (var error in content.Errors!)
+                {
+                    Errors.Add(ErrorTranslator.Translate(error, CreatePropertyItemsResponse.ErrorTranslations));
+                }
+            }
+            else
+            {
+                Errors.Add(ErrorTranslator.Translate(content.Detail, CreatePropertyItemsResponse.ErrorTranslations));
+            }
+        }
+    }
+
+    private async Task HandleExcelFileSelected(InputFileChangeEventArgs e)
+    {
+        Errors.Clear();
+        if (e.File == null) return;
+
+        if (e.File.Size > 1024 * 1024)
+            IsProcessing = true;
+
+        using var stream = new MemoryStream();
+        await e.File.OpenReadStream(1024 * 1024 * 100).CopyToAsync(stream);
+        stream.Position = 0;
+
+        var body = new MultipartFormDataContent 
+        { 
+            { new StreamContent(stream) { Headers = { ContentType = new MediaTypeHeaderValue(e.File.ContentType) } }, "file", e.File.Name } 
+        };
+
+        var columns = string.Join("|", PropertyColumns.Where(kv => !string.IsNullOrEmpty(kv.Value)).Select(kv => $"{kv.Key};{kv.Value}"));
+
+        var response = await Client.PostAsync($"/api/properties/items/excel-file?columns={Uri.EscapeDataString(columns)}", body);
+
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            IsProcessing = false;
+            ShowColumnPickerModal = false;
+            foreach (var key in PropertyColumns.Keys.ToList())
+                PropertyColumns[key] = "";
+
             await OnSuccessfulCreation.InvokeAsync(true);
         }
         else
