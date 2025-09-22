@@ -1,24 +1,17 @@
 using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
 
-namespace Invenire.Api.Properties.Items.Create;
+namespace Invenire.Api.Properties.Items.CreateFromExcelFile;
 
-public record CreatePropertyItemsResponse
+public record CreateFromExcelFilePropertyItemsResponse
 {
     public static readonly List<ErrorTranslation> ErrorTranslations =
     [
 
-        // Items
-        new ErrorTranslation
-        {
-            Pattern = new Regex(@"'items' must not be empty\."),
-            Translate = _ => "Seznam položek nesmí být prázdný."
-        },
-
         // Employee
         new ErrorTranslation
         {
-            Pattern = new Regex(@"The employee was not found in the system\. \(key - (.+)\)"),
+            Pattern = new Regex(@"The employee was not found in the system\. \(email - (.+)\)"),
             Translate = m => $"Zaměstnanec {NormalizeInventoryNumber(m.Groups[1].Value)}: Zaměstnanec s tímto identifikátorem nebyl nalezen."
         },
         new ErrorTranslation
@@ -128,6 +121,18 @@ public record CreatePropertyItemsResponse
         {
             Pattern = new Regex(@"Item (.+): The length of 'document_number' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Číslo dokladu musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
+        },
+
+        // General
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The 'columns' query parameter is missing or invalid\."),
+            Translate = _ => "Ne všechny povinné položky s hvězdičkou mají přiřazený sloupec."
+        },
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The excel file is missing required columns: (?<columns>.+)"),
+            Translate = m => "Ne všechny povinné položky s hvězdičkou mají přiřazený sloupec."
         },
 
         // Fallback translation for any unmatched errors.

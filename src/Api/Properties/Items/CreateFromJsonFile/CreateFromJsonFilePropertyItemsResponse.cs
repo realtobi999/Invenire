@@ -1,9 +1,9 @@
 using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
 
-namespace Invenire.Api.Properties.Items.Create;
+namespace Invenire.Api.Properties.Items.CreateFromJsonFile;
 
-public record CreatePropertyItemsResponse
+public class CreateFromJsonFilePropertyItemsResponse
 {
     public static readonly List<ErrorTranslation> ErrorTranslations =
     [
@@ -128,6 +128,13 @@ public record CreatePropertyItemsResponse
         {
             Pattern = new Regex(@"Item (.+): The length of 'document_number' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Číslo dokladu musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
+        },
+
+        // General
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"Request body is missing or invalid\."),
+            Translate = _ => "Formát souboru je nesprávný. Ujistěte se, že všechny povinné pole jsou vyplněny."
         },
 
         // Fallback translation for any unmatched errors.

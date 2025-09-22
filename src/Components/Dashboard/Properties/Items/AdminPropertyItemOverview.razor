@@ -119,7 +119,7 @@
                             <li><strong>Poznámka k umístění:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
                             <li><strong>Spravuje:</strong> <input @bind="edit.Employee.EmailAddress"/></li>
                             <li><strong>Popis:</strong> <input @bind="edit.Description" style="width:70%;"/></li>
-                            <li><strong>Dokument:</strong> <input @bind="edit.DocumentNumber"/></li>
+                            <li><strong>Číslo dokladu:</strong> <input @bind="edit.DocumentNumber"/></li>
                             <li><strong>Přidáno:</strong> @edit.CreatedAt:g</li>
                             @if (edit.LastUpdatedAt is not null)
                             {
@@ -146,7 +146,7 @@
                             }
                             <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                             <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
-                            <li><strong>Dokument:</strong> @item.DocumentNumber</li>
+                            <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
                             <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
                             @if (item.LastUpdatedAt is not null)
                             {

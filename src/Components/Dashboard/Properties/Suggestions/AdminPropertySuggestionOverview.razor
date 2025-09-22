@@ -84,7 +84,7 @@
                                         <li><strong>Poznámka k umístění:</strong> @command.Location.AdditionalNote</li>
                                     }
                                     <li><strong>Popis:</strong> @command.Description</li>
-                                    <li><strong>Dokument:</strong> @command.DocumentNumber</li>
+                                    <li><strong>Číslo dokladu:</strong> @command.DocumentNumber</li>
                                 </ul>
                             </div>
                         }
@@ -215,11 +215,11 @@
                                 </li>
 
                                 <li style="@((command.DocumentNumber != item.DocumentNumber) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Dokument:</strong> @command.DocumentNumber
+                                    <strong>Číslo dokladu:</strong> @command.DocumentNumber
                                     @if (command.DocumentNumber != item.DocumentNumber)
                                     {
                                         <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.DocumentNumber)
+                                            (Původně: @(item.DocumentNumber ?? "------"))
                                         </div>
                                     }
                                 </li>
@@ -263,7 +263,7 @@
                                     }
                                     <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                                     <li><strong>Popis:</strong> @item.Description</li>
-                                    <li><strong>Dokument:</strong> @item.DocumentNumber</li>
+                                    <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
                                     <li><strong>Přidáno:</strong> @item.CreatedAt:g</li>
                                     @if (item.LastUpdatedAt is not null)
                                     {

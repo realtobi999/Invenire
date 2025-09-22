@@ -4,7 +4,8 @@
 @using Invenire.Common.Errors
 @using System.Net.Http.Headers
 @using Invenire.Api.Properties.Items
-@using Invenire.Api.Properties.Items.Create
+@using Invenire.Api.Properties.Items.CreateFromExcelFile
+@using Invenire.Api.Properties.Items.CreateFromJsonFile
 
 @if (!IsProcessing)
 {
@@ -18,7 +19,9 @@
 
     @if (ShowColumnPickerModal)
     {
-        <h5 style="margin: 0;">Vyberte sloupce pro mapování dat</h5>
+        <h4 style="margin: 0;">Vyberte sloupce pro mapování dat</h4>
+
+        <p>Prosím, přiřaďte ke každé položce označené hvězdičkou odpovídající písmenko.</p>
 
         @foreach (var property in PropertyColumns.Keys.ToList())
         {
@@ -30,7 +33,7 @@
 
         <div class="modal-buttons">
             <button @onclick="OpenXlsxFile">Nahrát XLSX (Excel) soubor</button>
-            <button @onclick="() => ShowColumnPickerModal = false">Zrušit</button>
+            <button @onclick="() => {ShowColumnPickerModal = false; Errors.Clear();}">Zrušit</button>
         </div>
 
         <InputFile id="HiddenXLSXFileInput" OnChange="HandleExcelFileSelected" style="display:none" />
@@ -74,23 +77,25 @@ else
         { "LocationRoom", "" },
         { "LocationAdditionalNote", "" },
         { "Description", "" },
-        { "DocumentNumber", "" }
+        { "DocumentNumber", "" },
+        { "EmployeeEmailAddress", "" }
     };
 
     private readonly Dictionary<string, string> PropertyTranslations = new()
     {
-        { "InventoryNumber", "Inventární číslo" },
-        { "RegistrationNumber", "Registrační číslo" },
-        { "Name", "Název" },
-        { "Price", "Cena" },
+        { "InventoryNumber", "Inventární číslo *" },
+        { "RegistrationNumber", "Registrační číslo *" },
+        { "Name", "Název *" },
+        { "Price", "Cena *" },
         { "SerialNumber", "Sériové číslo" },
-        { "DateOfPurchase", "Datum nákupu" },
+        { "DateOfPurchase", "Datum nákupu *" },
         { "DateOfSale", "Datum prodeje" },
-        { "LocationBuilding", "Budova" },
-        { "LocationRoom", "Místnost" },
+        { "LocationBuilding", "Budova *" },
+        { "LocationRoom", "Místnost *" },
         { "LocationAdditionalNote", "Poznámka k umístění" },
         { "Description", "Popis" },
-        { "DocumentNumber", "Číslo dokumentu" }
+        { "DocumentNumber", "Číslo dokumentu" },
+        { "EmployeeEmailAddress", "Emailová adresa zaměstnance" }
     };
 
     private string GetTranslatedPropertyName(string propertyKey)
@@ -140,12 +145,12 @@ else
             {
                 foreach (var error in content.Errors!)
                 {
-                    Errors.Add(ErrorTranslator.Translate(error, CreatePropertyItemsResponse.ErrorTranslations));
+                    Errors.Add(ErrorTranslator.Translate(content.Detail, CreateFromJsonFilePropertyItemsResponse.ErrorTranslations));
                 }
             }
             else
             {
-                Errors.Add(ErrorTranslator.Translate(content.Detail, CreatePropertyItemsResponse.ErrorTranslations));
+                Errors.Add(ErrorTranslator.Translate(content.Detail, CreateFromJsonFilePropertyItemsResponse.ErrorTranslations));
             }
         }
     }
@@ -155,8 +160,7 @@ else
         Errors.Clear();
         if (e.File == null) return;
 
-        if (e.File.Size > 1024 * 1024)
-            IsProcessing = true;
+        IsProcessing = true;
 
         using var stream = new MemoryStream();
         await e.File.OpenReadStream(1024 * 1024 * 100).CopyToAsync(stream);
@@ -189,12 +193,12 @@ else
             {
                 foreach (var error in content.Errors!)
                 {
-                    Errors.Add(ErrorTranslator.Translate(error, CreatePropertyItemsResponse.ErrorTranslations));
+                    Errors.Add(ErrorTranslator.Translate(error, CreateFromExcelFilePropertyItemsResponse.ErrorTranslations));
                 }
             }
             else
             {
-                Errors.Add(ErrorTranslator.Translate(content.Detail, CreatePropertyItemsResponse.ErrorTranslations));
+                Errors.Add(ErrorTranslator.Translate(content.Detail, CreateFromExcelFilePropertyItemsResponse.ErrorTranslations));
             }
         }
     }
