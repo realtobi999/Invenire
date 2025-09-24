@@ -1,0 +1,23 @@
+@using System.Net
+@using Invenire.Api.Organizations.Invitations
+@using Invenire.Api.Properties.Scans
+
+<h4 style="margin-top: 0; margin-bottom: 10px;">Opravdu chcete dokončit inventuru?</h4>
+<button @onclick="CompleteScan">Ano, dokončit</button>
+<button @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    public async Task CompleteScan()
+    {
+        var response = await Client.PutAsync($"/api/properties/scans/complete", null);
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to complete the scan.");
+
+        await OnClose.InvokeAsync(true);
+        await OnChange.InvokeAsync(true);
+    }
+}

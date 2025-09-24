@@ -45,6 +45,12 @@ public record PropertyDtoScansSummary
 {
     [JsonPropertyName("total_scans")]
     public required int TotalScans { get; set; }
+
+    [JsonPropertyName("total_active_scans")]
+    public required int TotalActiveScans { get; set; }
+
+    [JsonPropertyName("last_active_scan")]
+    public required DateTimeOffset? LastActiveScan { get; set; }
 }
 
 public class PropertyDtoSuggestionsSummary

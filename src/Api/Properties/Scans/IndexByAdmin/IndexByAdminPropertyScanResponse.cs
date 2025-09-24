@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace Invenire.Api.Properties.Items.IndexByAdmin;
+namespace Invenire.Api.Properties.Scans.IndexByAdmin;
 
-public record IndexByAdminPropertyItemResponse
+public record IndexByAdminPropertyScanResponse
 {
     [JsonPropertyName("data")]
-    public required List<PropertyItemDto> Data { get; set; }
+    public required List<PropertyScanDto> Data { get; set; }
 
     [JsonPropertyName("limit")]
     public required int Limit { get; set; }

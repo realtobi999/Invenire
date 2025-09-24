@@ -1,0 +1,87 @@
+@using System.Net
+@using Invenire.Api.Properties.Scans
+@using Invenire.Common.Errors
+@using Invenire.Api.Organizations.Invitations.Create
+
+<EditForm Model="Body" OnSubmit="HandleCreation" @ref="Form">
+    <div>
+        <label>Název:</label>
+        <InputText @bind-Value="Body.Name" style="width:53%;"/>
+        <ValidationMessage For="@(() => Body.Name)" />
+    </div>
+
+    <div>
+        <label>Text:</label>
+        <InputText @bind-Value="Body.Description" style="width:80%;"/>
+        <ValidationMessage For="@(() => Body.Description)" />
+    </div>
+
+    <button type="submit">Vytvořit</button>
+    <button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+</EditForm>
+
+@if (ErrorGeneralMessage is not null)
+{
+    <div>
+        @ErrorGeneralMessage
+    </div>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private string? ErrorGeneralMessage;
+    private ValidationMessageStore ErrorValidationMessages = null!;
+
+    private EditForm Form = null!;
+    private CreatePropertyScanRequestBody Body = new();
+
+    protected override void OnAfterRender(bool first)
+    {
+        if (Form is not null && first)
+        {
+            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+        }
+    }
+
+    private async Task HandleCreation()
+    {
+        ErrorGeneralMessage = null;
+        ErrorValidationMessages.Clear();
+
+        var response = await Client.PostAsJsonAsync("/api/properties/scans", Body);
+
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            await OnClose.InvokeAsync(true);
+            await OnChange.InvokeAsync(true);
+        }
+        else
+        {
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (content.Type == "ValidationException")
+            {
+                foreach (var error in content.Errors!)
+                {
+                    var field = error switch
+                    {
+                        var e when e.Contains("name") => Form.EditContext!.Field(nameof(Body.Name)),
+                        var e when e.Contains("description") => Form.EditContext!.Field(nameof(Body.Description)),
+                        _ => throw new Exception($"Unknown error field: {error}")
+                    };
+
+                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, CreatePropertyScanResponse.ErrorTranslations));
+                }
+
+                Form.EditContext!.NotifyValidationStateChanged();
+            }
+            else
+            {
+                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, CreatePropertyScanResponse.ErrorTranslations);
+            }
+        }
+    }
+}

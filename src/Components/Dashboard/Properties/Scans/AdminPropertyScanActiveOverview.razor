@@ -1,0 +1,45 @@
+@using System.Net
+@using Invenire.Api.Properties.Scans
+@using Invenire.Api.Properties.Scans.IndexByAdmin
+
+@if (Scan is not null && Scan.ScannedItemsSummary is not null)
+{
+    <ul>
+        <li><strong>Id:</strong> @Scan.Id</li>
+        <li><strong>Název:</strong> @Scan.Name</li>
+        @if (!string.IsNullOrEmpty(Scan.Description))
+        {
+            <li><strong>Text: </strong> @Scan.Description</li>
+        }
+        <li><strong>Naskenováno</strong> @Scan.ScannedItemsSummary.TotalScannedItems / @Scan.ScannedItemsSummary.TotalItemsToScan</li>
+        <li><strong>Vytvořeno:</strong> @Scan.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+        @if (Scan.LastUpdatedAt is not null)
+        {
+            <li><strong>Naposledy upraveno:</strong> @Scan.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+        }
+    </ul>
+}
+else
+{
+    <p>Objevila se nečekaná chyba. Zkuste to prosím později.</p>
+}
+
+@code 
+{
+    [Inject] public HttpClient Client { get; set; } = default!;
+
+    private PropertyScanDto? Scan { get; set; }
+
+    protected override async Task OnInitializedAsync() => await LoadActiveScan();
+
+    private async Task LoadActiveScan()
+    {
+        var response = await Client.GetAsync("/api/properties/scans?limit=1&offset=0&active=true");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the active scan.");
+
+        var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertyScanResponse>() ?? throw new NullReferenceException();
+
+        Scan = content.Data.First();
+    }
+}
