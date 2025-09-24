@@ -16,9 +16,10 @@
 
     @if (Property.ScansSummary.TotalActiveScans != 0)
     {
-       <h4>Aktivní inventura</h4>
-
-        <AdminPropertyScanActiveOverview />
+        <div style="margin-bottom: 16px;">
+            <h4>Aktivní inventura</h4>
+            <AdminPropertyScanActiveOverview />
+        </div>
     }
 }
 else
@@ -26,7 +27,7 @@ else
     <p>Zatím nebyli zhotovené žádné inventury.</p>
 }
 
-<button @onclick="() => ShowCreationModal = true" disabled="@(Property?.ScansSummary?.TotalActiveScans == 1)">Začít inventuru</button>
+<button @onclick="() => ShowCreationModal = true" disabled="@(Property?.ScansSummary?.TotalActiveScans == 1)">Spustit inventuru</button>
 <button @onclick="() => ShowCompletionModal = true" disabled="@(Property?.ScansSummary?.TotalActiveScans != 1)">Dokončit inveturu</button>
 
 @if (ShowCreationModal)

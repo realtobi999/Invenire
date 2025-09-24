@@ -1,0 +1,210 @@
+@using System.Net
+@using Invenire.Api.Properties.Items
+@using Invenire.Api.Properties.Items.IndexByScan
+@using Invenire.Api.Properties.Scans
+
+<div style="display: flex; gap: 1rem;">
+    <div style="flex: 1; border-right: 2px solid #000; padding-right: 0.5rem;">
+        <h4>Naskenované Položky (@TotalScannedCount)</h4>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+            @foreach (var item in ScannedItems)
+            {
+                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#BBFF99;">
+                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;">
+                        <li><strong>ID:</strong> @item.Id</li>
+                        <li><strong>Název:</strong> @item.Name</li>
+                        <li><strong>Cena:</strong> @item.Price Kč</li>
+                        <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
+                        <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
+                        <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
+                        <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
+                        @if (item.DateOfSale is not null)
+                        {
+                            <li><strong>Datum prodeje:</strong> @item.DateOfSale.Value.ToString("dd.MM.yyyy")</li>
+                        }
+                        <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
+                        @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
+                        {
+                            <li><strong>Poznámka k umístění:</strong> @item.Location.AdditionalNote</li>
+                        }
+                        <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
+                        <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
+                        <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
+                        <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+                        @if (item.LastUpdatedAt is not null)
+                        {
+                            <li><strong>Upraveno:</strong> @item.LastUpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div style="flex: 1; padding-left: 0.5rem;">
+        <h4>Zbytek (@TotalNotScannedCount)</h4>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+            @foreach (var item in NotScannedItems)
+            {
+                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#FF5B5B;">
+                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;">
+                        <li><strong>ID:</strong> @item.Id</li>
+                        <li><strong>Název:</strong> @item.Name</li>
+                        <li><strong>Cena:</strong> @item.Price Kč</li>
+                        <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
+                        <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
+                        <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
+                        <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
+                        @if (item.DateOfSale is not null)
+                        {
+                            <li><strong>Datum prodeje:</strong> @item.DateOfSale.Value.ToString("dd.MM.yyyy")</li>
+                        }
+                        <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
+                        @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
+                        {
+                            <li><strong>Poznámka k umístění:</strong> @item.Location.AdditionalNote</li>
+                        }
+                        <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
+                        <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
+                        <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
+                        <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+                        @if (item.LastUpdatedAt is not null)
+                        {
+                            <li><strong>Upraveno:</strong> @item.LastUpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Pagination controls at the bottom -->
+<div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+    <!-- Left pagination (Scanned Items) -->
+    <div style="text-align: center; flex: 1;">
+        <button @onclick="PrevScannedPage" disabled="@(!CanGoPrevScanned)">◀</button>
+        <span style="margin: 0 10px;">@(ScannedCurrentPage + 1) / @ScannedTotalPages</span>
+        <button @onclick="NextScannedPage" disabled="@(!CanGoNextScanned)">▶</button>
+    </div>
+
+    <!-- Right pagination (Not Scanned Items) -->
+    <div style="text-align: center; flex: 1;">
+        <button @onclick="PrevNotScannedPage" disabled="@(!CanGoPrevNotScanned)">◀</button>
+        <span style="margin: 0 10px;">@(NotScannedCurrentPage + 1) / @NotScannedTotalPages</span>
+        <button @onclick="NextNotScannedPage" disabled="@(!CanGoNextNotScanned)">▶</button>
+    </div>
+</div>
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public PropertyScanDto? Scan { get; set; }
+
+    private List<PropertyItemDto> ScannedItems { get; set; } = [];
+    private List<PropertyItemDto> NotScannedItems { get; set; } = [];
+
+    private int ScannedLimit { get; set; } = 6;
+    private int NotScannedLimit { get; set; } = 6;
+
+    private int TotalScannedCount { get; set; }
+    private int TotalNotScannedCount { get; set; }
+
+    private int ScannedCurrentPage { get; set; }
+    private int ScannedTotalPages => TotalScannedCount == 0 ? 1 : (int)Math.Ceiling((double)TotalScannedCount / ScannedLimit);
+    private bool CanGoPrevScanned => ScannedCurrentPage > 0;
+    private bool CanGoNextScanned => ScannedCurrentPage + 1 < ScannedTotalPages;
+
+    private int NotScannedCurrentPage { get; set; }
+    private int NotScannedTotalPages => TotalNotScannedCount == 0 ? 1 : (int)Math.Ceiling((double)TotalNotScannedCount / NotScannedLimit);
+    private bool CanGoPrevNotScanned => NotScannedCurrentPage > 0;
+    private bool CanGoNextNotScanned => NotScannedCurrentPage + 1 < NotScannedTotalPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        TotalScannedCount = Scan!.ScannedItemsSummary!.TotalScannedItems;
+        TotalNotScannedCount = Scan.ScannedItemsSummary!.TotalItemsToScan - Scan!.ScannedItemsSummary!.TotalScannedItems;
+
+        await LoadScannedItems();
+        await LoadNotScannedItems();
+    }
+
+    private async Task PrevScannedPage()
+    {
+        if (CanGoPrevScanned)
+        {
+            ScannedCurrentPage--;
+            await LoadScannedItems();
+        }
+    }
+
+    private async Task NextScannedPage()
+    {
+        if (CanGoNextScanned)
+        {
+            ScannedCurrentPage++;
+            await LoadScannedItems();
+        }
+    }
+
+    private async Task PrevNotScannedPage()
+    {
+        if (CanGoPrevNotScanned)
+        {
+            NotScannedCurrentPage--;
+            await LoadNotScannedItems();
+        }
+    }
+
+    private async Task NextNotScannedPage()
+    {
+        if (CanGoNextNotScanned)
+        {
+            NotScannedCurrentPage++;
+            await LoadNotScannedItems();
+        }
+    }
+
+    private async Task LoadScannedItems()
+    {
+        try
+        {
+            var offset = ScannedCurrentPage * ScannedLimit;
+            var response = await Client.GetAsync($"/api/properties/scans/{Scan!.Id}/items?limit={ScannedLimit}&offset={offset}&scanned=true");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                throw new Exception("Something went wrong during the request to get scanned items.");
+
+            var content = await response.Content.ReadFromJsonAsync<IndexByScanPropertyItemResponse>()
+                ?? throw new NullReferenceException();
+
+            ScannedItems = content.Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading scanned items: {ex.Message}");
+            ScannedItems = [];
+        }
+    }
+
+    private async Task LoadNotScannedItems()
+    {
+        try
+        {
+            var offset = NotScannedCurrentPage * NotScannedLimit;
+            var response = await Client.GetAsync($"/api/properties/scans/{Scan!.Id}/items?limit={NotScannedLimit}&offset={offset}&scanned=false");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                throw new Exception("Something went wrong during the request to get not scanned items.");
+
+            var content = await response.Content.ReadFromJsonAsync<IndexByScanPropertyItemResponse>()
+                ?? throw new NullReferenceException();
+
+            NotScannedItems = content.Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading not scanned items: {ex.Message}");
+            NotScannedItems = [];
+        }
+    }
+}
