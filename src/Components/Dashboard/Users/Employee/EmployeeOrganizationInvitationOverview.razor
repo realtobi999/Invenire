@@ -48,11 +48,11 @@ else
 
     <div class="pagination">
         <button @onclick="() => SetInvitations(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
-            Předchozí
+            ◀
         </button>
-        <span>Stránka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationsCount / Limit))</span>
+        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationsCount / Limit))</span>
         <button @onclick="() => SetInvitations(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
-            Další
+            ▶
         </button>
     </div>
 

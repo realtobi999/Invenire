@@ -204,9 +204,9 @@
             gap: 10px;
             box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
         ">
-            <button @onclick="() =>  LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">Předchozí</button>
-            <span>Položky @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
-            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">Další</button>
+            <button @onclick="() =>  LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+            <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
         </div>
     </div>
 }

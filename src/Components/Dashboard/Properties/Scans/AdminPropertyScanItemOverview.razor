@@ -84,7 +84,7 @@
             {
                 @foreach (var item in ScannedItems)
                 {
-                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#BBFF99; flex: 1 1 calc(30% - 0.5rem);">
+                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#BBFF99; flex: 1 1 calc(22% - 0.5rem);">
                         <ul style="list-style-type:none;padding:0;margin:0;">
                             <li><strong>ID:</strong> @item.Id</li>
                             <li><strong>Název:</strong> @item.Name</li>
@@ -128,7 +128,7 @@
             {
                 @foreach (var item in NotScannedItems)
                 {
-                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#FF5B5B; flex: 1 1 calc(30% - 0.5rem);">
+                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#FF5B5B; flex: 1 1 calc(22% - 0.5rem);">
                         <ul style="list-style-type:none;padding:0;margin:0;">
                             <li><strong>ID:</strong> @item.Id</li>
                             <li><strong>Název:</strong> @item.Name</li>
@@ -155,6 +155,10 @@
                                 <li><strong>Upraveno:</strong> @item.LastUpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</li>
                             }
                         </ul>
+                        @if (Scan!.CompletedAt is null)
+                        {
+                            <button @onclick="() => ScanItem(item)">Naskenovat</button>
+                        }
                     </div>
                 }
             }
@@ -178,8 +182,8 @@
 
 @code {
     [Inject] public HttpClient Client { get; set; } = default!;
-    [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public PropertyScanDto? Scan { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
 
     private List<PropertyItemDto> ScannedItems { get; set; } = [];
     private List<PropertyItemDto> NotScannedItems { get; set; } = [];
@@ -228,10 +232,8 @@
     private string? FilteringEmployeeEmailAddress { get; set; }
     private string? SearchQuery { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadItemsWithFilter();
-    }
+    protected override void OnParametersSet() => StateHasChanged();
+    protected override async Task OnInitializedAsync() => await LoadItemsWithFilter();
 
     private async Task LoadItemsWithFilter()
     {
@@ -393,5 +395,17 @@
         FilteringEmployeeEmailAddress = null;
 
         await LoadItemsWithFilter();
+    }
+
+    private async Task ScanItem(PropertyItemDto item)
+    {
+        var response = await Client.PutAsync($"/api/properties/items/{item.Id}/scan", null);
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to scan the item.");
+
+        await LoadScannedItems(ScannedCurrentOffset);
+        await LoadNotScannedItems(NotScannedCurrentOffset);
+
+        await OnChange.InvokeAsync(true);
     }
 }

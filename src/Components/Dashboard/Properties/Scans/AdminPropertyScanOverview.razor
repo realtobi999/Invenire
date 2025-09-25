@@ -1,0 +1,117 @@
+@using System.Net
+@using Invenire.Api.Properties.Scans
+@using Invenire.Api.Properties.Scans.IndexByAdmin
+
+<div>
+    <label for="OrderSelect">Řazení: </label>
+    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadScan(0)">
+        @foreach (var option in OrderOptions)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+</div>
+
+@if (Scan is not null)
+{
+    <h4>Základní informace</h4>
+    <ul>
+        <li><strong>Id:</strong> @Scan.Id</li>
+        <li><strong>Název:</strong> @Scan.Name</li>
+        @if (!string.IsNullOrEmpty(Scan.Description))
+        {
+            <li><strong>Text: </strong> @Scan.Description</li>
+        }
+        <li><strong>Vytvořeno:</strong> @Scan.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+        @if (Scan.LastUpdatedAt is not null)
+        {
+            <li><strong>Naposledy upraveno:</strong> @Scan.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+        }
+    </ul>
+
+    <hr />
+
+    <h4>Informace o průběhu</h4>
+    <ul>
+        <li><strong>Celkový počet položek:</strong> @Scan.ScannedItemsSummary?.TotalItemsToScan</li>
+        <li><strong>Celkový počet naskenovaných položek:</strong> @Scan.ScannedItemsSummary?.TotalScannedItems</li>
+        <li><strong>Celkový počet nenaskenovaných položek:</strong> @(Scan.ScannedItemsSummary?.TotalItemsToScan - @Scan.ScannedItemsSummary?.TotalScannedItems)</li>
+    </ul>
+
+    <hr />
+
+    <div style="margin-bottom:2%;">
+        <h4>Položky inventury</h4>
+        <p>Některé informace o položkách již mohou být aktualizovány nebo některé položky mohou být odstraněny.</p>
+        <AdminPropertyScanItemOverview Scan="Scan" @key="Scan.Id"/>
+    </div>
+
+    <div style="
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 10px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.5);">
+
+        <button @onclick="() => LoadScan(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalScansCount / Limit))</span>
+        <button @onclick="() => LoadScan(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+    </div>
+}
+
+@code
+{
+    [Inject] public HttpClient Client { get; set; } = default!;
+
+    private PropertyScanDto? Scan { get; set; }
+
+    private int Limit { get; set; } = 1;
+    private int CurrentOffset { get; set; }
+    private int TotalScansCount { get; set; }
+
+    private bool CanGoPrev => CurrentOffset > 0;
+    private bool CanGoNext => CurrentOffset + Limit < TotalScansCount;
+
+    private string SelectedOrderOption { get; set; } = "createdat_desc";
+    private readonly List<(string Value, string Label)> OrderOptions = new()
+    {
+        ("name_asc", "Název (A-Z)"),
+        ("name_desc", "Název (Z-A)"),
+        ("createdat_asc", "Datum přidání (nejstarší první)"),
+        ("createdat_desc", "Datum přidání (nejnovější první)"),
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadScan(0);
+
+    private async Task LoadScan(int offset)
+    {
+        CurrentOffset = Math.Max(0, offset);
+        var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
+
+        var response = await Client.GetAsync($"/api/properties/scans?limit={Limit}&offset={offset}&active=false&order={sort}&desc={descending}");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the scan.");
+
+        var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertyScanResponse>() ?? throw new NullReferenceException();
+
+        if (content.Data is not null && content.Data.Any())
+        {
+            Scan = content.Data.First();
+        }
+        else
+        {
+            Scan = null;
+        }
+
+        Limit = content.Limit;
+        TotalScansCount = content.TotalCount;
+
+        StateHasChanged();
+    }
+}

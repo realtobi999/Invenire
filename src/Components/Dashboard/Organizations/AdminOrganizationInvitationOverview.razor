@@ -35,13 +35,13 @@
 
     <div class="pagination">
         <button @onclick="() => SetCurrentOffset(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
-            Předchozí
+            ◀
         </button>
         <span>
-            Pozvánka @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationCount / Limit))
+            @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationCount / Limit))
         </span>
         <button @onclick="() => SetCurrentOffset(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
-            Další
+            ▶
         </button>
     </div>
 }
