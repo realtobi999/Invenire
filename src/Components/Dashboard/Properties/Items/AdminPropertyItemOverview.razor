@@ -81,6 +81,14 @@
         </div>
     }
 </div>
+
+<br />
+
+<div>
+    <label for="limit_slider">Limit:</label>
+    <input id="limit_slider" type="range" min="28" max="200" step="4" @bind="Limit" @bind:after="() => LoadItems(CurrentOffset)" />
+    <span>Limit: @Limit, Počet položek na stránce: @Items.Count, Celkově položek: @TotalItemsCount</span>
+</div>
     
 <br />
 
@@ -90,13 +98,31 @@
         <div>
             <button @onclick="() => SelectItems(Items)" disabled="@(Items.Except(DeletedItems).All(i => SelectedItems.Contains(i)))" >Vybrat vše</button>
             <button @onclick="() => ClearSelectedItems()" disabled="@(!SelectedItems.Any())">Zrušit výběr</button>
+            <span>Počet vybraných: @SelectedItems.Count</span>
         </div>
         <div>
             <button @onclick="() => DeleteSelectedItems()" disabled="@(Items.All(i => DeletedItems.Contains(i)) || !SelectedItems.Any())">Označit vybrané jako smazané</button>
             <button @onclick="() => ClearDeletedItems()" disabled="@(!DeletedItems.Any())">Ponechat všechny smazané položky</button>
         </div>
+        <div>
+            <button @onclick="() => ShowDownloadCodesModal = true" disabled="@(!SelectedItems.Any())">Stáhnout QR kódy vybraných</button>
+        </div>
 
-        <br /> <br />
+        <div style="margin-bottom:2%">
+            <button @onclick="() => SaveChanges()" disabled="@(!DeletedItems.Any() && !UpdatedItems.Any())">Uložit změny</button>
+
+            @if (SavingErrorMessages.Any())
+            {
+                <ul>
+                @foreach ( var error in SavingErrorMessages)
+                {
+                    <li>@error</li>
+                }
+                </ul>
+
+                <button @onclick="() => SavingErrorMessages.Clear()">Smazat upozornění</button>
+            }
+        </div>
 
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
             @foreach (var item in Items.Select(i => UpdatedItems.FirstOrDefault(u => u.Id == i.Id) ?? i))
@@ -135,23 +161,14 @@
                             <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
                             <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
                             <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
-                            @if (item.DateOfSale is not null)
-                            {
-                                <li><strong>Datum prodeje:</strong> @item.DateOfSale.Value.ToString("dd.MM.yyyy")</li>
-                            }
+                            <li><strong>Datum prodeje:</strong> @(item.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----")</li>
                             <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
-                            @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
-                            {
-                                <li><strong>Poznámka k umístění:</strong> @item.Location.AdditionalNote</li>
-                            }
+                            <li><strong>Poznámka k umístění:</strong> @(item.Location.AdditionalNote ?? "-----")</li>
                             <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                             <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
                             <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
                             <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-                            @if (item.LastUpdatedAt is not null)
-                            {
-                                <li><strong>Upraveno:</strong> @item.LastUpdatedAt.Value.ToString("dd.MM.yyyy HH:mm")</li>
-                            }
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
                         }
                         </ul>
 
@@ -176,21 +193,6 @@
             }
         </div>
         <br/>
-        <div style="margin-bottom:2%">
-            <button @onclick="() => SaveChanges()" disabled="@(!DeletedItems.Any() && !UpdatedItems.Any())">Uložit změny</button>
-
-            @if (SavingErrorMessages.Any())
-            {
-                <ul>
-                @foreach ( var error in SavingErrorMessages)
-                {
-                    <li>@error</li>
-                }
-                </ul>
-
-                <button @onclick="() => SavingErrorMessages.Clear()">Smazat</button>
-            }
-        </div>
         <div style="
             position: sticky;
             bottom: 0;
@@ -209,11 +211,43 @@
             <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
         </div>
     </div>
+
+    @if (ShowDownloadCodesModal)
+    {
+        <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                    z-index: 9999;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    overflow: auto; /* allow modal to scroll if too tall */
+                    padding: 1rem;  /* optional: spacing around modal */
+                ">
+            <div style="
+                        background: white;
+                        border-radius: 6px;
+                        max-height: 90vh;  /* don't exceed viewport height */
+                        overflow-y: auto;  /* scroll inside modal */
+                        padding: 1rem;
+                        min-width: 300px;
+                        max-width: 90%;
+                    ">
+
+                <GenerateCodesPropertyItemsForm Items="SelectedItems.ToList()" OnChange="() => { OnChange.InvokeAsync(true); ShowDownloadCodesModal = false;}" OnClose="() => ShowDownloadCodesModal = false" />
+            </div>
+        </div>
+    }
 }
 else
 {
     <p>Žádné položky nebyly nalezeny.</p>
 }
+
 
 @code {
     [Inject] public HttpClient Client { get; set; } = default!;
@@ -571,4 +605,8 @@ else
 
         ClearUpdatedItems();
     }
+
+    /** Downloading QR's. **/
+
+    private bool ShowDownloadCodesModal { get; set; }
 }

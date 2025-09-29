@@ -1,0 +1,47 @@
+@using System.Net
+@using Invenire.Api.Properties.Items
+@using Invenire.Api.Properties.Items.Delete
+@using Invenire.Api.Properties.Items.GenerateCodes
+
+<h4 style="margin:0;">Opravdu chcete stáhnout QR kódy vybraných položek?</h4>
+
+@if (!IsProcessing)
+{
+    <button @onclick="() => DownloadCodes()">Ano, stáhnout</button>
+    <button style="width:20%" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+}
+else
+{
+    <p>Žádost se zpracovává... Může to chvíli trvat.</p>
+}
+
+@code {
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public List<PropertyItemDto> Items { get; set; } = [];
+
+    private bool IsProcessing { get; set; }
+
+    private async Task DownloadCodes()
+    {
+        IsProcessing = true;
+
+        var command = new GenerateCodesPropertyItemsRequest
+        {
+            Ids = Items.Select(i => i.Id).ToList()
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/properties/items/generate-codes", command);
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to download the codes for items.");
+
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        await JS.InvokeVoidAsync("download_file", "qrkody.zip", "application/zip", bytes);
+
+        IsProcessing = false;
+        await OnClose.InvokeAsync(true);
+        await OnChange.InvokeAsync(true);
+    }
+}

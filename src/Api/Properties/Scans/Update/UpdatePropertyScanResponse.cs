@@ -1,9 +1,9 @@
 using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
 
-namespace Invenire.Api.Properties.Scans.Create;
+namespace Invenire.Api.Properties.Scans.Update;
 
-public record CreatePropertyScanResponse
+public record UpdatePropertyScanResponse
 {
     // Errors.
 

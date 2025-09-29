@@ -1,0 +1,26 @@
+@page "/test"
+@using Invenire.Api.Properties.Items.GenerateCodes
+
+@code
+{
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+    [Inject] public HttpClient Client { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync() => await GenerateCodesAsync();
+
+    private async Task GenerateCodesAsync()
+    {
+        var command = new GenerateCodesPropertyItemsRequest
+        {
+            Ids = [Guid.Parse("75c1767a-7419-4aca-bfdc-782e5c1b48e8")]
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/properties/items/generate-codes", command);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            await JS.InvokeVoidAsync("download_file", "qrkody.zip", "application/zip", bytes);
+        }
+    }
+}

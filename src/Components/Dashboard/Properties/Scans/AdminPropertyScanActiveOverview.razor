@@ -1,6 +1,7 @@
 @using System.Net
 @using Invenire.Api.Properties.Scans
 @using Invenire.Api.Properties.Scans.IndexByAdmin
+@using Invenire.Components.Forms.Properties.Scans
 
 <div>
     @if (ActiveScan is not null && ActiveScan.ScannedItemsSummary is not null)
@@ -21,6 +22,7 @@
         </ul>
 
         <button @onclick="() => ShowActiveScansItemsModal = true">Zobrazit položky</button>
+        <button @onclick="() => ShowUpdateActiveScanModal = true">Upravit informace</button>
 
         @if (ShowActiveScansItemsModal)
         {
@@ -57,6 +59,38 @@
                 </div>
             </div>
         }
+
+        @if (ShowUpdateActiveScanModal)
+        {
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;">
+                <div style="
+                    background-color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    width: 400px;
+                    max-width: 90%;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin:0;">Upravit informace invetury</h4>
+                        <button @onclick="() => ShowUpdateActiveScanModal = false">X</button>
+                    </div>
+
+                    <UpdatePropertyScanForm Scan="ActiveScan" OnClose="() =>  ShowUpdateActiveScanModal = false" OnSuccessfulUpdate="() => LoadActiveScan()" />
+                </div>
+            </div>
+        }
+
     }
     else
     {
@@ -69,7 +103,9 @@
     [Inject] public HttpClient Client { get; set; } = default!;
 
     private PropertyScanDto? ActiveScan { get; set; }
+
     private bool ShowActiveScansItemsModal { get; set;}
+    private bool ShowUpdateActiveScanModal { get; set;}
 
     protected override async Task OnInitializedAsync() => await LoadActiveScan();
 
