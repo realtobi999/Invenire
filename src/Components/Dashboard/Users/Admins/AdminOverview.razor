@@ -15,9 +15,9 @@
         }
     </ul>
 
-    <button @onclick="() => ShowModal = true">Upravit informace</button>
+    <button @onclick="() => ShowUpdateModal = true">Upravit informace</button>
 }
-@if (Admin is not null && ShowModal)
+@if (Admin is not null && ShowUpdateModal)
 {
     <div style="
         position: fixed;
@@ -40,27 +40,27 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h4 style="margin: 0;">Upravit svoje informace</h4>
-                <button @onclick="() => ShowModal = false">X</button>
+                <button @onclick="() => ShowUpdateModal = false">X</button>
             </div>
 
-            <UpdateAdminForm Admin="Admin" OnClose="() => ShowModal = false" OnSuccessfulUpdate="OnSuccessfulOrganizationUpdate" />
+            <UpdateAdminForm Admin="Admin" OnClose="() => ShowUpdateModal = false" OnChange="OnSuccessfulAdminUpdate" />
         </div>
     </div>
 }
 
-
-@code {
+@code 
+{
     [Inject] private HttpClient Client { get; set; } = default!;
 
-    private bool ShowModal { get; set; } = false;
+    private bool ShowUpdateModal { get; set; }
     private AdminDto? Admin { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await SetAdmin();
+        await LoadAdmin();
     }
 
-    private async Task SetAdmin()
+    private async Task LoadAdmin()
     {
         var response = await Client.GetAsync("/api/admins/profile");
 
@@ -71,13 +71,13 @@
 
     private async Task ReloadAdmin()
     {
-        await SetAdmin();
+        await LoadAdmin();
         StateHasChanged();
     }
 
-    private async Task OnSuccessfulOrganizationUpdate()
+    private async Task OnSuccessfulAdminUpdate()
     {
-        ShowModal = false;
+        ShowUpdateModal = false;
         await ReloadAdmin();
     }
 }

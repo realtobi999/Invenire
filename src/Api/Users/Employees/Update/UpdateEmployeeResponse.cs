@@ -1,9 +1,9 @@
 using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
 
-namespace Invenire.Api.Users.Admin.Update;
+namespace Invenire.Api.Users.Employees.Update;
 
-public record UpdateAdminResponse
+public record UpdateEmployeeResponse
 {
     // Errors.
 

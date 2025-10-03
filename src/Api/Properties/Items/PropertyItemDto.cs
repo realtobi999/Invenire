@@ -53,6 +53,12 @@ public record PropertyItemDto
     [JsonPropertyName("last_updated_at")]
     public required DateTimeOffset? LastUpdatedAt { get; set; }
 
+    [JsonPropertyName("last_code_generated_at")]
+    public required DateTimeOffset? LastCodeGeneratedAt { get; set; }
+
+    [JsonPropertyName("last_scanned_at")]
+    public DateTimeOffset? LastScannedAt { get; set; }
+
     public static PropertyItemDto CloneThis(PropertyItemDto item)
     {
         return new PropertyItemDto
@@ -77,7 +83,9 @@ public record PropertyItemDto
             Description = item.Description,
             DocumentNumber = item.DocumentNumber,
             CreatedAt = item.CreatedAt,
-            LastUpdatedAt = item.LastUpdatedAt
+            LastUpdatedAt = item.LastUpdatedAt,
+            LastCodeGeneratedAt = item.LastCodeGeneratedAt,
+            LastScannedAt = item.LastScannedAt,
         };
     }
 
@@ -101,7 +109,8 @@ public record PropertyItemDto
                Description == other.Description &&
                DocumentNumber == other.DocumentNumber &&
                CreatedAt.Equals(other.CreatedAt) &&
-               Nullable.Equals(LastUpdatedAt, other.LastUpdatedAt);
+               Nullable.Equals(LastUpdatedAt, other.LastUpdatedAt) &&
+               Nullable.Equals(LastScannedAt, other.LastScannedAt);
     }
 
     public override int GetHashCode()

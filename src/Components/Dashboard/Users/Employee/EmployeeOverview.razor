@@ -1,0 +1,79 @@
+@using Invenire.Api.Users.Employees
+@using System.Net
+@using Invenire.Components.Forms.Users.Employees
+
+@if (Employee is not null)
+{
+    <ul>
+        <li><strong>Id:</strong> @Employee.Id</li>
+        <li><strong>Jméno:</strong> @Employee.FullName</li>
+        <li><strong>Email:</strong> @Employee.EmailAddress</li>
+        <li><strong>Vytvořen:</strong> @Employee.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+        <li><strong>Naposledy upraven:</strong> @Employee.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+    </ul>
+
+    <button @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+}
+@if (Employee is not null && ShowUpdateModal)
+{
+    <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;">
+        <div style="
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="margin: 0;">Upravit svoje informace</h4>
+                <button @onclick="() => ShowUpdateModal = false">X</button>
+            </div>
+
+            <UpdateEmployeeForm Employee="Employee" OnClose="() => ShowUpdateModal = false" OnChange="OnSuccessfulEmployeeUpdate" />
+        </div>
+    </div>
+}
+@code 
+{
+    [Inject] private HttpClient Client { get; set; } = default!;
+
+    private bool ShowUpdateModal { get; set; }
+    private EmployeeDto? Employee { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployee();
+    }
+
+    private async Task LoadEmployee()
+    {
+        var response = await Client.GetAsync("/api/employees/profile");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the employee."); 
+
+        Employee = await response.Content.ReadFromJsonAsync<EmployeeDto>();
+    }
+
+    private async Task ReloadEmployee()
+    {
+        await LoadEmployee();
+        StateHasChanged();
+    }
+
+    private async Task OnSuccessfulEmployeeUpdate()
+    {
+        ShowUpdateModal = false;
+        await ReloadEmployee();
+    }
+}

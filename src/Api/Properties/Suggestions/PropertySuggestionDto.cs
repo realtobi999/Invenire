@@ -29,7 +29,7 @@ public record PropertySuggestionDto
     public required string? Feedback { get; set; }
 
     [JsonPropertyName("payload")]
-    public PropertySuggestionDtoPayload? Payload { get; set; }
+    public PropertySuggestionPayloadDto? Payload { get; set; }
 
     [JsonPropertyName("status")]
     public required PropertySuggestionDtoStatus Status { get; set; }
@@ -51,7 +51,7 @@ public enum PropertySuggestionDtoStatus
     DECLINED = 2,
 }
 
-public record PropertySuggestionDtoPayload
+public record PropertySuggestionPayloadDto
 {
     [JsonPropertyName("delete_commands")]
     public required List<Guid> DeleteCommands { get; set; } = [];
@@ -60,5 +60,5 @@ public record PropertySuggestionDtoPayload
     public required List<CreatePropertyItemRequest> CreateCommands { get; set; } = [];
 
     [JsonPropertyName("update_commands")]
-    public required List<UpdatePropertyItemRequest> UpdateCommands { get; set; } = [];
+    public required List<UpdatePropertyItemRequestBody> UpdateCommands { get; set; } = [];
 }

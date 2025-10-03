@@ -12,7 +12,7 @@
         <li><strong>Celkový počet:</strong> @Property.ItemsSummary.TotalItems</li>
         <li><strong>Celková hodnota:</strong> @Property.ItemsSummary.TotalValue Kč</li>
         <li><strong>Průměrná cena položky:</strong> @Property.ItemsSummary.AveragePrice Kč</li>
-        <li><strong>Průměrné stáří položky:</strong> @Property.ItemsSummary.AverageAge.ToString("g") let</li>
+        <li><strong>Průměrné stáří položky:</strong> @Property.ItemsSummary.AverageAge?.ToString("g") let</li>
     </ul>
 
     <button @onclick="() => ShowAllItemsModal = true">Zobrazit položky</button>

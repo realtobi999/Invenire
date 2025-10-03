@@ -1,0 +1,26 @@
+@using Invenire.Api.Organizations
+@using Invenire.Components.Forms.Organizations
+
+@if (Organization is not null)
+{
+    <ul>
+        <li><strong>Id:</strong> @Organization.Id</li>
+        <li><strong>Název:</strong> @Organization.Name</li>
+        <li>
+            <strong>Admin:</strong>
+            <ul>
+                <li><strong>Id:</strong> @Organization.Admin?.Id</li>
+                <li><strong>Jméno:</strong> @Organization.Admin?.FullName</li>
+                <li><strong>Email:</strong> @Organization.Admin?.EmailAddress</li>
+                <li><strong>Vytvořen:</strong> @Organization.Admin?.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+                <li><strong>Naposledy upraven:</strong> @Organization.Admin?.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+            </ul>
+        </li>
+        <li><strong>Vytvořeno:</strong> @Organization.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+        <li><strong>Naposledy upraveno:</strong> @Organization.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+    </ul>
+}
+
+@code {
+    [Parameter] public OrganizationDto? Organization { get; set; }
+}

@@ -1,0 +1,26 @@
+@using Invenire.Api.Organizations
+@using System.Net
+
+@if (Organization is not null)
+{
+    <h3>Základní informace</h3>
+    <EmployeeOrganizationBaseOverview Organization="Organization" />
+}
+
+@code
+{
+    [Inject] private HttpClient Client { get; set; } = default!;
+
+    private OrganizationDto? Organization { get; set; }
+
+    protected override async Task OnInitializedAsync() => await LoadOrganization();
+
+    private async Task LoadOrganization()
+    {
+        var response = await Client.GetAsync("/api/organizations");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the organization.");
+
+        Organization = await response.Content.ReadFromJsonAsync<OrganizationDto>();
+    }
+}

@@ -1,21 +1,32 @@
-using Invenire.Common.Errors;
 using System.Text.RegularExpressions;
+using Invenire.Common.Errors;
 
-namespace Invenire.Api.Properties.Items.Update;
+namespace Invenire.Api.Properties.Suggestions.Create;
 
-public record UpdatePropertyItemsResponse
+public record CreatePropertySuggestionResponse
 {
     public static readonly List<ErrorTranslation> ErrorTranslations =
     [
-
-        // Items
+        // Name.
         new ErrorTranslation
         {
-            Pattern = new Regex(@"'items' must not be empty\."),
-            Translate = _ => "Seznam položek nesmí být prázdný."
+            Pattern = new Regex(@"'name' must not be empty\."),
+            Translate = _ => "Název nesmí být prázdný."
+        },
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The length of 'name' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
+            Translate = m => $"Název musí mít maximálně {m.Groups[1].Value} {PluralizeChar(int.Parse(m.Groups[1].Value))}. Zadali jste {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}."
         },
 
-        // Inventory number
+        // Description.
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@"The length of 'decription' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
+            Translate = m => $"Název musí mít maximálně {m.Groups[1].Value} {PluralizeChar(int.Parse(m.Groups[1].Value))}. Zadali jste {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}."
+        },
+
+        // Items.Inventory number
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'inventory_number' must not be empty\."),
@@ -27,7 +38,7 @@ public record UpdatePropertyItemsResponse
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Inventarizační číslo musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
         },
 
-        // Registration number
+        // Items.Registration number
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'registration_number' must not be empty\."),
@@ -39,7 +50,7 @@ public record UpdatePropertyItemsResponse
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Evidenční číslo musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
         },
 
-        // Name
+        // Items.Name
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'name' must not be empty\."),
@@ -51,28 +62,28 @@ public record UpdatePropertyItemsResponse
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Název musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
         },
 
-        // Price
+        // Items.Price
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'price' must be greater than or equal to '0'\."),
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Cena musí být větší nebo rovna 0."
         },
 
-        // Serial number
+        // Items.Serial number
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): The length of 'serial_number' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Sériové číslo musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
         },
 
-        // Date of purchase
+        // Items.Date of purchase
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'date_of_purchase' must not be empty\."),
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Datum pořízení nesmí být prázdné."
         },
 
-        // Location (room / building / additional note)
+        // Items.Location (room / building / additional note)
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'room' must not be empty\."),
@@ -99,14 +110,14 @@ public record UpdatePropertyItemsResponse
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Poznámka k lokaci musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
         },
 
-        // Description
+        // Items.Description
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): The length of 'description' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
             Translate = m => $"Položka {NormalizeInventoryNumber(m.Groups[1].Value)}: Popis musí mít maximálně {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}. Zadali jste {m.Groups[3].Value} {PluralizeChar(int.Parse(m.Groups[3].Value))}."
         },
 
-        // Document number
+        // Items.Document number
         new ErrorTranslation
         {
             Pattern = new Regex(@"Item (.+): 'document_number' must not be empty\."),

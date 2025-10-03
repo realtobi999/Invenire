@@ -11,6 +11,8 @@
 
 @page "/dashboard"
 
+<button @onclick="() => Logout()">Odhlásit</button>
+
 @if (Role == JwtRole.Admin)
 {
     @if (IsOrganizationNull is true)
@@ -47,6 +49,18 @@ else if (Role == JwtRole.Employee)
     else
     {
         <h1>Dashboard</h1>
+        <div>
+            <h2>Přehled vás</h2>
+            <EmployeeOverview />
+        </div>
+        <div>
+            <h2>Přehled organizace</h2>
+            <EmployeeOrganizationOverview />
+        </div>        
+        <div>
+            <h2>Přehled majetku</h2>
+            <EmployeePropertyOverview />
+        </div>
     }
 }
 
@@ -107,5 +121,12 @@ else if (Role == JwtRole.Employee)
     {
         IsOrganizationNull = false;
         StateHasChanged();
+    }
+
+    private async Task Logout()
+    {
+        await Client.PostAsync("/api/logout", null);
+
+        Navigation.NavigateTo("/login");
     }
 }

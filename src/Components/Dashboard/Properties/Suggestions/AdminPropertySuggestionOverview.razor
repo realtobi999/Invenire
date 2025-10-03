@@ -362,7 +362,7 @@ else
 
     private List<PropertySuggestionDto> Suggestions { get; set; } = [];
     private Dictionary<Guid, PropertyItemDto> DeletedItems { get; set; } = [];
-    private Dictionary<UpdatePropertyItemRequest, PropertyItemDto> UpdatedItems { get; set; } = [];
+    private Dictionary<UpdatePropertyItemRequestBody, PropertyItemDto> UpdatedItems { get; set; } = [];
 
     private int Limit { get; set; } = 1;
     private int CurrentOffset { get; set; }

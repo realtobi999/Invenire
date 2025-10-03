@@ -1,9 +1,11 @@
 @using System.Net
+@using Invenire.Api.Users.Employees
+@using Invenire.Api.Users.Employees.Update
 @using Invenire.Common.Errors
 @using Invenire.Api.Users.Admin
 @using Invenire.Api.Users.Admin.Update
 
-@if (Admin is not null)
+@if (Employee is not null)
 {
     <EditForm Model="Body" OnSubmit="HandleUpdate" @ref="Form">
         <div>
@@ -24,7 +26,7 @@
 }
 @code {
     [Inject] private HttpClient Client { get; set; } = default!;
-    [Parameter] public AdminDto? Admin { get; set; }
+    [Parameter] public EmployeeDto? Employee { get; set; }
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
@@ -32,7 +34,7 @@
     private ValidationMessageStore ErrorValidationMessages = null!;
 
     private EditForm Form = null!;
-    private UpdateAdminRequestBody Body = new();
+    private UpdateEmployeeRequestBody Body = new();
 
     protected override void OnAfterRender(bool rendered)
     {
@@ -44,10 +46,10 @@
 
     protected override void OnParametersSet()
     {
-        if (Admin is not null)
+        if (Employee is not null)
         {
-            Body.FirstName = Admin.FirstName;
-            Body.LastName = Admin.LastName;
+            Body.FirstName = Employee.FirstName;
+            Body.LastName = Employee.LastName;
         }
     }
 
@@ -56,7 +58,7 @@
         ErrorGeneralMessage = null;
         ErrorValidationMessages.Clear();
 
-        var response = await Client.PutAsJsonAsync("/api/admins", Body);
+        var response = await Client.PutAsJsonAsync("/api/employees", Body);
 
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
@@ -77,14 +79,14 @@
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, UpdateAdminResponse.ErrorTranslations));
+                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, UpdateEmployeeResponse.ErrorTranslations));
                 }
 
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, UpdateAdminResponse.ErrorTranslations);
+                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, UpdateEmployeeResponse.ErrorTranslations);
             }
         }
     }

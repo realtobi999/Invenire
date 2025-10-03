@@ -1,0 +1,127 @@
+@using System.Net
+@using Invenire.Api.Properties.Items
+@using Invenire.Api.Properties.Items.Update
+@using Invenire.Api.Properties.Suggestions
+@using Invenire.Api.Properties.Suggestions.Create
+@using Invenire.Common.Errors
+@using Invenire.Api.Properties.Scans.Create;
+
+<EditForm Model="Body" OnSubmit="HandleCreation" @ref="Form">
+    <div>
+        <label>Název:</label>
+        <InputText @bind-Value="Body.Name" style="width:53%;" />
+        <ValidationMessage For="@(() => Body.Name)" />
+    </div>
+
+    <div>
+        <label>Text:</label>
+        <InputText @bind-Value="Body.Description" style="width:80%;" />
+        <ValidationMessage For="@(() => Body.Description)" />
+    </div>
+
+    <button type="submit">Vytvořit</button>
+    <button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+</EditForm>
+
+@if (Errors.Count != 0)
+{
+    <div>
+        @foreach(var error in Errors)
+        {
+            <p>@error</p>
+        }
+    </div>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Parameter] public List<PropertyItemDto> ItemsToDelete { get; set; } = [];
+    [Parameter] public List<PropertyItemDto> ItemsToUpdate { get; set; } = [];
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private List<string> Errors = [];
+    private ValidationMessageStore ErrorValidationMessages = null!;
+
+    private EditForm Form = null!;
+    private CreatePropertySuggestionRequestBody Body = new();
+
+    protected override void OnAfterRender(bool first)
+    {
+        if (Form is not null && first)
+        {
+            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+        }
+    }
+
+    private async Task HandleCreation()
+    {
+        Errors.Clear();
+        ErrorValidationMessages.Clear();
+
+        Body.Payload = new PropertySuggestionPayloadDto
+        {
+            CreateCommands = [],
+            DeleteCommands = ItemsToDelete.Select(i => i.Id).ToList(),
+            UpdateCommands = ItemsToUpdate.Select(i => new UpdatePropertyItemRequestBody
+            {
+                Id = i.Id,
+                EmployeeId = i.EmployeeId,
+                InventoryNumber = i.InventoryNumber,
+                RegistrationNumber = i.RegistrationNumber,
+                Name = i.Name,
+                Price = i.Price,
+                SerialNumber = i.SerialNumber,
+                DateOfPurchase = i.DateOfPurchase.ToUniversalTime(),
+                DateOfSale = i.DateOfSale?.ToUniversalTime() ?? null,
+                Location = new UpdatePropertyItemCommandLocation
+                {
+                    Room = i.Location.Room,
+                    Building = i.Location.Building,
+                    AdditionalNote = i.Location.AdditionalNote,
+                },
+                Description = i.Description,
+                DocumentNumber = i.DocumentNumber,
+            }).ToList()
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/properties/suggestions", Body);
+
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            await OnClose.InvokeAsync(true);
+            await OnChange.InvokeAsync(true);
+        }
+        else
+        {
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (content.Type == "ValidationException")
+            {
+                foreach (var error in content.Errors!)
+                {
+                    if (error.Contains("name"))
+                    {
+                        var field = Form.EditContext!.Field(nameof(Body.Name));
+                        ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, CreatePropertySuggestionResponse.ErrorTranslations));
+                    }
+                    else if (error.Contains("description"))
+                    {
+                        var field = Form.EditContext!.Field(nameof(Body.Description));
+                        ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, CreatePropertySuggestionResponse.ErrorTranslations));
+                    }
+                    else
+                    {
+                        Errors.Add(ErrorTranslator.Translate(error, CreatePropertySuggestionResponse.ErrorTranslations));
+                    }
+                }
+                
+                Form.EditContext!.NotifyValidationStateChanged();
+            }
+            else
+            {
+                Errors.Add(ErrorTranslator.Translate(content.Detail, CreatePropertySuggestionResponse.ErrorTranslations));
+            }
+        }
+    }
+}

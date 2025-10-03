@@ -1,0 +1,48 @@
+@using System.Net
+@using Invenire.Common.Errors
+@using Invenire.Api.Properties
+@using Invenire.Components.Forms.Properties
+@using Invenire.Components.Dashboard.Properties.Scans
+@using Invenire.Components.Dashboard.Properties.Items
+@using Invenire.Components.Dashboard.Properties.Suggestions
+
+@if (Property is not null)
+{
+    <h3>Základní informace</h3>
+    <EmployeePropertyBaseOverview Property="Property" />
+    <h3>Položky</h3>
+    <EmployeePropertyItemBaseOverview Property="Property"/>
+}
+else
+{
+    <p>Admin zatím nevytvořil majetek k organizaci.</p>
+}
+
+@code {
+    [Inject] private HttpClient Client { get; set; } = default!;
+
+    private PropertyDto? Property { get; set; }
+
+    protected override async Task OnInitializedAsync() => await LoadProperty();
+
+    private async Task LoadProperty()
+    {
+        var response = await Client.GetAsync("/api/properties");
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            var error = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (error.Detail == "The organization doesn't have a property.")
+            {
+                return;
+            }
+            else
+            {
+                throw new Exception("Something went wrong during the request to get the property.");
+            }
+        }
+
+        Property = await response.Content.ReadFromJsonAsync<PropertyDto>();
+    }
+}

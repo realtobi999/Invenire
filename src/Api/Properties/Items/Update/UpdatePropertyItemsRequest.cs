@@ -2,13 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace Invenire.Api.Properties.Items.Update;
 
-public record UpdatePropertyItemsRequest
+public record UpdatePropertyItemsRequestBody
 {
     [JsonPropertyName("items")]
-    public required List<UpdatePropertyItemRequest> Items { get; init; }
+    public required List<UpdatePropertyItemRequestBody> Items { get; init; }
 }
 
-public record UpdatePropertyItemRequest
+public record UpdatePropertyItemRequestBody
 {
     [JsonPropertyName("id")]
     public required Guid Id { get; init; }

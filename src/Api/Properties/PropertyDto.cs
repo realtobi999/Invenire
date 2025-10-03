@@ -29,41 +29,41 @@ public record PropertyDto
 public record PropertyDtoItemsSummary
 {
     [JsonPropertyName("total_items")]
-    public required int TotalItems { get; set; }
+    public int? TotalItems { get; set; }
 
     [JsonPropertyName("total_value")]
-    public required double TotalValue { get; set; }
+    public double? TotalValue { get; set; }
 
     [JsonPropertyName("average_price")]
-    public required double AveragePrice { get; set; }
+    public double? AveragePrice { get; set; }
 
     [JsonPropertyName("average_age")]
-    public required double AverageAge { get; set; }
+    public double? AverageAge { get; set; }
 }
 
 public record PropertyDtoScansSummary
 {
     [JsonPropertyName("total_scans")]
-    public required int TotalScans { get; set; }
+    public int? TotalScans { get; set; }
 
     [JsonPropertyName("total_active_scans")]
-    public required int TotalActiveScans { get; set; }
+    public int? TotalActiveScans { get; set; }
 
     [JsonPropertyName("last_active_scan")]
-    public required DateTimeOffset? LastActiveScan { get; set; }
+    public DateTimeOffset? LastActiveScan { get; set; }
 }
 
 public class PropertyDtoSuggestionsSummary
 {
     [JsonPropertyName("total_suggestions")]
-    public required int TotalSuggestions { get; set; }
+    public int? TotalSuggestions { get; set; }
 
     [JsonPropertyName("total_approved_suggestions")]
-    public required int TotalApprovedSuggestions { get; set; }
+    public int? TotalApprovedSuggestions { get; set; }
 
     [JsonPropertyName("total_pending_suggestions")]
-    public required int TotalPendingSuggestions { get; set; }
+    public int? TotalPendingSuggestions { get; set; }
 
     [JsonPropertyName("total_declined_suggestions")]
-    public required int TotalDeclinedSuggestions { get; set; }
+    public int? TotalDeclinedSuggestions { get; set; }
 }

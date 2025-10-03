@@ -56,6 +56,15 @@
 
             <br />
 
+            <label for="WithGeneratedCode">Vygenerovaný kód:</label>
+            <select id="WithGeneratedCode" @bind="WithGeneratedCode" >
+                <option value="">Nezáleží</option>
+                <option value="true">S kódem</option>
+                <option value="false">Bez kódu</option>
+            </select>
+
+            <br />
+
             <label for="Employee">Spravuje:</label>
             <input id="Employee" type="email" @bind="FilteringEmployeeEmailAddress" @bind:after="() => GetEmployeeForFiltering()"/>
 
@@ -84,7 +93,7 @@
             {
                 @foreach (var item in ScannedItems)
                 {
-                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#BBFF99; flex: 1 1 calc(22% - 0.5rem);">
+                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@(item.LastCodeGeneratedAt is not null ? "#BBFF99" : "#EEEE77"); flex: 1 1 calc(22% - 0.5rem);">
                         <ul style="list-style-type:none;padding:0;margin:0;">
                             <li><strong>ID:</strong> @item.Id</li>
                             <li><strong>Název:</strong> @item.Name</li>
@@ -101,6 +110,8 @@
                             <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
                             <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
                             <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Naskenováno:</strong> @(item.LastScannedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
                         </ul>
                     </div>
                 }
@@ -136,6 +147,7 @@
                             <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
                             <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
                             <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
                         </ul>
                         @if (Scan!.CompletedAt is null)
                         {
@@ -209,6 +221,7 @@
     private DateTime? DateOfPurchaseTo { get; set; }
     private string? Room { get; set; }
     private string? Building { get; set; }
+    private string? WithGeneratedCode { get; set; }
     private Guid? FilteringEmployeeId { get; set; }
     private string? FilteringEmployeeErrorMessage { get; set; }
     private string? FilteringEmployeeEmailAddress { get; set; }
@@ -323,6 +336,10 @@
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
+            
+            // Přidání nového parametru filtru
+            if (!string.IsNullOrEmpty(WithGeneratedCode))
+                parameters.Add($"withGeneratedCode={WithGeneratedCode}");
         }
     }
 
@@ -375,6 +392,8 @@
         FilteringEmployeeId = null;
         FilteringEmployeeErrorMessage = null;
         FilteringEmployeeEmailAddress = null;
+        // Vymazání nového filtru
+        WithGeneratedCode = null;
 
         await LoadItemsWithFilter();
     }

@@ -10,6 +10,8 @@
 @using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.IndexByAdmin
 @using Invenire.Components.Forms.Properties.Items
+@using Invenire.Components.Forms.Properties.Suggestions
+@using System.Formats.Asn1
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h4 style="margin:0;">Všechny položky</h4>
@@ -76,17 +78,7 @@
 
             <br />
 
-            <label for="Employee">Spravuje:</label>
-            <input id="Employee" type="email" @bind="FilteringEmployeeEmailAddress" @bind:after="() => GetEmployeeForFiltering()"/>
-
-            @if (FilteringEmployeeErrorMessage is not null)
-            {
-                <span> @FilteringEmployeeErrorMessage</span>
-            }
-
-            <br />
-
-            <button @onclick="() => LoadItems(0)" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
+            <button @onclick="() => LoadItems(0)" >Použít</button>
             <button @onclick="() => ClearFilters()">Vymazat</button>
         </div>
     }
@@ -111,28 +103,13 @@
             <span>Počet vybraných: @SelectedItems.Count</span>
         </div>
         <div>
-            <button @onclick="() => DeleteSelectedItems()" disabled="@(Items.All(i => DeletedItems.Contains(i)) || !SelectedItems.Any())">Označit vybrané jako smazané</button>
-            <button @onclick="() => ClearDeletedItems()" disabled="@(!DeletedItems.Any())">Ponechat všechny smazané položky</button>
-        </div>
-        <div>
-            <button @onclick="() => ShowDownloadCodesModal = true" disabled="@(!SelectedItems.Any())">Stáhnout QR kódy vybraných</button>
+            <button @onclick="() => DeleteSelectedItems()" disabled="@(!SelectedItems.Any())">Označit vybrané jako smazané</button>
+            <button @onclick="() => ClearDeletedItems()" disabled="@(!DeletedItemIds.Any())">Ponechat všechny smazané položky</button>
         </div>
 
         <div style="margin-bottom:2%">
-            <button @onclick="() => SaveChanges()" disabled="@(!DeletedItems.Any() && !UpdatedItems.Any())">Uložit změny</button>
-            <button @onclick="async () => {await ClearDeletedItems(); await ClearUpdatedItems();}" disabled="@(!DeletedItems.Any() && !UpdatedItems.Any())">Zrušit změny</button>
-
-            @if (SavingErrorMessages.Any())
-            {
-                <ul>
-                @foreach ( var error in SavingErrorMessages)
-                {
-                    <li>@error</li>
-                }
-                </ul>
-
-                <button @onclick="() => SavingErrorMessages.Clear()">Smazat upozornění</button>
-            }
+            <button @onclick="() => ShowCreateSuggestionModal = true" disabled="@(!HasPendingChanges)">Vytvořit návrh</button>
+            <button @onclick="async () => {await ClearDeletedItems(); await ClearUpdatedItems();}" disabled="@(!HasPendingChanges)">Zrušit změny</button>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
@@ -326,40 +303,40 @@
             gap: 10px;
             box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
         ">
-            <button @onclick="() =>  LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+            <button @onclick="() => LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
             <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
             <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
         </div>
     </div>
 
-    @if (ShowDownloadCodesModal)
+    @if (ShowCreateSuggestionModal)
     {
         <div style="
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0,0,0,0.5);
-                    z-index: 9999;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    overflow: auto; /* allow modal to scroll if too tall */
-                    padding: 1rem;  /* optional: spacing around modal */
-                ">
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;">
             <div style="
-                        background: white;
-                        border-radius: 6px;
-                        max-height: 90vh;  /* don't exceed viewport height */
-                        overflow-y: auto;  /* scroll inside modal */
-                        padding: 1rem;
-                        min-width: 300px;
-                        max-width: 90%;
-                    ">
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: 500px;
+                max-width: 90%;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
 
-                <GenerateCodesPropertyItemsForm Items="SelectedItems.ToList()" OnChange="async () => { await LoadItems(CurrentOffset); ShowDownloadCodesModal = false;}" OnClose="() => ShowDownloadCodesModal = false" />
-            </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;">Vytvořit návrh</h4>
+                        <button @onclick="() => ShowCreateSuggestionModal = false">X</button>
+                    </div>
+
+                    <CreatePropertySuggestionForm OnClose="() => ShowCreateSuggestionModal = false" OnChange="() => OnSuggestionCreation()" ItemsToDelete="DeletedItems.ToList()" ItemsToUpdate="UpdatedItems.ToList()"/>
+                </div>
         </div>
     }
 }
@@ -470,13 +447,11 @@ else
                 parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
             if (DateOfPurchaseTo is not null)
                 parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
-            if (FilteringEmployeeId is not null)
-                parameters.Add($"employeeId={FilteringEmployeeId}");
             if (!string.IsNullOrEmpty(Room))
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
-            
+
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
         }
@@ -490,11 +465,11 @@ else
         Items = content.Data;
         Limit = content.Limit;
         TotalItemsCount = content.TotalCount;
-
-        StateHasChanged();
+        
+        StateHasChanged(); 
     }
 
-    private bool CanGoPrev => CurrentOffset > 0; 
+    private bool CanGoPrev => CurrentOffset > 0;
     private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
 
     private bool ShowFilteringOptions { get; set; }
@@ -510,40 +485,8 @@ else
 
     private string? Room { get; set; }
     private string? Building { get; set; }
-    
+
     private string? WithGeneratedCode { get; set; }
-
-    private Guid? FilteringEmployeeId { get; set; }
-    private string? FilteringEmployeeErrorMessage { get; set; }
-    private string? FilteringEmployeeEmailAddress { get; set; }
-
-    private async Task GetEmployeeForFiltering()
-    {
-        FilteringEmployeeErrorMessage = null;
-
-        if (string.IsNullOrEmpty(FilteringEmployeeEmailAddress))
-            return;
-
-        var response = await Client.GetAsync($"/api/organizations/employees/{FilteringEmployeeEmailAddress}");
-
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-
-            if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.") 
-                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nebyl nalezen.";
-            else if (exception.Type == "Unauthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.") 
-                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nepatří k vaší organizaci.";
-            else
-                throw new Exception("Something went wrong during the request to get the employee.");
-
-            return;
-        }
-
-        var content = await response.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
-
-        FilteringEmployeeId = content.Id;
-    }
 
     private async Task ClearFilters()
     {
@@ -555,10 +498,7 @@ else
         DateOfPurchaseTo = null;
         Room = null;
         Building = null;
-        FilteringEmployeeId = null;
-        FilteringEmployeeErrorMessage = null;
-        FilteringEmployeeEmailAddress = null;
-        WithGeneratedCode = null; // Vymazání nového filtru
+        WithGeneratedCode = null;
 
         await LoadItems(0);
     }
@@ -660,132 +600,22 @@ else
         await SavePersistentState();
     }
 
-    /* Others */
-
-    private List<string> SavingErrorMessages { get; set; } = [];
+    private bool ShowCreateSuggestionModal { get; set; }
 
     public string GetItemColor(PropertyItemDto item)
     {
-        if (UpdatedItems.Any(i => i.Id == item.Id)) return "#BBFF99";
-        if (DeletedItems.Any(i => i.Id == item.Id)) return "#FF5B5B";
+        if (UpdatedItemDtos.ContainsKey(item.Id)) return "#BBFF99";
+        if (DeletedItemIds.Contains(item.Id)) return "#FF5B5B";
         if (SelectedItems.Any(i => i.Id == item.Id)) return "#E0E0E0";
         return "FFFFFF";
     }
 
-    public async Task SaveChanges()
+    private async Task OnSuggestionCreation()
     {
-        try
-        {
-            if (UpdatedItems.Any()) await SaveUpdatedAsync();
-            if (DeletedItems.Any()) await SaveDeletedAsync();
-        }
-        catch
-        {
-            return;
-        }
+        await ClearDeletedItems();
+        await ClearUpdatedItems();
 
         await LoadItems(0);
         await OnChange.InvokeAsync(true);
     }
-
-    public async Task SaveDeletedAsync()
-    {
-        var response = await Client.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/properties/items")
-        {
-            Content = JsonContent.Create(new DeletePropertyItemsRequest
-            {
-                Ids = [.. DeletedItems.Select(i => i.Id)],
-            })
-        });
-
-        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the requests to delete the items.");
-
-        await ClearDeletedItems();
-    }
-
-    public async Task SaveUpdatedAsync()
-    {
-        SavingErrorMessages.Clear();
-
-        var items = new List<UpdatePropertyItemRequestBody>();
-
-        foreach (var item in UpdatedItems)
-        {
-            if (item.Employee.EmailAddress != Items.First(i => i.Id == item.Id).Employee.EmailAddress)
-            {
-                var get = await Client.GetAsync($"/api/organizations/employees/{item.Employee.EmailAddress}");
-
-                if (get.StatusCode != HttpStatusCode.OK)
-                {
-                    var exception = await get.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-
-                    if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.") 
-                        SavingErrorMessages.Add($"Položka {item.InventoryNumber}: Zaměstnanec s touto adresou nebyl nalezen.");
-                    else if (exception.Type == "NotAuthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.") 
-                        SavingErrorMessages.Add($"Položka {item.InventoryNumber}: Zaměstnanec s touto adresou nepatří k vaší organizaci.");
-
-                    throw new Exception("Something went wrong during the request to get the employee.");
-                }
-    
-                var content = await get.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
-
-                item.EmployeeId = content.Id;
-            }
-
-            if (item.EmployeeId is not null && string.IsNullOrEmpty(item.Employee.EmailAddress)) item.EmployeeId = null;
-
-            items.Add(new UpdatePropertyItemRequestBody
-            {
-                Id = item.Id,
-                EmployeeId = item.EmployeeId,
-                InventoryNumber = item.InventoryNumber,
-                RegistrationNumber = item.RegistrationNumber,
-                Name = item.Name,
-                Price = item.Price,
-                SerialNumber = item.SerialNumber,
-                DateOfPurchase = item.DateOfPurchase.ToUniversalTime(),
-                DateOfSale = item.DateOfSale is not null ? item.DateOfSale!.Value.ToUniversalTime() : null,
-                Location = new UpdatePropertyItemCommandLocation
-                {
-                    Room = item.Location.Room,
-                    Building = item.Location.Building,
-                    AdditionalNote = item.Location.AdditionalNote,
-                },
-                Description = item.Description,
-                DocumentNumber = item.DocumentNumber,
-            });
-        }
-
-        var body = new UpdatePropertyItemsRequestBody
-        {
-            Items = items
-        };
-
-        var response = await Client.PutAsJsonAsync("/api/properties/items", body);
-
-        if (response.StatusCode != HttpStatusCode.NoContent) 
-        {
-            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-
-            if (exception.Type == "ValidationException")
-            {
-                foreach (var error in exception.Errors!)
-                {
-                    SavingErrorMessages.Add(ErrorTranslator.Translate(error, UpdatePropertyItemsResponse.ErrorTranslations));
-                }
-            }
-            else
-            {
-                SavingErrorMessages.Add(ErrorTranslator.Translate(exception.Detail, UpdatePropertyItemsResponse.ErrorTranslations));
-            }
-
-            throw new Exception("Something went wrong during the requests to update the items.");
-        }
-
-        await ClearUpdatedItems();
-    }
-
-    /** Downloading QR's. **/
-
-    private bool ShowDownloadCodesModal { get; set; }
 }
