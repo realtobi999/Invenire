@@ -1,0 +1,12 @@
+@using ZXingBlazor.Components
+
+<BarcodeReader ScanResult="ScanResult" />
+
+@code {
+    public string? BarCode { get; set; }
+    
+    private void ScanResult(string result)
+    {
+        BarCode = result;
+    }
+}

@@ -49,17 +49,19 @@ else if (Role == JwtRole.Employee)
     else
     {
         <h1>Dashboard</h1>
-        <div>
-            <h2>Přehled vás</h2>
-            <EmployeeOverview />
-        </div>
-        <div>
-            <h2>Přehled organizace</h2>
-            <EmployeeOrganizationOverview />
-        </div>        
-        <div>
-            <h2>Přehled majetku</h2>
-            <EmployeePropertyOverview />
+        <div style="display: flex; gap: 1rem;">
+            <div style="flex: 1;">
+                <h2>Přehled vás</h2>
+                <EmployeeOverview />
+            </div>
+            <div style="flex: 1;">
+                <h2>Přehled organizace</h2>
+                <EmployeeOrganizationOverview />
+            </div>
+            <div style="flex: 3;">
+                <h2>Přehled majetku</h2>
+                <EmployeePropertyOverview />
+            </div>
         </div>
     }
 }

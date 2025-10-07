@@ -1,0 +1,158 @@
+@using System.Net
+@using System.Drawing
+@using System.Reflection.Metadata
+@using Invenire.Api.Properties.Items
+@using System.Runtime.InteropServices
+@using Invenire.Api.Properties.Suggestions
+@using Invenire.Api.Properties.Items.Update
+@using Invenire.Api.Properties.Suggestions.IndexByAdmin
+@using Invenire.Components.Dashboard.Properties.Items
+@using Invenire.Components.Forms.Properties.Suggestions
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h4 style="margin:0;">Všechny návrhy</h4>
+    <button @onclick="() => OnClose.InvokeAsync(true)">X</button>
+</div>
+
+<div>
+    <input type="text" @bind="SearchTerm" @bind:after="() => LoadSuggestions(0)" placeholder="Hledat ..." />
+</div>
+
+<div>
+    <label for="OrderSelect">Řazení: </label>
+    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadSuggestions(0)">
+        @foreach (var option in OrderOptions)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+</div>
+
+@if (Suggestions.Any())
+{
+    <div>
+        @foreach (var suggestion in Suggestions)
+        {
+
+            var status = GetCzechStatus(suggestion.Status);
+
+            <h4>Základní informace</h4>
+            <div>
+                <ul>
+                    <li><strong>Název:</strong> @suggestion.Name</li>
+                    <li><strong>Předloženo:</strong> @suggestion.Employee.EmailAddress</li>
+                    @if (!string.IsNullOrEmpty(suggestion.Description))
+                    {
+                        <li><strong>Popis:</strong> @suggestion.Description</li>
+                    }
+                    @if (!string.IsNullOrEmpty(suggestion.Feedback))
+                    {
+                        <li><strong>Feedback:</strong> @suggestion.Feedback</li>
+                    }
+                    <li><strong>Status:</strong> <span style="color:@status.Color">@status.Text</span></li>
+                    <li><strong>Vytvořeno:</strong> @suggestion.CreatedAt.ToString("g")</li>
+                    @if (suggestion.LastUpdatedAt is not null)
+                    {
+                        <li><strong>Upraveno:</strong> @suggestion.LastUpdatedAt.Value.ToString("g")</li>
+                    }
+                </ul>
+            </div>
+
+            <EmployeePropertySuggestionItemOverview Suggestion="suggestion" OnChange="async () => {await OnChange.InvokeAsync(true); await LoadSuggestions(CurrentOffset);}"/>
+        }
+    </div>
+
+    <div style="
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 10px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
+    ">
+        <button @onclick="() => LoadSuggestions(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+        <button @onclick="() => LoadSuggestions(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+    </div>
+}
+else
+{
+    <p>Žádné návrhy nebyly nalezeny.</p>
+}
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private List<PropertySuggestionDto> Suggestions { get; set; } = [];
+    private Dictionary<Guid, PropertyItemDto> DeletedItems { get; set; } = [];
+    private Dictionary<UpdatePropertyItemRequestBody, PropertyItemDto> UpdatedItems { get; set; } = [];
+
+    private int Limit { get; set; } = 1;
+    private int CurrentOffset { get; set; }
+    private int TotalItemsCount { get; set; }
+
+    private bool CanGoPrev => CurrentOffset > 0; 
+    private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
+
+    protected override async Task OnInitializedAsync() => await LoadSuggestions(0);
+
+    private async Task LoadSuggestions(int offset)
+    {
+        UpdatedItems.Clear();
+        DeletedItems.Clear();
+
+        CurrentOffset = Math.Max(0, offset);
+
+        var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
+
+        var parameters = new List<string>
+        {
+            $"limit={Limit}",
+            $"offset={CurrentOffset}",
+            $"order={sort}",
+            $"desc={descending}",
+            $"status={PropertySuggestionDtoStatus.DECLINED}"
+        };
+
+        if (!string.IsNullOrEmpty(SearchTerm))
+            parameters.Add($"searchQuery={SearchTerm}");
+
+        var response = await Client.GetAsync($"/api/properties/suggestions?{string.Join("&", parameters)}");
+
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the suggestions.");
+
+        var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertySuggestionResponse>() ?? throw new NullReferenceException();
+
+        Suggestions = content.Data;
+        Limit = content.Limit;
+        TotalItemsCount = content.TotalCount;
+    }
+
+    private string? SearchTerm { get; set; }
+
+    private string SelectedOrderOption { get; set; } = "createdat_asc";
+    private readonly List<(string Value, string Label)> OrderOptions = new()
+    {
+        ("name_asc", "Název (A-Z)"),
+        ("name_desc", "Název (Z-A)"),
+        ("createdat_asc", "Datum přidání (nejstarší první)"),
+        ("createdat_desc", "Datum přidání (nejnovější první)")
+    };
+
+    private (string Text, string Color) GetCzechStatus(PropertySuggestionDtoStatus status)
+    {
+        return status switch
+        {
+            PropertySuggestionDtoStatus.PENDING => ("Nevyřízený", "goldenrod"),
+            PropertySuggestionDtoStatus.DECLINED => ("Odmítnutý", "red"),
+            _ => ("Neznámý", "gray")
+        };
+    }
+}

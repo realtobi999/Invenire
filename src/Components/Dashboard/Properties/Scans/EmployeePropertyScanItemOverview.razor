@@ -1,0 +1,435 @@
+@using System.Net
+@using Invenire.Api.Properties.Items
+@using Invenire.Api.Properties.Items.IndexByScan
+@using Invenire.Api.Properties.Scans
+@using Invenire.Api.Users.Employees
+@using Invenire.Common.Errors
+@using Invenire.Components.Forms.Properties.Items
+
+<div>
+    <input type="text" placeholder="Hledat..." @bind="SearchQuery" @bind:after="() => LoadItemsWithFilter()" style="margin-top: 10px;" />
+</div>
+
+<div>
+    <label for="OrderSelect">Řazení: </label>
+    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItemsWithFilter()">
+        @foreach (var option in OrderOptions)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+</div>
+
+<div>
+    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await ClearFilters();}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
+    @if (ShowFilteringOptions)
+    {
+        <div>
+            <label for="PriceMin">Cena od:</label>
+            <input id="PriceMin" type="number" @bind="PriceMin" min="0" />
+
+            <label for="PriceMax">do:</label>
+            <input id="PriceMax" type="number" @bind="PriceMax" min="0" />
+
+            <br />
+
+            <label for="DateOfPurchaseFrom">Datum nákupu od:</label>
+            <input id="DateOfPurchaseFrom" type="date" @bind="DateOfPurchaseFrom" />
+
+            <label for="DateOfPurchaseTo">do:</label>
+            <input id="DateOfPurchaseTo" type="date" @bind="DateOfPurchaseTo" />
+
+            <br />
+
+            <label for="CreatedAtFrom">Datum přidání od:</label>
+            <input id="CreatedAtFrom" type="date" @bind="CreatedAtFrom" />
+
+            <label for="CreatedAtTo">do:</label>
+            <input id="CreatedAtTo" type="date" @bind="CreatedAtTo" />
+
+            <br />
+
+            <label for="Building">V budově:</label>
+            <input id="Building" type="text" @bind="Building" />
+
+            <label for="Room">V místnosti:</label>
+            <input id="Room" type="text" @bind="Room" />
+
+            <br />
+
+            <label for="WithGeneratedCode">Vygenerovaný kód:</label>
+            <select id="WithGeneratedCode" @bind="WithGeneratedCode" >
+                <option value="">Nezáleží</option>
+                <option value="true">S kódem</option>
+                <option value="false">Bez kódu</option>
+            </select>
+
+            <br />
+
+            <label for="Employee">Spravuje:</label>
+            <input id="Employee" type="email" @bind="FilteringEmployeeEmailAddress" @bind:after="() => GetEmployeeForFiltering()"/>
+
+            @if (FilteringEmployeeErrorMessage is not null)
+            {
+                <span> @FilteringEmployeeErrorMessage</span>
+            }
+
+            <br />
+
+            <button @onclick="() => LoadItemsWithFilter()" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
+            <button @onclick="() => ClearFilters()">Vymazat</button>
+        </div>
+    }
+</div>
+
+<br />
+
+<div>
+    <button @onclick="() => ShowScanItemModal = true">Skenovat položky</button>
+</div>
+
+<div style="display: flex; gap: 1rem;">
+    <div style="flex: 1; border-right: 2px solid #000; padding-right: 0.5rem;">
+        <h4>Naskenované Položky (@TotalScannedCount)</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            @if (ScannedItems.Count == 0)
+            {
+                <p>Položky již nebyly nalezeny.</p>
+            }
+            else
+            {
+                @foreach (var item in ScannedItems)
+                {
+                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@(item.LastCodeGeneratedAt is not null ? "#BBFF99" : "#EEEE77"); flex: 1 1 calc(22% - 0.5rem);">
+                        <ul style="list-style-type:none;padding:0;margin:0;">
+                            <li><strong>ID:</strong> @item.Id</li>
+                            <li><strong>Název:</strong> @item.Name</li>
+                            <li><strong>Cena:</strong> @item.Price Kč</li>
+                            <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
+                            <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
+                            <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
+                            <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
+                            <li><strong>Datum prodeje:</strong> @(item.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----")</li>
+                            <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
+                            <li><strong>Poznámka k umístění:</strong> @(item.Location.AdditionalNote ?? "-----")</li>
+                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
+                            <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
+                            <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
+                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Naskenováno:</strong> @(item.LastScannedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                        </ul>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div style="flex: 1; padding-left: 0.5rem;">
+        <h4>Zbytek (@TotalNotScannedCount)</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            @if (NotScannedItems.Count == 0)
+            {
+                <p>Položky již nebyly nalezeny.</p>
+            }
+            else
+            {
+                @foreach (var item in NotScannedItems)
+                {
+                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#FF5B5B; flex: 1 1 calc(22% - 0.5rem);">
+                        <ul style="list-style-type:none;padding:0;margin:0;">
+                            <li><strong>ID:</strong> @item.Id</li>
+                            <li><strong>Název:</strong> @item.Name</li>
+                            <li><strong>Cena:</strong> @item.Price Kč</li>
+                            <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
+                            <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
+                            <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
+                            <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
+                            <li><strong>Datum prodeje:</strong> @(item.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----")</li>
+                            <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
+                            <li><strong>Poznámka k umístění:</strong> @(item.Location.AdditionalNote ?? "-----")</li>
+                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
+                            <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
+                            <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
+                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                        </ul>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+    <div style="text-align: center; flex: 1;">
+        <button @onclick="() => LoadScannedItems(ScannedCurrentOffset - ScannedLimit)" disabled="@(!CanGoPrevScanned)">◀</button>
+        <span style="margin: 0 10px;">@(ScannedCurrentOffset / ScannedLimit + 1) / @ScannedTotalPages</span>
+        <button @onclick="() => LoadScannedItems(ScannedCurrentOffset + ScannedLimit)" disabled="@(!CanGoNextScanned)">▶</button>
+    </div>
+
+    <div style="text-align: center; flex: 1;">
+        <button @onclick="() => LoadNotScannedItems(NotScannedCurrentOffset - NotScannedLimit)" disabled="@(!CanGoPrevNotScanned)">◀</button>
+        <span style="margin: 0 10px;">@(NotScannedCurrentOffset / NotScannedLimit + 1) / @NotScannedTotalPages</span>
+        <button @onclick="() => LoadNotScannedItems(NotScannedCurrentOffset + NotScannedLimit)" disabled="@(!CanGoNextNotScanned)">▶</button>
+    </div>
+</div>
+
+@if (ShowScanItemModal)
+{
+    <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;">
+        <div style="
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="margin:0;">Naskenovat položky</h4>
+                <button @onclick="() => ShowScanItemModal = false">X</button>
+            </div>
+
+            <ScanPropertyItemForm />
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] public HttpClient Client { get; set; } = default!;
+    [Parameter] public PropertyScanDto? Scan { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private List<PropertyItemDto> ScannedItems { get; set; } = [];
+    private List<PropertyItemDto> NotScannedItems { get; set; } = [];
+
+    private int ScannedLimit { get; set; } = 12;
+    private int NotScannedLimit { get; set; } = 12;
+
+    private int ScannedCurrentOffset { get; set; }
+    private int NotScannedCurrentOffset { get; set; }
+
+    private int TotalScannedCount { get; set; }
+    private int TotalNotScannedCount { get; set; }
+
+    private int ScannedTotalPages => TotalScannedCount == 0 ? 1 : (int)Math.Ceiling((double)TotalScannedCount / ScannedLimit);
+    private bool CanGoPrevScanned => ScannedCurrentOffset > 0;
+    private bool CanGoNextScanned => ScannedCurrentOffset + ScannedLimit < TotalScannedCount;
+
+    private int NotScannedTotalPages => TotalNotScannedCount == 0 ? 1 : (int)Math.Ceiling((double)TotalNotScannedCount / NotScannedLimit);
+    private bool CanGoPrevNotScanned => NotScannedCurrentOffset > 0;
+    private bool CanGoNextNotScanned => NotScannedCurrentOffset + NotScannedLimit < TotalNotScannedCount;
+
+    private string SelectedOrderOption { get; set; } = "createdat_asc";
+    private readonly List<(string Value, string Label)> OrderOptions = new()
+    {
+        ("name_asc", "Název (A-Z)"),
+        ("name_desc", "Název (Z-A)"),
+        ("price_asc", "Cena (nejnižší první)"),
+        ("price_desc", "Cena (nejvyšší první)"),
+        ("dateofpurchase_asc", "Datum nákupu (nejstarší první)"),
+        ("dateofpurchase_desc", "Datum nákupu (nejnovější první)"),
+        ("createdat_asc", "Datum přidání (nejstarší první)"),
+        ("createdat_desc", "Datum přidání (nejnovější první)")
+    };
+
+    private bool ShowFilteringOptions { get; set; }
+    private decimal? PriceMin { get; set; }
+    private decimal? PriceMax { get; set; }
+    private DateTime? CreatedAtFrom { get; set; }
+    private DateTime? CreatedAtTo { get; set; }
+    private DateTime? DateOfPurchaseFrom { get; set; }
+    private DateTime? DateOfPurchaseTo { get; set; }
+    private string? Room { get; set; }
+    private string? Building { get; set; }
+    private string? WithGeneratedCode { get; set; }
+    private Guid? FilteringEmployeeId { get; set; }
+    private string? FilteringEmployeeErrorMessage { get; set; }
+    private string? FilteringEmployeeEmailAddress { get; set; }
+    private string? SearchQuery { get; set; }
+
+    protected override void OnParametersSet() => StateHasChanged();
+    protected override async Task OnInitializedAsync() => await LoadItemsWithFilter();
+
+    private async Task LoadItemsWithFilter()
+    {
+        ScannedCurrentOffset = 0;
+        NotScannedCurrentOffset = 0;
+        await LoadScannedItems(ScannedCurrentOffset);
+        await LoadNotScannedItems(NotScannedCurrentOffset);
+    }
+
+    private async Task LoadScannedItems(int offset)
+    {
+        try
+        {
+            ScannedCurrentOffset = Math.Max(0, offset);
+            var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
+
+            var parameters = new List<string>
+            {
+                $"limit={ScannedLimit}",
+                $"offset={ScannedCurrentOffset}",
+                $"order={sort}",
+                $"desc={descending}",
+                "scanned=true"
+            };
+
+            AddFilteringParameters(parameters);
+            AddSearchParameter(parameters);
+
+            var response = await Client.GetAsync($"/api/properties/scans/{Scan!.Id}/items?{string.Join("&", parameters)}");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                throw new Exception("Something went wrong during the request to get scanned items.");
+
+            var content = await response.Content.ReadFromJsonAsync<IndexByScanPropertyItemResponse>()
+                ?? throw new NullReferenceException();
+
+            ScannedItems = content.Data ?? [];
+            TotalScannedCount = content.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading scanned items: {ex.Message}");
+            ScannedItems = [];
+            TotalScannedCount = 0;
+        }
+    }
+
+    private async Task LoadNotScannedItems(int offset)
+    {
+        try
+        {
+            NotScannedCurrentOffset = Math.Max(0, offset);
+            var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
+
+            var parameters = new List<string>
+            {
+                $"limit={NotScannedLimit}",
+                $"offset={NotScannedCurrentOffset}",
+                $"order={sort}",
+                $"desc={descending}",
+                "scanned=false"
+            };
+
+            AddFilteringParameters(parameters);
+            AddSearchParameter(parameters);
+
+            var response = await Client.GetAsync($"/api/properties/scans/{Scan!.Id}/items?{string.Join("&", parameters)}");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                throw new Exception("Something went wrong during the request to get not scanned items.");
+
+            var content = await response.Content.ReadFromJsonAsync<IndexByScanPropertyItemResponse>()
+                ?? throw new NullReferenceException();
+
+            NotScannedItems = content.Data ?? [];
+            TotalNotScannedCount = content.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading not scanned items: {ex.Message}");
+            NotScannedItems = [];
+            TotalNotScannedCount = 0;
+        }
+    }
+
+    private void AddFilteringParameters(List<string> parameters)
+    {
+        if (ShowFilteringOptions)
+        {
+            if (PriceMin is not null)
+                parameters.Add($"minPrice={PriceMin}");
+            if (PriceMax is not null)
+                parameters.Add($"maxPrice={PriceMax}");
+            if (CreatedAtFrom is not null)
+                parameters.Add($"createdAtFrom={new DateTimeOffset(CreatedAtFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (CreatedAtTo is not null)
+                parameters.Add($"createdAtTo={new DateTimeOffset(CreatedAtTo.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (DateOfPurchaseFrom is not null)
+                parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (DateOfPurchaseTo is not null)
+                parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
+            if (FilteringEmployeeId is not null)
+                parameters.Add($"employeeId={FilteringEmployeeId}");
+            if (!string.IsNullOrEmpty(Room))
+                parameters.Add($"room={Room}");
+            if (!string.IsNullOrEmpty(Building))
+                parameters.Add($"building={Building}");
+            
+            // Přidání nového parametru filtru
+            if (!string.IsNullOrEmpty(WithGeneratedCode))
+                parameters.Add($"withGeneratedCode={WithGeneratedCode}");
+        }
+    }
+
+    private void AddSearchParameter(List<string> parameters)
+    {
+        if (!string.IsNullOrEmpty(SearchQuery))
+        {
+            parameters.Add($"searchQuery={SearchQuery}");
+        }
+    }
+
+    private async Task GetEmployeeForFiltering()
+    {
+        FilteringEmployeeErrorMessage = null;
+
+        if (string.IsNullOrEmpty(FilteringEmployeeEmailAddress))
+            return;
+
+        var response = await Client.GetAsync($"/api/organizations/employees/{FilteringEmployeeEmailAddress}");
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+
+            if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.")
+                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nebyl nalezen.";
+            else if (exception.Type == "Unauthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.")
+                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nepatří k vaší organizaci.";
+            else
+                throw new Exception("Something went wrong during the request to get the employee.");
+
+            return;
+        }
+
+        var content = await response.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
+
+        FilteringEmployeeId = content.Id;
+    }
+
+    private async Task ClearFilters()
+    {
+        PriceMin = null;
+        PriceMax = null;
+        CreatedAtFrom = null;
+        CreatedAtTo = null;
+        DateOfPurchaseFrom = null;
+        DateOfPurchaseTo = null;
+        Room = null;
+        Building = null;
+        FilteringEmployeeId = null;
+        FilteringEmployeeErrorMessage = null;
+        FilteringEmployeeEmailAddress = null;
+        WithGeneratedCode = null;
+
+        await LoadItemsWithFilter();
+    }
+
+    private bool ShowScanItemModal { get; set; }
+}
