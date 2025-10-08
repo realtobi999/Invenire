@@ -156,6 +156,10 @@
                             <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
                             <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
                         </ul>
+                        @if (Scan!.CompletedAt is null && item.LastCodeGeneratedAt is null)
+                        {
+                            <button @onclick="() => ScanItem(item)">Naskenovat</button>
+                        }
                     </div>
                 }
             }
@@ -429,6 +433,18 @@
         WithGeneratedCode = null;
 
         await LoadItemsWithFilter();
+    }
+
+    private async Task ScanItem(PropertyItemDto item)
+    {
+        var response = await Client.PutAsync($"/api/properties/items/{item.Id}/scan", null);
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to scan the item.");
+
+        await LoadScannedItems(ScannedCurrentOffset);
+        await LoadNotScannedItems(NotScannedCurrentOffset);
+
+        await OnChange.InvokeAsync(true);
     }
 
     private bool ShowScanItemModal { get; set; }
