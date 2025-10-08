@@ -1,12 +1,37 @@
-@using ZXingBlazor.Components
+@using BlazorBarcodeScanner.ZXing.JS
+@using System.Threading.Tasks
+@using System.Net
+@using System.Text.RegularExpressions
 
-<BarcodeReader ScanResult="ScanResult" />
+<div class="scanner-container">
+    <BarcodeReader
+        OnBarcodeReceived="ScanResult" 
+        StartCameraAutomatically="true"
+        ShowStart="false"
+        ShowReset="false"
+        ShowResult="false"
+        ShowStop="false"
+        ShowToggleTorch="false"
+        ShowVideoDeviceList="true"
+        Title=""
+        LabelVideoDeviceListText="Změnit kameru: "
+        TextWithoutDevices="Probíhá načítání kamery..."
+    />
+</div>
 
 @code {
-    public string? BarCode { get; set; }
-    
-    private void ScanResult(string result)
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
+
+    private async Task ScanResult(BarcodeReceivedEventArgs args)
     {
-        BarCode = result;
+        if (!Regex.IsMatch(args.BarcodeText, @"api/properties/items/[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/scan"))
+            return;
+
+        var response = await Client.PutAsync(args.BarcodeText, null);
+
+        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to scan the item.");
+
+        await OnChange.InvokeAsync(true);
     }
 }

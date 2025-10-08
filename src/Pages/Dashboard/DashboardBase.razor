@@ -23,16 +23,16 @@
     else
     {
         <h1>Dashboard</h1>
-        <div style="display: flex; gap: 1rem;">
-            <div style="flex: 1;">
+        <div>
+            <div>
                 <h2>Přehled vás</h2>
                 <AdminOverview />
             </div>
-            <div style="flex: 1;">
+            <div>
                 <h2>Přehled organizace</h2>
                 <AdminOrganizationOverview />
             </div>
-            <div style="flex: 3;">
+            <div>
                 <h2>Přehled majetku</h2>
                 <AdminPropertyOverview />
             </div>
@@ -49,16 +49,16 @@ else if (Role == JwtRole.Employee)
     else
     {
         <h1>Dashboard</h1>
-        <div style="display: flex; gap: 1rem;">
-            <div style="flex: 1;">
+        <div>
+            <div>
                 <h2>Přehled vás</h2>
                 <EmployeeOverview />
             </div>
-            <div style="flex: 1;">
+            <div>
                 <h2>Přehled organizace</h2>
                 <EmployeeOrganizationOverview />
             </div>
-            <div style="flex: 3;">
+            <div>
                 <h2>Přehled majetku</h2>
                 <EmployeePropertyOverview />
             </div>

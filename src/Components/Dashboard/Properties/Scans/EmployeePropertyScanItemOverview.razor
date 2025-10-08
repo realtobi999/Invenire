@@ -203,7 +203,7 @@
                 <button @onclick="() => ShowScanItemModal = false">X</button>
             </div>
 
-            <ScanPropertyItemForm />
+            <ScanPropertyItemForm OnChange="async () => {await LoadItemsWithFilter(); await OnChange.InvokeAsync(true);}"/>
         </div>
     </div>
 }
