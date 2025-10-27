@@ -115,7 +115,8 @@ else
     }
 }
 
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulJoin { get; set; }
 

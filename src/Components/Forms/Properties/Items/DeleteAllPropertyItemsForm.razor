@@ -9,7 +9,8 @@
     <button style="width:20%"@onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
 </div>
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set;}
     [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set;}

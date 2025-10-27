@@ -140,7 +140,8 @@ else
 
 
 
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public OrganizationDto? Organization { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }

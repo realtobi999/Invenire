@@ -23,7 +23,8 @@ else
     <CreatePropertyForm OnSuccessfulCreation="ReloadProperty"/>
 }
 
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
 
 

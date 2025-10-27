@@ -34,7 +34,8 @@
     </div>
 }
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
 

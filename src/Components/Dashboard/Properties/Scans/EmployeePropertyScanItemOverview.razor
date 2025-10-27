@@ -207,12 +207,13 @@
                 <button @onclick="() => ShowScanItemModal = false">X</button>
             </div>
 
-            <ScanPropertyItemForm OnChange="async () => {await LoadItemsWithFilter(); await OnChange.InvokeAsync(true);}"/>
+            <ScanPropertyItemForm OnSuccessfulScan="async () => {await LoadItemsWithFilter(); await OnChange.InvokeAsync(true);}"/>
         </div>
     </div>
 }
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public PropertyScanDto? Scan { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
@@ -374,8 +375,6 @@
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
-            
-            // Přidání nového parametru filtru
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
         }

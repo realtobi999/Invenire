@@ -28,12 +28,13 @@
     </div>
 }
 
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public List<PropertyItemDto> ItemsToDelete { get; set; } = [];
     [Parameter] public List<PropertyItemDto> ItemsToUpdate { get; set; } = [];
     [Parameter] public EventCallback<bool> OnClose { get; set; }
-    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
     [Parameter] public PropertySuggestionDto? Suggestion { get; set; }
 
     private List<string> Errors = [];
@@ -94,7 +95,7 @@
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
             await OnClose.InvokeAsync(true);
-            await OnChange.InvokeAsync(true);
+            await OnSuccessfulCreation.InvokeAsync(true);
         }
         else
         {

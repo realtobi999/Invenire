@@ -22,7 +22,8 @@ else
     <p>Admin zatím nevytvořil majetek k organizaci.</p>
 }
 
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
 
     private PropertyDto? Property { get; set; }

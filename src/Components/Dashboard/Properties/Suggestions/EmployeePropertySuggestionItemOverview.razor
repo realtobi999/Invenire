@@ -333,7 +333,7 @@
                         <button @onclick="() => ShowUpdateSuggestionModal = false">X</button>
                     </div>
 
-                    <UpdatePropertySuggestionForm OnClose="() => ShowUpdateSuggestionModal = false" OnChange="() => OnSuggestionUpdate()" ItemsToDelete="DeletedItems.ToList()" ItemsToUpdate="UpdatedItems.ToList()" Suggestion="Suggestion"/>
+                    <UpdatePropertySuggestionForm OnClose="() => ShowUpdateSuggestionModal = false" OnSuccessfulCreation="() => OnSuggestionUpdate()" ItemsToDelete="DeletedItems.ToList()" ItemsToUpdate="UpdatedItems.ToList()" Suggestion="Suggestion"/>
                 </div>
         </div>
     }
@@ -344,7 +344,8 @@ else
 }
 
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }

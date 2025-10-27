@@ -19,9 +19,10 @@
     />
 </div>
 
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
-    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulScan { get; set; }
 
     private async Task ScanResult(BarcodeReceivedEventArgs args)
     {
@@ -32,6 +33,6 @@
 
         if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to scan the item.");
 
-        await OnChange.InvokeAsync(true);
+        await OnSuccessfulScan.InvokeAsync(true);
     }
 }

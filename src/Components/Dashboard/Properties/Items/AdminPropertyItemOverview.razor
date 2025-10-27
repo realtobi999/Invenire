@@ -358,7 +358,7 @@
                         max-width: 90%;
                     ">
 
-                <GenerateCodesPropertyItemsForm Items="SelectedItems.ToList()" OnChange="async () => { await LoadItems(CurrentOffset); ShowDownloadCodesModal = false;}" OnClose="() => ShowDownloadCodesModal = false" />
+                <GenerateCodesPropertyItemsForm Items="SelectedItems.ToList()" OnSuccessfulGeneration="async () => { await LoadItems(CurrentOffset); ShowDownloadCodesModal = false;}" OnClose="() => ShowDownloadCodesModal = false" />
             </div>
         </div>
     }
@@ -369,7 +369,8 @@ else
 }
 
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Inject] public ILocalStorageService Storage { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
@@ -476,7 +477,6 @@ else
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
-            
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
         }
@@ -558,7 +558,7 @@ else
         FilteringEmployeeId = null;
         FilteringEmployeeErrorMessage = null;
         FilteringEmployeeEmailAddress = null;
-        WithGeneratedCode = null; // Vymazání nového filtru
+        WithGeneratedCode = null;
 
         await LoadItems(0);
     }

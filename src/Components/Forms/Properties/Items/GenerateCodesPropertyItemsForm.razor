@@ -15,11 +15,12 @@ else
     <p>Žádost se zpracovává... Může to chvíli trvat.</p>
 }
 
-@code {
+@code
+{
     [Inject] public IJSRuntime JS { get; set; } = default!;
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
-    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulGeneration { get; set; }
     [Parameter] public List<PropertyItemDto> Items { get; set; } = [];
 
     private bool IsProcessing { get; set; }
@@ -42,6 +43,6 @@ else
 
         IsProcessing = false;
         await OnClose.InvokeAsync(true);
-        await OnChange.InvokeAsync(true);
+        await OnSuccessfulGeneration.InvokeAsync(true);
     }
 }

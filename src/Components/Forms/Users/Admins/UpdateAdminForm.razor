@@ -22,11 +22,12 @@
         <button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
     </EditForm>
 }
-@code {
+@code
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public AdminDto? Admin { get; set; }
     [Parameter] public EventCallback<bool> OnClose { get; set; }
-    [Parameter] public EventCallback<bool> OnChange { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulUpdate { get; set; }
 
     private string? ErrorGeneralMessage;
     private ValidationMessageStore ErrorValidationMessages = null!;
@@ -60,7 +61,7 @@
 
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
-            await OnChange.InvokeAsync(true);
+            await OnSuccessfulUpdate.InvokeAsync(true);
         }
         else
         {

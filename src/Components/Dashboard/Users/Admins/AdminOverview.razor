@@ -43,7 +43,7 @@
                 <button @onclick="() => ShowUpdateModal = false">X</button>
             </div>
 
-            <UpdateAdminForm Admin="Admin" OnClose="() => ShowUpdateModal = false" OnChange="OnSuccessfulAdminUpdate" />
+            <UpdateAdminForm Admin="Admin" OnClose="() => ShowUpdateModal = false" OnSuccessfulUpdate="OnSuccessfulAdminUpdate" />
         </div>
     </div>
 }
@@ -69,15 +69,10 @@
         Admin = await response.Content.ReadFromJsonAsync<AdminDto>();
     }
 
-    private async Task ReloadAdmin()
-    {
-        await LoadAdmin();
-        StateHasChanged();
-    }
-
     private async Task OnSuccessfulAdminUpdate()
     {
         ShowUpdateModal = false;
-        await ReloadAdmin();
+        await LoadAdmin();
+        StateHasChanged();
     }
 }

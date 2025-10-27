@@ -174,7 +174,8 @@
     </div>
 </div>
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public PropertyScanDto? Scan { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
@@ -336,8 +337,6 @@
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
-            
-            // Přidání nového parametru filtru
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
         }
@@ -392,7 +391,6 @@
         FilteringEmployeeId = null;
         FilteringEmployeeErrorMessage = null;
         FilteringEmployeeEmailAddress = null;
-        // Vymazání nového filtru
         WithGeneratedCode = null;
 
         await LoadItemsWithFilter();

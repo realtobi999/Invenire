@@ -40,14 +40,15 @@
                     <h4 style="margin: 0;">Upravit informace organizace</h4>
                     <button @onclick="() => ShowModal = false">X</button>
                 </div>
-
+                    
                 <UpdateOrganizationForm Organization="Organization" OnClose="() => ShowModal = false" OnSuccessfulUpdate="OnSuccessfulOrganizationUpdate" />
             </div>
         </div>
     }
 }
 
-@code {
+@code 
+{
     [Parameter] public OrganizationDto? Organization { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulUpdate { get; set; }
 

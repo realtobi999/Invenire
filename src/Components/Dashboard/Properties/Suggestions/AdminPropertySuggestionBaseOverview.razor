@@ -59,7 +59,8 @@ else
     <p>Zatím nebyli přidané žádné návrhy</p>
 }
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public PropertyDto? Property { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }

@@ -40,7 +40,7 @@
                 <button @onclick="() => ShowUpdateModal = false">X</button>
             </div>
 
-            <UpdateEmployeeForm Employee="Employee" OnClose="() => ShowUpdateModal = false" OnChange="OnSuccessfulEmployeeUpdate" />
+            <UpdateEmployeeForm Employee="Employee" OnClose="() => ShowUpdateModal = false" OnSuccessfulUpdate="OnSuccessfulEmployeeUpdate" />
         </div>
     </div>
 }

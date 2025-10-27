@@ -19,15 +19,13 @@
 }
 
 
-@code {
+@code 
+{
     [Inject] private HttpClient Client { get; set; } = default!;
 
     private OrganizationDto? Organization { get; set; }
     
-    protected override async Task OnInitializedAsync()
-    {
-        await SetOrganization();
-    }
+    protected override async Task OnInitializedAsync() => await SetOrganization();
 
     private async Task SetOrganization()
     {

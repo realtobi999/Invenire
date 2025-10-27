@@ -19,7 +19,8 @@
     </div>
 }
 
-@code {
+@code 
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
 
@@ -29,9 +30,9 @@
     private EditForm Form = null!;
     private CreateOrganizationRequestBody Body = new();
 
-    protected override void OnAfterRender(bool rendered)
+    protected override void OnAfterRender(bool first)
     {
-        if (Form is not null && rendered)
+        if (Form is not null && first)
         {
             ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
         }

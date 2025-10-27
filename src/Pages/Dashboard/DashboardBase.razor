@@ -11,7 +11,7 @@
 
 @page "/dashboard"
 
-<button @onclick="() => Logout()">Odhlásit</button>
+<button @onclick="() => Logout()">Odhlásit se</button>
 
 @if (Role == JwtRole.Admin)
 {
@@ -67,7 +67,8 @@ else if (Role == JwtRole.Employee)
 }
 
 
-@code {
+@code 
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 

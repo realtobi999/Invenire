@@ -335,7 +335,7 @@
                         <button @onclick="() => ShowCreateSuggestionModal = false">X</button>
                     </div>
 
-                    <CreatePropertySuggestionForm OnClose="() => ShowCreateSuggestionModal = false" OnChange="() => OnSuggestionCreation()" ItemsToDelete="DeletedItems.ToList()" ItemsToUpdate="UpdatedItems.ToList()"/>
+                    <CreatePropertySuggestionForm OnClose="() => ShowCreateSuggestionModal = false" OnSuccessfulCreation="() => OnSuggestionCreation()" ItemsToDelete="DeletedItems.ToList()" ItemsToUpdate="UpdatedItems.ToList()"/>
                 </div>
         </div>
     }
@@ -346,7 +346,8 @@ else
 }
 
 
-@code {
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Inject] public ILocalStorageService Storage { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }

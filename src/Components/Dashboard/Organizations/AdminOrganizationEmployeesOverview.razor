@@ -74,26 +74,20 @@
     }
 }
 
-@code {
-    /* Public Parameters. */
-
+@code
+{
     [Inject] public HttpClient Client { get; set; } = default!;
     [Parameter] public OrganizationDto? Organization { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set; }
 
-    /* Private Parameters. */
-
-    /* Pagination. */
     private int Limit = 5;
     private int CurrentOffset { get; set; }
     private int TotalCount => SearchedEmployees.Count();
     private bool CanGoPrev => CurrentOffset > 0;
     private bool CanGoNext => CurrentOffset + Limit < TotalCount;
 
-    /* Modals. */
     private bool ShowDeletionModal { get; set; }
 
-    /* Ordering. */
     private string SelectedOrderOption { get; set; } = "name_asc";
     private readonly List<(string Value, string Label)> OrderOptions = new()
     {
@@ -103,7 +97,6 @@
         ("email_desc", "Email (Z-A)")
     };
 
-    /* Searching. */
     private string SearchTerm { get; set; } = string.Empty;
     private IEnumerable<EmployeeDto> SearchedEmployees
     {
@@ -125,11 +118,8 @@
         }
     }
 
-    /* Other */
     private IEnumerable<EmployeeDto> PagedEmployees => SearchedEmployees.Skip(CurrentOffset).Take(Limit);
     private EmployeeDto? SelectedEmployee { get; set; }
-
-    /* Private Methods. */
 
     private async Task RemoveEmployee()
     {

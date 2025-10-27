@@ -22,18 +22,16 @@ else
     <button @onclick="SendEmailAsync">Poslat znovu</button>
 }
 
-@code {
+@code 
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    private JwtRole? Role { get; set; }
     private bool IsLoading { get; set; }
     private string? EmailAddress { get; set; }
+    private JwtRole? Role { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await SendEmailAsync();
-    }
+    protected override async Task OnInitializedAsync() => await SendEmailAsync();
 
     private async Task SendEmailAsync()
     {

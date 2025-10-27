@@ -21,13 +21,14 @@ else
     <NavLink href="/login">Přihlásit se</NavLink>
 }
 
-@code {
+@code 
+{
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
+    private bool IsLoading { get; set; }
     private string? Token { get; set; }
     private JwtRole? Role { get; set; }
-    private bool IsLoading { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

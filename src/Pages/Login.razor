@@ -22,7 +22,8 @@ else if (SelectedRole == "Admin")
 
 <p>Nemáte ještě účet? <NavLink class="nav-link" href="/register">Zaregistrujte se zde</NavLink>.</p>
 
-@code {
+@code 
+{
     private string SelectedRole { get; set; } = "Employee";
     private string HeaderText => SelectedRole switch
     {
