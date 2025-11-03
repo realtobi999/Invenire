@@ -8,7 +8,7 @@ public record PropertyScanDto
     public required Guid Id { get; set; }
 
     [JsonPropertyName("property_id")]
-    public required Guid? PropertyId { get; set; }
+    public Guid? PropertyId { get; set; }
 
     [JsonPropertyName("name")]
     public required string Name { get; set; }
@@ -23,10 +23,10 @@ public record PropertyScanDto
     public required DateTimeOffset CreatedAt { get; init; }
 
     [JsonPropertyName("completed_at")]
-    public required DateTimeOffset? CompletedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
 
     [JsonPropertyName("last_updated_at")]
-    public required DateTimeOffset? LastUpdatedAt { get; init; }
+    public DateTimeOffset? LastUpdatedAt { get; init; }
 
     [JsonPropertyName("scanned_items_summary")]
     public PropertyScanDtoScannedItemsSummary? ScannedItemsSummary { get; set; }

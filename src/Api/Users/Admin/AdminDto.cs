@@ -8,7 +8,7 @@ public record AdminDto
     public required Guid Id { get; init; }
 
     [JsonPropertyName("organization_id")]
-    public required Guid? OrganizationId { get; init; }
+    public Guid? OrganizationId { get; init; }
 
     [JsonPropertyName("first_name")]
     public required string FirstName { get; init; }
@@ -26,5 +26,5 @@ public record AdminDto
     public required DateTimeOffset CreatedAt { get; init; }
 
     [JsonPropertyName("last_updated_at")]
-    public required DateTimeOffset? LastUpdatedAt { get; init; }
+    public DateTimeOffset? LastUpdatedAt { get; init; }
 }

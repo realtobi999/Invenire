@@ -9,10 +9,10 @@ public record PropertyItemDto
     public required Guid Id { get; init; }
 
     [JsonPropertyName("property_id")]
-    public required Guid? PropertyId { get; set; }
+    public Guid? PropertyId { get; set; }
 
     [JsonPropertyName("employee_id")]
-    public required Guid? EmployeeId { get; set; }
+    public Guid? EmployeeId { get; set; }
 
     [JsonPropertyName("employee")]
     public EmployeeDto Employee { get; set; } = new EmployeeDto();
@@ -30,31 +30,31 @@ public record PropertyItemDto
     public required double Price { get; set; }
 
     [JsonPropertyName("serial_number")]
-    public required string? SerialNumber { get; set; }
+    public string? SerialNumber { get; set; }
 
     [JsonPropertyName("date_of_purchase")]
     public required DateTimeOffset DateOfPurchase { get; set; }
 
     [JsonPropertyName("date_of_sale")]
-    public required DateTimeOffset? DateOfSale { get; set; }
+    public DateTimeOffset? DateOfSale { get; set; }
 
     [JsonPropertyName("location")]
     public required PropertyItemLocationDto Location { get; set; }
 
     [JsonPropertyName("description")]
-    public required string? Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("document_number")]
-    public required string DocumentNumber { get; set; }
+    public string? DocumentNumber { get; set; }
 
     [JsonPropertyName("created_at")]
     public required DateTimeOffset CreatedAt { get; init; }
 
     [JsonPropertyName("last_updated_at")]
-    public required DateTimeOffset? LastUpdatedAt { get; set; }
+    public DateTimeOffset? LastUpdatedAt { get; set; }
 
     [JsonPropertyName("last_code_generated_at")]
-    public required DateTimeOffset? LastCodeGeneratedAt { get; set; }
+    public DateTimeOffset? LastCodeGeneratedAt { get; set; }
 
     [JsonPropertyName("last_scanned_at")]
     public DateTimeOffset? LastScannedAt { get; set; }
@@ -131,7 +131,7 @@ public record PropertyItemLocationDto
     public required string Building { get; set; }
 
     [JsonPropertyName("additional_note")]
-    public required string? AdditionalNote { get; set; }
+    public string? AdditionalNote { get; set; }
 
     public virtual bool Equals(PropertyItemLocationDto? other)
     {

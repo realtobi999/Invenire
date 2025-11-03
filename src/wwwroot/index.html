@@ -25,7 +25,9 @@
         <a href="." class="reload">Obnovit</a>
         <span class="dismiss">🗙</span>
     </div>
-    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/BlazorBarcodeScanner.ZXing.JS/zxingjs.index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="_content/BlazorBarcodeScanner.ZXing.JS/BlazorBarcodeScanner.js"></script>
     <script>
         window.download_file = (name, type, content) => {
             const blob = new Blob([content], { type: type });
@@ -37,8 +39,42 @@
             URL.revokeObjectURL(url);
         };
     </script>
-    <script src="_content/BlazorBarcodeScanner.ZXing.JS/zxingjs.index.min.js"></script>
-    <script src="_content/BlazorBarcodeScanner.ZXing.JS/BlazorBarcodeScanner.js"></script>
+    <script>
+        window.excel_reader = {
+            get_headers_from_bytes: async function (byte_array) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        if (!byte_array || byte_array.length === 0) {
+                            reject(new Error("Přečtená data souboru jsou prázdná."));
+                            return;
+                        }
+
+                        const workbook = XLSX.read(byte_array, { type: 'array' });
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const range = XLSX.utils.decode_range(sheet['!ref']);
+                        const headers = [];
+                        const firstRow = range.s.r;
+
+                        for (let col = range.s.c; col <= range.e.c; ++col) {
+                            const cellAddress = XLSX.utils.encode_col(col); // e.g. "A", "B", "C"
+                            const cell = sheet[XLSX.utils.encode_cell({ r: firstRow, c: col })];
+
+                            // Return both the value and the letter
+                            const headerName = cell ? cell.v : `Sloupec ${col + 1}`;
+                            headers.push({ name: headerName, letter: cellAddress });
+                        }
+
+                        resolve(headers);
+                    } catch (err) {
+                        console.error("Chyba při zpracování Excel souboru:", err);
+                        reject(new Error("Chyba při zpracování Excel souboru: " + err.message));
+                    }
+                });
+            }
+        };
+    </script>
+
+    <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
 </html>
