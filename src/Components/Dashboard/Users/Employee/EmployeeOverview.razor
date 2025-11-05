@@ -8,8 +8,8 @@
         <li><strong>Id:</strong> @Employee.Id</li>
         <li><strong>Jméno:</strong> @Employee.FullName</li>
         <li><strong>Email:</strong> @Employee.EmailAddress</li>
-        <li><strong>Vytvořen:</strong> @Employee.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-        <li><strong>Naposledy upraven:</strong> @Employee.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+        <li><strong>Vytvořen:</strong> @Employee.CreatedAt.ToUserTimeString()</li>
+        <li><strong>Naposledy upraven:</strong> @Employee.LastUpdatedAt.ToUserTimeString()</li>
     </ul>
 
     <button @onclick="() => ShowUpdateModal = true">Upravit informace</button>

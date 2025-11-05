@@ -16,10 +16,10 @@
                     {
                         <strong>Text:</strong> @invitation.Description <br />
                     }
-                    <strong>Vytvořeno:</strong> @invitation.CreatedAt.ToString("g") <br />
+                    <strong>Vytvořeno:</strong> @invitation.CreatedAt.ToUserTimeString() <br />
                     @if (invitation.LastUpdatedAt is not null)
                     {
-                        <strong>Naposledy upraveno: </strong> @invitation.LastUpdatedAt?.ToString("g") <br />
+                        <strong>Naposledy upraveno: </strong> @invitation.LastUpdatedAt.ToUserTimeString() <br />
                     }
                     @if (invitation.Employee is not null)
                     {

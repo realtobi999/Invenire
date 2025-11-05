@@ -137,9 +137,9 @@
                             <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                             <li><strong>Popis:</strong> <input @bind="edit.Description" style="width:70%;"/></li>
                             <li><strong>Číslo dokladu:</strong> <input @bind="edit.DocumentNumber"/></li>
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
                         }
                         else
                         {
@@ -263,9 +263,9 @@
                                 }
                             </li>
 
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
                         }
                     </ul>
 

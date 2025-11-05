@@ -50,7 +50,7 @@
                         <li><strong>Feedback:</strong> @suggestion.Feedback</li>
                     }
                     <li><strong>Status:</strong> <span style="color:@status.Color">@status.Text</span></li>
-                    <li><strong>Vytvořeno:</strong> @suggestion.CreatedAt.ToString("g")</li>
+                    <li><strong>Vytvořeno:</strong> @suggestion.CreatedAt.ToUserTimeString()</li>
                     @if (suggestion.LastUpdatedAt is not null)
                     {
                         <li><strong>Upraveno:</strong> @suggestion.LastUpdatedAt.Value.ToString("g")</li>

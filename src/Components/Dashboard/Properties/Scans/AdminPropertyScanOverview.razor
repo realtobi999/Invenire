@@ -22,10 +22,10 @@
         {
             <li><strong>Text: </strong> @Scan.Description</li>
         }
-        <li><strong>Vytvořeno:</strong> @Scan.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+        <li><strong>Vytvořeno:</strong> @Scan.CreatedAt.ToUserTimeString()</li>
         @if (Scan.LastUpdatedAt is not null)
         {
-            <li><strong>Naposledy upraveno:</strong> @Scan.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+            <li><strong>Naposledy upraveno:</strong> @Scan.LastUpdatedAt.ToUserTimeString()</li>
         }
     </ul>
 

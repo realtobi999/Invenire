@@ -14,10 +14,10 @@
                 <li><strong>Text: </strong> @ActiveScan.Description</li>
             }
             <li><strong>Naskenováno</strong> @ActiveScan.ScannedItemsSummary.TotalScannedItems / @ActiveScan.ScannedItemsSummary.TotalItemsToScan</li>
-            <li><strong>Vytvořeno:</strong> @ActiveScan.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
+            <li><strong>Vytvořeno:</strong> @ActiveScan.CreatedAt.ToUserTimeString()</li>
             @if (ActiveScan.LastUpdatedAt is not null)
             {
-                <li><strong>Naposledy upraveno:</strong> @ActiveScan.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm")</li>
+                <li><strong>Naposledy upraveno:</strong> @ActiveScan.LastUpdatedAt.ToUserTimeString()</li>
             }
         </ul>
 

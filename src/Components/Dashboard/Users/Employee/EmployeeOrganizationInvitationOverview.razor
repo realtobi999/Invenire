@@ -31,10 +31,10 @@ else
                 {
                     <strong>Text:</strong> @invitation.Description <br />
                 }
-                <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToString("g")</li>
+                <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToUserTimeString()</li>
                 @if (invitation.LastUpdatedAt is not null)
                 {
-                    <li><strong>Naposledy upraveno:</strong> @invitation.LastUpdatedAt?.ToString("g")</li>
+                    <li><strong>Naposledy upraveno:</strong> @invitation.LastUpdatedAt.ToUserTimeString()</li>
                 }
                 @if (invitation.Employee is not null)
                 {

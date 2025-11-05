@@ -115,10 +115,10 @@
                             <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                             <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
                             <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
-                            <li><strong>Naskenováno:</strong> @(item.LastScannedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
+                            <li><strong>Naskenováno:</strong> @(item.LastScannedAt.ToUserTimeString() ?? "-----")</li>
                         </ul>
                     </div>
                 }
@@ -152,9 +152,9 @@
                             <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
                             <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
                             <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
+                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
+                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
                         </ul>
                         @if (Scan!.CompletedAt is null && item.LastCodeGeneratedAt is null)
                         {

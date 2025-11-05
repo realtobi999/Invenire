@@ -1,6 +1,7 @@
 @using System.Net
 @using Invenire.Api.Users.Admin
 @using Invenire.Components.Forms.Users.Admins
+@using Invenire.Extensions
 
 @if (Admin is not null)
 {
@@ -8,10 +9,10 @@
         <li><strong>Id:</strong> @Admin.Id</li>
         <li><strong>Jméno:</strong> @Admin.FullName</li>
         <li><strong>Email:</strong> @Admin.EmailAddress</li>
-        <li><strong>Vytvořen:</strong> @Admin.CreatedAt.ToString("g")</li>
+        <li><strong>Vytvořen:</strong> @Admin.CreatedAt.ToUserTimeString()</li>
         @if (Admin.LastUpdatedAt is not null)
         {
-            <li><strong>Naposledy upraven:</strong> @Admin.LastUpdatedAt?.ToString("g")</li>
+            <li><strong>Naposledy upraven:</strong> @Admin.LastUpdatedAt.ToUserTimeString()</li>
         }
     </ul>
 

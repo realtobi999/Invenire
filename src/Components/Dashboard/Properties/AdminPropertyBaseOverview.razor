@@ -4,8 +4,8 @@
 {
     <ul>
         <li><strong>Id:</strong> @Property.Id</li>
-        <li><strong>Vytvořeno:</strong> @Property.CreatedAt.ToString("dd.MM.yyyy HH:mm")</li>
-        <li><strong>Naposledy upraveno:</strong> @(Property.LastUpdatedAt?.ToString("dd.MM.yyyy HH:mm") ?? "-----")</li>
+        <li><strong>Vytvořeno:</strong> @Property.CreatedAt.ToUserTimeString()</li>
+        <li><strong>Naposledy upraveno:</strong> @(Property.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
     </ul>
 }
 

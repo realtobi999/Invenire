@@ -6,10 +6,10 @@
     <ul>
         <li><strong>Id:</strong> @Organization.Id</li>
         <li><strong>Název:</strong> @Organization.Name</li>
-        <li><strong>Vytvořeno:</strong> @Organization.CreatedAt.ToString("g")</li>
+        <li><strong>Vytvořeno:</strong> @Organization.CreatedAt.ToUserTimeString()</li>
         @if (Organization.LastUpdatedAt is not null)
         {
-            <li><strong>Naposledy upraveno:</strong> @Organization.LastUpdatedAt?.ToString("g")</li>
+            <li><strong>Naposledy upraveno:</strong> @Organization.LastUpdatedAt.ToUserTimeString()</li>
         }
     </ul>
 
