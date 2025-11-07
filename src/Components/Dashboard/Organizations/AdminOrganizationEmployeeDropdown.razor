@@ -1,0 +1,56 @@
+@using Blazored.LocalStorage
+@using Invenire.Api.Users.Employees
+
+@if (Employees.Any())
+{
+    <input 
+        type="text" 
+        placeholder="Hledat..." 
+        @bind="SearchTerm" 
+        style="margin-bottom:8px; padding:4px 8px; width:100%; box-sizing:border-box;" 
+    />
+
+    <div style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:8px; border-radius:4px;">
+        @foreach (var employee in FilteredEmployees)
+        {
+            <div style="margin-bottom:12px; cursor:pointer; padding:4px; border-radius:4px;" @onclick="() => ChooseEmployee(employee)">
+                <div style="font-weight:bold;">@employee.FullName</div>
+                <div style="font-size:0.9em; color:gray;">@employee.EmailAddress</div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>Vaše organizace zatím nemá zaměstnance.</p>
+}
+
+@code {
+    [Inject] private ILocalStorageService Storage { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<EmployeeDto> OnEmployeeSelected { get; set; }
+
+
+    private List<EmployeeDto> Employees { get; set; } = new();
+
+    private string SearchTerm { get; set; } = "";
+    private IEnumerable<EmployeeDto> FilteredEmployees => Employees
+        .Where(e =>
+            string.IsNullOrWhiteSpace(SearchTerm) ||
+            e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            (e.FirstName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (e.LastName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (e.EmailAddress?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+        );
+    protected override async Task OnInitializedAsync() => await LoadPersistentEmployees();
+
+    private async Task LoadPersistentEmployees()
+        => Employees = await Storage.GetItemAsync<List<EmployeeDto>>("Employees") ?? new();
+
+    private async Task ChooseEmployee(EmployeeDto employee)
+    {
+        await OnClose.InvokeAsync(true);
+        await OnEmployeeSelected.InvokeAsync(employee);
+    }
+}
+

@@ -3,15 +3,15 @@
 @using Invenire.Api.Properties.Items.Delete
 
 <div>
-    <h4 style="margin:0;">Opravdu chcete smazat položky?</h4>
+    <h4 style="margin:0;">Opravdu chcete smazat všechny položky?</h4>
     <p>Tuto akci nelze vrátit zpět. Doporučujeme si zálohovat data.</p>
-    <button @onclick="() => DeleteItems()">Ano, smazat</button>
+    <button @onclick="() => DeleteItems()" style="background-color: #ffcccc;">Ano, smazat</button>
     <button style="width:20%"@onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
 </div>
 
 @code
 {
-    [Inject] public HttpClient Client { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set;}
     [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set;}
 

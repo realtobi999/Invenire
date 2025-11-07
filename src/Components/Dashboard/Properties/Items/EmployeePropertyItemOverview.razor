@@ -348,8 +348,8 @@ else
 
 @code
 {
-    [Inject] public HttpClient Client { get; set; } = default!;
-    [Inject] public ILocalStorageService Storage { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private ILocalStorageService Storage { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 

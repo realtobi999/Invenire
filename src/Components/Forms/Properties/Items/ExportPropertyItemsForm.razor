@@ -1,0 +1,96 @@
+@using System.Net
+@using Invenire.Api.Properties.Items.ExportToExcel
+@using Invenire.Api.Properties.Items.ExportToJson
+@using Invenire.Common.Errors
+
+@if (!IsProcessing)
+{
+    <button @onclick="() => ExportToJson()">Export do JSON souboru</button>
+    <button @onclick="() => ExportToExcel()">Export do .xlsx (Excel) souboru</button>
+
+    @if (ErrorMessage is not null)
+    {
+        <p style="color: red;">@ErrorMessage</p>
+    }
+}
+else
+{
+    <p>Žádost se zpracovává... Může to chvíli trvat.</p>
+}
+
+@code
+{
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulExport { get; set; }
+
+    private bool IsProcessing { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private async Task ExportToJson()
+    {
+        ErrorMessage = null;
+        IsProcessing = true;
+
+        try
+        {
+            var response = await Client.GetAsync("/api/properties/items/export/json");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+                ErrorMessage = ErrorTranslator.Translate(error.Detail, ExportToJsonPropertyItemResponse.ErrorTranslations);
+                return;
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            await JS.InvokeVoidAsync("download_file", $"export-{DateTime.Now:yyyyMMdd}.json", "application/zip", bytes);
+
+            IsProcessing = false;
+            await OnClose.InvokeAsync(true);
+            await OnSuccessfulExport.InvokeAsync(true);
+        }
+        catch
+        {
+            ErrorMessage = "Objevila se nečekaná chyba. Zkuste to prosím později.";
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        ErrorMessage = null;
+        IsProcessing = true;
+
+        try
+        {
+            var response = await Client.GetAsync("/api/properties/items/export/excel");
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
+                ErrorMessage = ErrorTranslator.Translate(error.Detail, ExportToExcelPropertyItemResponse.ErrorTranslations);
+                return;
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            await JS.InvokeVoidAsync("download_file", $"export-{DateTime.Now:yyyyMMdd}.xlsx", "application/zip", bytes);
+
+            IsProcessing = false;
+            await OnClose.InvokeAsync(true);
+            await OnSuccessfulExport.InvokeAsync(true);
+        }
+        catch
+        {
+            ErrorMessage = "Objevila se nečekaná chyba. Zkuste to prosím později.";
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+}

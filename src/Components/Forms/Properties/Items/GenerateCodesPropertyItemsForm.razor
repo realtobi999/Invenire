@@ -17,8 +17,8 @@ else
 
 @code
 {
-    [Inject] public IJSRuntime JS { get; set; } = default!;
-    [Inject] public HttpClient Client { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulGeneration { get; set; }
     [Parameter] public List<PropertyItemDto> Items { get; set; } = [];

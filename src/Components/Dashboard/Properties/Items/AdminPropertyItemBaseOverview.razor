@@ -52,11 +52,79 @@ else
     <p>Zatím nebyli přidané žádné položky</p>
 }
 
-<button @onclick="() => ShowAdditionItemsModal = true">Přidat položky</button>
+<button @onclick="() => ShowImportItemsModal = true">Import položek</button>
+
+@if (ShowImportItemsModal)
+{
+    <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;">
+        <div style="
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: auto;
+                max-width: 90%;
+                max-height: 80vh;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                overflow-y: auto;
+                ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="margin: 0;">Import položek</h4>
+                <button @onclick="() => ShowImportItemsModal = false">X</button>
+            </div>
+
+            <ImportPropertyItemsForm OnSuccessfulCreation="() => { OnChange.InvokeAsync(true); ShowImportItemsModal = false; }" />
+        </div>
+    </div>
+}
+
+<button @onclick="() => ShowExportItemsModal = true">Export položek</button>
+
+@if (ShowExportItemsModal)
+{
+    <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;">
+        <div style="
+                background-color: white;
+                padding: 20px;
+                border-radius: 8px;
+                width: auto;
+                max-width: 90%;
+                max-height: 80vh;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                overflow-y: auto;
+                ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="margin: 0;">Export položek</h4>
+                <button @onclick="() => ShowExportItemsModal = false">X</button>
+            </div>
+
+            <ExportPropertyItemsForm />
+        </div>
+    </div>
+}
 
 @if (Property is not null && Property.ItemsSummary is not null)
 {
-    <button @onclick="() => ShowDeletionItemsModal = true">Smazat všechny položky</button>
+    <button @onclick="() => ShowDeletionItemsModal = true" style="background-color: #ffcccc;">Smazat položky</button>
 
     @if (ShowDeletionItemsModal)
     {
@@ -89,39 +157,6 @@ else
     }
 }
 
-@if (ShowAdditionItemsModal)
-{
-    <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;">
-        <div style="
-                background-color: white;
-                padding: 20px;
-                border-radius: 8px;
-                width: auto;
-                max-width: 90%;
-                max-height: 80vh;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                overflow-y: auto;
-                ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Přidat položky</h4>
-                <button @onclick="() => ShowAdditionItemsModal = false">X</button>
-            </div>
-
-            <CreatePropertyItemsForm OnSuccessfulCreation="() => { OnChange.InvokeAsync(true); ShowAdditionItemsModal = false; }" />
-        </div>
-    </div>
-}
-
 
 @code
 {
@@ -129,6 +164,7 @@ else
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
     private bool ShowAllItemsModal { get; set; }
-    private bool ShowAdditionItemsModal { get; set; }
+    private bool ShowImportItemsModal { get; set; }
+    private bool ShowExportItemsModal { get; set; }
     private bool ShowDeletionItemsModal { get; set; }
 }

@@ -7,7 +7,7 @@
 
 @code
 {
-    [Inject] public HttpClient Client { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set; }
     [Parameter] public OrganizationInvitationDto? Invitation { get; set; }

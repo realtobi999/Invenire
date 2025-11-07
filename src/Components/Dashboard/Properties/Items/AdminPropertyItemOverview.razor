@@ -9,6 +9,7 @@
 @using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.IndexByAdmin
+@using Invenire.Components.Dashboard.Organizations
 @using Invenire.Components.Forms.Properties.Items
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -157,7 +158,44 @@
                             <li><strong>Datum prodeje:</strong> <input type="date" @bind="edit.DateOfSale"/></li>
                             <li><strong>Umístění:</strong> Budova <input @bind="edit.Location.Building"/> , Místnost <input @bind="edit.Location.Room"/></li>
                             <li><strong>Poznámka k umístění:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
-                            <li><strong>Spravuje:</strong> <input @bind="edit.Employee.EmailAddress"/></li>
+                            <li>
+                                <strong>Spravuje: </strong>
+                                <span style="margin-right:2px;">@(string.IsNullOrEmpty(edit.Employee.EmailAddress) ?  "-----" : edit.Employee.EmailAddress)</span>
+                                <button @onclick="() => ShowEmployeeDropdownModal = true">Změnit</button>
+                                <button @onclick="() => edit.Employee = new EmployeeDto()">Odebrat</button>
+                                @if (ShowEmployeeDropdownModal)
+                                {
+                                    <div style="
+                                        position: fixed;
+                                        top: 0;
+                                        left: 0;
+                                        width: 100vw;
+                                        height: 100vh;
+                                        background-color: rgba(0, 0, 0, 0.5);
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        z-index: 9999;">
+                                        <div style="
+                                            background-color: white;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            width: auto;
+                                            max-width: 90%;
+                                            max-height: 80vh;
+                                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                                            overflow-y: auto;
+                                            ">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                    <h4 style="margin: 0;">Vyberte zaměstnance</h4>
+                                                    <button @onclick="() => ShowEmployeeDropdownModal= false">X</button>
+                                                </div>
+
+                                                <AdminOrganizationEmployeeDropdown OnEmployeeSelected="(employee) => edit.Employee = employee"  OnClose="() => ShowEmployeeDropdownModal = false"/>
+                                        </div>
+                                   </div>
+                                }
+                            </li>
                             <li><strong>Popis:</strong> <input @bind="edit.Description" style="width:70%;"/></li>
                             <li><strong>Číslo dokladu:</strong> <input @bind="edit.DocumentNumber"/></li>
                             <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
@@ -264,7 +302,16 @@
                                 </li>
                             }
                             
-                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
+                            <li style="@((isPendingUpdate && item.Employee.EmailAddress != original!.Employee.EmailAddress) ? "background-color:#BBFF99;" : "")">
+                                <strong>Spravuje:</strong> 
+                                @(string.IsNullOrEmpty(item.Employee.EmailAddress) ? "-----" : item.Employee.EmailAddress)
+                                @if (isPendingUpdate && item.Employee.EmailAddress != original!.Employee.EmailAddress)
+                                {
+                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
+                                        (Původně: @(string.IsNullOrEmpty(original!.Employee.EmailAddress) ? "-----" : original!.Employee.EmailAddress))
+                                    </div>
+                                }
+                            </li>
 
                             <li style="@((isPendingUpdate && item.Description != original!.Description) ? "background-color:#BBFF99;" : "")">
                                 <strong>Popis:</strong> @(item.Description ?? "------")
@@ -371,8 +418,8 @@ else
 
 @code
 {
-    [Inject] public HttpClient Client { get; set; } = default!;
-    [Inject] public ILocalStorageService Storage { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private ILocalStorageService Storage { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
@@ -613,6 +660,8 @@ else
         UpdatedItemDtos.Clear();
         await SavePersistentState();
     }
+
+    private bool ShowEmployeeDropdownModal { get; set; }
 
     public void EditItem(PropertyItemDto item)
     {

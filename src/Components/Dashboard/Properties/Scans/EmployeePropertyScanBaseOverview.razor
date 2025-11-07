@@ -63,7 +63,7 @@ else
 
 @code
 {
-    [Inject] public HttpClient Client { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
 
     private PropertyScanDto? ActiveScan { get; set; }
 

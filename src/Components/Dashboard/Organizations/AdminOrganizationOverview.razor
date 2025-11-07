@@ -1,4 +1,5 @@
 @using System.Net
+@using Blazored.LocalStorage
 @using Invenire.Api.Organizations
 @using Invenire.Api.Users.Employees
 @using Invenire.Components.Forms.Organizations
@@ -22,9 +23,10 @@
 @code 
 {
     [Inject] private HttpClient Client { get; set; } = default!;
+    [Inject] private ILocalStorageService Storage { get; set; } = default!;
 
     private OrganizationDto? Organization { get; set; }
-    
+
     protected override async Task OnInitializedAsync() => await SetOrganization();
 
     private async Task SetOrganization()
@@ -34,6 +36,8 @@
         if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the organization.");
 
         Organization = await response.Content.ReadFromJsonAsync<OrganizationDto>();
+
+        await PersistEmployees(Organization!.Employees ?? []);
     }
 
     private async Task ReloadOrganization()
@@ -41,4 +45,7 @@
         await SetOrganization();
         StateHasChanged();
     }
+
+    private async Task PersistEmployees(IEnumerable<EmployeeDto> employees)
+        => await Storage.SetItemAsync("Employees", employees);
 }

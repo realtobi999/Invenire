@@ -1,4 +1,5 @@
 @using System.Net
+@using Blazored.LocalStorage
 @using Invenire.Api.Users
 @using Invenire.Api.Users.Admin
 @using Invenire.Common.Extensions
@@ -22,7 +23,7 @@
     }
     else
     {
-        <h1>Dashboard</h1>
+        <h1>Dashboard - Admin</h1>
         <div>
             <div>
                 <h2>Přehled vás</h2>
@@ -48,7 +49,7 @@ else if (Role == JwtRole.Employee)
     }
     else
     {
-        <h1>Dashboard</h1>
+        <h1>Dashboard - Zaměstnanec</h1>
         <div>
             <div>
                 <h2>Přehled vás</h2>
@@ -71,6 +72,7 @@ else if (Role == JwtRole.Employee)
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private ILocalStorageService Storage { get; set; } = default!;
 
     private bool? IsOrganizationNull { get; set; }
     private JwtRole? Role { get; set; }
@@ -129,7 +131,7 @@ else if (Role == JwtRole.Employee)
     private async Task Logout()
     {
         await Client.PostAsync("/api/logout", null);
-
+        await Storage.ClearAsync();
         Navigation.NavigateTo("/login");
     }
 }

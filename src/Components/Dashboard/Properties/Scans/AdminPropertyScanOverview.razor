@@ -67,7 +67,7 @@
 
 @code
 {
-    [Inject] public HttpClient Client { get; set; } = default!;
+    [Inject] private HttpClient Client { get; set; } = default!;
 
     private PropertyScanDto? Scan { get; set; }
 
