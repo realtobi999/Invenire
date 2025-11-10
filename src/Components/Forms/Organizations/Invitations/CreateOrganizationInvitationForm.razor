@@ -4,15 +4,17 @@
 
 <EditForm Model="Body" OnSubmit="HandleCreation" @ref="Form">
     <div>
-        <label>Text:</label>
-        <InputText @bind-Value="Body.Description" style="width:80%;"/>
-        <ValidationMessage For="@(() => Body.Description)" />
-    </div>
-
-    <div>
         <label>Email zaměstnance:</label>
         <InputText @bind-Value="Body.EmployeeEmailAddress" style="width:53%;"/>
         <ValidationMessage For="@(() => Body.EmployeeEmailAddress)" />
+    </div>
+
+    <div>
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+            <label style="white-space:nowrap;">Text:</label>
+            <InputTextArea @bind-Value="Body.Description" style="width:80%; height:100px; resize:vertical;" />
+        </div>
+        <ValidationMessage For="@(() => Body.Description)" />
     </div>
 
     <button type="submit">Vytvořit</button>

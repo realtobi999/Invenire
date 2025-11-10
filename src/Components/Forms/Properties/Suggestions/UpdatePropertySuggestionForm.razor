@@ -9,8 +9,10 @@
 
 <EditForm Model="Body" OnSubmit="HandleUpdate" @ref="Form">
     <div>
-        <label>Text:</label>
-        <InputText @bind-Value="Body.Description" style="width:80%;" />
+        <div style="display:flex; align-items:flex-start; gap:10px;">
+            <label style="white-space:nowrap;">Text:</label>
+            <InputTextArea @bind-Value="Body.Description" style="width:80%; height:100px; resize:vertical;" />
+        </div>
         <ValidationMessage For="@(() => Body.Description)" />
     </div>
 

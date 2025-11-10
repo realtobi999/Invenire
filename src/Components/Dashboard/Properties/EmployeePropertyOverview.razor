@@ -11,7 +11,7 @@
     <h3>Základní informace</h3>
     <EmployeePropertyBaseOverview Property="Property" />
     <h3>Položky</h3>
-    <EmployeePropertyItemBaseOverview Property="Property"/>
+    <EmployeePropertyItemBaseOverview Property="Property" OnChange="() => LoadProperty()"/>
     <h3>Návrhy</h3>
     <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="() => LoadProperty()"/>
     <h3>Inventury</h3>

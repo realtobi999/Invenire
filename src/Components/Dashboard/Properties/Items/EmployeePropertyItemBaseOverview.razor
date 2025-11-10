@@ -39,7 +39,7 @@
                         min-width: 300px;
                         max-width: 90%;
                     ">
-                <EmployeePropertyItemOverview OnClose="() => ShowAllItemsModal = false"/>
+                <EmployeePropertyItemOverview OnClose="() => ShowAllItemsModal = false" OnChange="() => OnChange.InvokeAsync(true)"/>
             </div>
         </div>
     }
@@ -52,6 +52,7 @@ else
 @code
 {
     [Parameter] public PropertyDto? Property { get; set; }
+    [Parameter] public EventCallback<bool> OnChange { get; set; }
 
     private bool ShowAllItemsModal { get; set; }
 }
