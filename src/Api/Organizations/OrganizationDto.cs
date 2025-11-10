@@ -18,7 +18,7 @@ public record OrganizationDto
     public required DateTimeOffset CreatedAt { get; set; }
 
     [JsonPropertyName("last_updated_at")]
-    public required DateTimeOffset? LastUpdatedAt { get; set; }
+    public DateTimeOffset? LastUpdatedAt { get; set; }
 
     [JsonPropertyName("admin")]
     public AdminDto? Admin { get; set; }

@@ -241,7 +241,16 @@
                                 </li>
                             }
                             
-                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
+                            <li style="@((isPendingUpdate && item.Employee.EmailAddress != original!.Employee.EmailAddress) ? "background-color:#BBFF99;" : "")">
+                                <strong>Spravuje:</strong> 
+                                @(string.IsNullOrEmpty(item.Employee.EmailAddress) ? "-----" : item.Employee.EmailAddress)
+                                @if (isPendingUpdate && item.Employee.EmailAddress != original!.Employee.EmailAddress)
+                                {
+                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
+                                        (Původně: @(string.IsNullOrEmpty(original!.Employee.EmailAddress) ? "-----" : original!.Employee.EmailAddress))
+                                    </div>
+                                }
+                            </li>
 
                             <li style="@((isPendingUpdate && item.Description != original!.Description) ? "background-color:#BBFF99;" : "")">
                                 <strong>Popis:</strong> @(item.Description ?? "------")

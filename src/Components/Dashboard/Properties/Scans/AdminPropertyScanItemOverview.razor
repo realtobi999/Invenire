@@ -4,6 +4,7 @@
 @using Invenire.Api.Properties.Scans
 @using Invenire.Api.Users.Employees
 @using Invenire.Common.Errors
+@using Invenire.Components.Dashboard.Organizations
 
 <div>
     <input type="text" placeholder="Hledat..." @bind="SearchQuery" @bind:after="() => LoadItemsWithFilter()" style="margin-top: 10px;" />
@@ -66,16 +67,45 @@
             <br />
 
             <label for="Employee">Spravuje:</label>
-            <input id="Employee" type="email" @bind="FilteringEmployeeEmailAddress" @bind:after="() => GetEmployeeForFiltering()"/>
-
-            @if (FilteringEmployeeErrorMessage is not null)
+            <span id="Employee">@(FilteringEmployee is not null ? FilteringEmployee.EmailAddress :  "-----" )</span>
+            <button @onclick="() => ShowEmployeeDropdownModal = true">Vybrat</button>
+            <button @onclick="() => FilteringEmployee = null" disabled="@(FilteringEmployee is null)">Odebrat</button>
+            @if (ShowEmployeeDropdownModal)
             {
-                <span> @FilteringEmployeeErrorMessage</span>
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;">
+                    <div style="
+                        background-color: white;
+                        padding: 20px;
+                        border-radius: 8px;
+                        width: auto;
+                        max-width: 90%;
+                        max-height: 80vh;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                        overflow-y: auto;
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="margin: 0;">Vyberte zaměstnance</h4>
+                                <button @onclick="() => ShowEmployeeDropdownModal= false">X</button>
+                            </div>
+
+                            <AdminOrganizationEmployeeDropdown OnEmployeeSelected="(employee) => FilteringEmployee = employee"  OnClose="() => ShowEmployeeDropdownModal = false"/>
+                    </div>
+                </div>
             }
 
             <br />
 
-            <button @onclick="() => LoadItemsWithFilter()" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
+            <button @onclick="() => LoadItemsWithFilter()">Použít</button>
             <button @onclick="() => ClearFilters()">Vymazat</button>
         </div>
     }
@@ -213,6 +243,8 @@
         ("createdat_desc", "Datum přidání (nejnovější první)")
     };
 
+    private bool ShowEmployeeDropdownModal { get; set; }
+
     private bool ShowFilteringOptions { get; set; }
     private decimal? PriceMin { get; set; }
     private decimal? PriceMax { get; set; }
@@ -223,9 +255,7 @@
     private string? Room { get; set; }
     private string? Building { get; set; }
     private string? WithGeneratedCode { get; set; }
-    private Guid? FilteringEmployeeId { get; set; }
-    private string? FilteringEmployeeErrorMessage { get; set; }
-    private string? FilteringEmployeeEmailAddress { get; set; }
+    private EmployeeDto? FilteringEmployee { get; set; }
     private string? SearchQuery { get; set; }
 
     protected override void OnParametersSet() => StateHasChanged();
@@ -331,8 +361,8 @@
                 parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
             if (DateOfPurchaseTo is not null)
                 parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
-            if (FilteringEmployeeId is not null)
-                parameters.Add($"employeeId={FilteringEmployeeId}");
+            if (FilteringEmployee is not null)
+                parameters.Add($"employeeId={FilteringEmployee.Id}");
             if (!string.IsNullOrEmpty(Room))
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
@@ -350,33 +380,6 @@
         }
     }
 
-    private async Task GetEmployeeForFiltering()
-    {
-        FilteringEmployeeErrorMessage = null;
-
-        if (string.IsNullOrEmpty(FilteringEmployeeEmailAddress))
-            return;
-
-        var response = await Client.GetAsync($"/api/organizations/employees/{FilteringEmployeeEmailAddress}");
-
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-
-            if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.")
-                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nebyl nalezen.";
-            else if (exception.Type == "Unauthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.")
-                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nepatří k vaší organizaci.";
-            else
-                throw new Exception("Something went wrong during the request to get the employee.");
-
-            return;
-        }
-
-        var content = await response.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
-
-        FilteringEmployeeId = content.Id;
-    }
 
     private async Task ClearFilters()
     {
@@ -388,9 +391,7 @@
         DateOfPurchaseTo = null;
         Room = null;
         Building = null;
-        FilteringEmployeeId = null;
-        FilteringEmployeeErrorMessage = null;
-        FilteringEmployeeEmailAddress = null;
+        FilteringEmployee = null;
         WithGeneratedCode = null;
 
         await LoadItemsWithFilter();

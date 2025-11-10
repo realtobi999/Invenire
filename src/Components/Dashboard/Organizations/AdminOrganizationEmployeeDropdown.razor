@@ -3,20 +3,36 @@
 
 @if (Employees.Any())
 {
+    <label for="OrderSelect">Řazení: </label>
+    <select id="OrderSelect" @bind="SelectedOrderOption">
+        @foreach (var option in OrderOptions)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+
     <input 
         type="text" 
         placeholder="Hledat..." 
         @bind="SearchTerm" 
-        style="margin-bottom:8px; padding:4px 8px; width:100%; box-sizing:border-box;" 
+        style="margin-bottom:8px; padding:4px 8px; width:100%; box-sizing:border-box; margin-top:5px;" 
     />
 
     <div style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:8px; border-radius:4px;">
-        @foreach (var employee in FilteredEmployees)
+        @if (FilteredEmployees.Any())
         {
-            <div style="margin-bottom:12px; cursor:pointer; padding:4px; border-radius:4px;" @onclick="() => ChooseEmployee(employee)">
-                <div style="font-weight:bold;">@employee.FullName</div>
-                <div style="font-size:0.9em; color:gray;">@employee.EmailAddress</div>
-            </div>
+            @foreach (var employee in FilteredEmployees)
+            {
+                <div style="margin-bottom:12px; cursor:pointer; padding:4px; border-radius:4px;" 
+                     @onclick="() => ChooseEmployee(employee)">
+                    <div style="font-weight:bold;">@employee.FullName</div>
+                    <div style="font-size:0.9em; color:gray;">@employee.EmailAddress</div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>Žádný zaměstnanec nebyl nalezen.</p>
         }
     </div>
 }
@@ -30,18 +46,41 @@ else
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<EmployeeDto> OnEmployeeSelected { get; set; }
 
-
     private List<EmployeeDto> Employees { get; set; } = new();
-
     private string SearchTerm { get; set; } = "";
-    private IEnumerable<EmployeeDto> FilteredEmployees => Employees
-        .Where(e =>
-            string.IsNullOrWhiteSpace(SearchTerm) ||
-            e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-            (e.FirstName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (e.LastName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (e.EmailAddress?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-        );
+    private string SelectedOrderOption { get; set; } = "name_asc";
+
+    private readonly List<(string Value, string Label)> OrderOptions = new()
+    {
+        ("name_asc", "Jméno (A-Z)"),
+        ("name_desc", "Jméno (Z-A)"),
+        ("email_asc", "Email (A-Z)"),
+        ("email_desc", "Email (Z-A)")
+    };
+
+    private IEnumerable<EmployeeDto> FilteredEmployees
+    {
+        get
+        {
+            var filtered = Employees.Where(e =>
+                string.IsNullOrWhiteSpace(SearchTerm) ||
+                e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (e.FirstName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (e.LastName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (e.EmailAddress?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+
+            var (field, asc) = SelectedOrderOption.Split('_') switch { var p => (p[0], p[1] == "asc") };
+
+            return field switch
+            {
+                "name" => asc ? filtered.OrderBy(e => e.FullName) : filtered.OrderByDescending(e => e.FullName),
+                "email" => asc ? filtered.OrderBy(e => e.EmailAddress) : filtered.OrderByDescending(e => e.EmailAddress),
+                _ => filtered
+            };
+        }
+    }
+
     protected override async Task OnInitializedAsync() => await LoadPersistentEmployees();
 
     private async Task LoadPersistentEmployees()
@@ -53,4 +92,3 @@ else
         await OnEmployeeSelected.InvokeAsync(employee);
     }
 }
-

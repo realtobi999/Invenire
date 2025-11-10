@@ -66,16 +66,6 @@
 
             <br />
 
-            <label for="Employee">Spravuje:</label>
-            <input id="Employee" type="email" @bind="FilteringEmployeeEmailAddress" @bind:after="() => GetEmployeeForFiltering()"/>
-
-            @if (FilteringEmployeeErrorMessage is not null)
-            {
-                <span> @FilteringEmployeeErrorMessage</span>
-            }
-
-            <br />
-
             <button @onclick="() => LoadItemsWithFilter()" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
             <button @onclick="() => ClearFilters()">Vymazat</button>
         </div>

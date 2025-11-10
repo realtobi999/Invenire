@@ -68,8 +68,7 @@ else
     </ul>
 }
 
-@code
-{
+@code {
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
@@ -79,6 +78,7 @@ else
     private bool ShowColumnPickerModal { get; set; }
     private List<(string Name, string Letter)> AvailableHeaders { get; set; } = [];
     private IBrowserFile? SelectedExcelFile { get; set; }
+    private byte[]? ExcelFileBytes { get; set; }
 
     private Dictionary<string, string> PropertyColumns { get; set; } = new()
     {
@@ -184,8 +184,9 @@ else
         {
             using var stream = new MemoryStream();
             await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 100).CopyToAsync(stream);
+            ExcelFileBytes = stream.ToArray();
 
-            var headers = await JS.InvokeAsync<JsonElement>("excel_reader.get_headers_from_bytes", stream.ToArray());
+            var headers = await JS.InvokeAsync<JsonElement>("excel_reader.get_headers_from_bytes", ExcelFileBytes);
 
             foreach (var header in headers.EnumerateArray())
             {
@@ -202,33 +203,31 @@ else
 
     private async Task HandleExcelFileSelectedFinal()
     {
-        if (SelectedExcelFile is null)
+        if (ExcelFileBytes is null || ExcelFileBytes.Length == 0)
         {
-            Errors.Add("Nejdříve vyberte Excel soubor.");
+            Errors.Add("Excel soubor nebyl načten nebo je prázdný.");
             return;
         }
 
         Errors.Clear();
         IsProcessing = true;
 
-        using var stream = new MemoryStream();
-        await SelectedExcelFile.OpenReadStream(1024 * 1024 * 100).CopyToAsync(stream);
-        stream.Position = 0;
-
+        using var stream = new MemoryStream(ExcelFileBytes);
         var body = new MultipartFormDataContent
         {
-            { new StreamContent(stream) { Headers = { ContentType = new MediaTypeHeaderValue(SelectedExcelFile.ContentType) } }, "file", SelectedExcelFile.Name }
+            { new StreamContent(stream) { Headers = { ContentType = new MediaTypeHeaderValue(SelectedExcelFile!.ContentType) } }, "file", SelectedExcelFile!.Name }
         };
 
         var columns = string.Join("|", PropertyColumns.Where(kv => !string.IsNullOrEmpty(kv.Value)).Select(kv => $"{kv.Key};{kv.Value}"));
-
         var response = await Client.PostAsync($"/api/properties/items/excel-file?columns={Uri.EscapeDataString(columns)}", body);
+
+        IsProcessing = false;
 
         if (response.StatusCode == HttpStatusCode.Created)
         {
-            IsProcessing = false;
             ShowColumnPickerModal = false;
             AvailableHeaders.Clear();
+            ExcelFileBytes = null;
             SelectedExcelFile = null;
 
             foreach (var key in PropertyColumns.Keys.ToList())
@@ -238,15 +237,12 @@ else
         }
         else
         {
-            IsProcessing = false;
             var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
 
             if (content.Type == "ValidationException")
             {
                 foreach (var error in content.Errors!)
-                {
                     Errors.Add(ErrorTranslator.Translate(error, CreateFromExcelFilePropertyItemsResponse.ErrorTranslations));
-                }
             }
             else
             {

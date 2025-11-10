@@ -29,7 +29,7 @@ else
                 }
                 @if (!string.IsNullOrEmpty(invitation.Description))
                 {
-                    <strong>Text:</strong> @invitation.Description <br />
+                    <li><strong>Text:</strong> @invitation.Description <br /></li>
                 }
                 <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToUserTimeString()</li>
                 @if (invitation.LastUpdatedAt is not null)

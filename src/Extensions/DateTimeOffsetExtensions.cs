@@ -9,7 +9,7 @@ public static class DateTimeOffsetExtensions
 
     public static string ToUserTimeString(this DateTimeOffset? time)
     {
-        if (!time.HasValue) return string.Empty;
+        if (!time.HasValue) return "-----";
         return time.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
     }
 }

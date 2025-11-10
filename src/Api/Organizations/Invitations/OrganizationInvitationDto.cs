@@ -9,7 +9,7 @@ public class OrganizationInvitationDto
     public required Guid Id { get; set; }
 
     [JsonPropertyName("organization_id")]
-    public required Guid? OrganizationId { get; set; }
+    public Guid? OrganizationId { get; set; }
 
     public OrganizationDto? OrganizationDto { get; set; }
 
@@ -20,7 +20,7 @@ public class OrganizationInvitationDto
     public required DateTimeOffset CreatedAt { get; set; }
 
     [JsonPropertyName("last_updated_at")]
-    public required DateTimeOffset? LastUpdatedAt { get; set; }
+    public DateTimeOffset? LastUpdatedAt { get; set; }
 
     [JsonPropertyName("employee")]
     public required EmployeeDto? Employee { get; set; }
