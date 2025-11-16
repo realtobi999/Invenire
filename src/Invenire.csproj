@@ -4,7 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <CssIsolationEnabled>true</CssIsolationEnabled>
   </PropertyGroup>
+
 
   <ItemGroup>
     <PackageReference Include="BlazorBarcodeScanner.ZXing.JS" Version="1.0.4" />

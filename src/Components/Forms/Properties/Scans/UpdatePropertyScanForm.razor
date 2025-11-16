@@ -7,29 +7,29 @@
 
 @if (Scan is not null)
 {
-    <EditForm Model="Body" OnSubmit="HandleUpdate" @ref="Form">
-        <div>
+    <EditForm class="modal-form" Model="Body" OnSubmit="HandleUpdate" @ref="Form">
+        <div class="form-group">
             <label>Název:</label>
-            <InputText @bind-Value="Body.Name" style="width:80%"/>
+            <InputText @bind-Value="Body.Name" />
             <ValidationMessage For="@(() => Body.Name)" />
         </div>
 
-        <div>
-            <div style="display:flex; align-items:flex-start; gap:10px;">
-                <label style="white-space:nowrap;">Text:</label>
-                <InputTextArea @bind-Value="Body.Description" style="width:80%; height:100px; resize:vertical;" />
-            </div>
+        <div class="form-group">
+            <label>Text:</label>
+            <InputTextArea @bind-Value="Body.Description" rows="4" />
             <ValidationMessage For="@(() => Body.Description)" />
         </div>
 
-        <button type="submit">Uložit</button>
-        <button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+        <div class="form-actions">
+            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+            <button type="submit">Uložit</button>
+        </div>
     </EditForm>
 }
 
 @if (ErrorGeneralMessage is not null)
 {
-    <div>
+    <div class="error-banner">
         @ErrorGeneralMessage
     </div>
 }
@@ -87,7 +87,7 @@
                     var field = error switch
                     {
                         var e when e.Contains("name") => Form.EditContext!.Field(nameof(Body.Name)),
-                        var e when e.Contains("description") => Form.EditContext!.Field(nameof(Body.Name)),
+                        var e when e.Contains("description") => Form.EditContext!.Field(nameof(Body.Description)),
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 

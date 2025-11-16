@@ -5,46 +5,49 @@
 
 @if (Admin is not null)
 {
-    <ul>
-        <li><strong>Id:</strong> @Admin.Id</li>
-        <li><strong>Jméno:</strong> @Admin.FullName</li>
-        <li><strong>Email:</strong> @Admin.EmailAddress</li>
-        <li><strong>Vytvořen:</strong> @Admin.CreatedAt.ToUserTimeString()</li>
-        @if (Admin.LastUpdatedAt is not null)
-        {
-            <li><strong>Naposledy upraven:</strong> @Admin.LastUpdatedAt.ToUserTimeString()</li>
-        }
-    </ul>
+    <section class="section-card">
+        <h3>Základní informace</h3>
+        
+        <div class="detail-list">
+            <div class="detail-item">
+                <span class="detail-label">Id</span>
+                <span class="detail-value">@Admin.Id</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Jméno</span>
+                <span class="detail-value">@Admin.FullName</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">@Admin.EmailAddress</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Vytvořen</span>
+                <span class="detail-value">@Admin.CreatedAt.ToUserTimeString()</span>
+            </div>
+            @if (Admin.LastUpdatedAt is not null)
+            {
+                <div class="detail-item">
+                    <span class="detail-label">Naposledy upraven</span>
+                    <span class="detail-value">@Admin.LastUpdatedAt.ToUserTimeString()</span>
+                </div>
+            }
+        </div>
 
-    <button @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+<button class="btn-secondary" @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+    </section>
 }
 @if (Admin is not null && ShowUpdateModal)
 {
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 500px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Upravit svoje informace</h4>
-                <button @onclick="() => ShowUpdateModal = false">X</button>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Upravit svoje informace</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseUpdateModal">Zavřít</button>
             </div>
-
-            <UpdateAdminForm Admin="Admin" OnClose="() => ShowUpdateModal = false" OnSuccessfulUpdate="OnSuccessfulAdminUpdate" />
+            <div class="modal-body">
+                <UpdateAdminForm Admin="Admin" OnClose="CloseUpdateModal" OnSuccessfulUpdate="OnSuccessfulAdminUpdate" />
+            </div>
         </div>
     </div>
 }
@@ -72,8 +75,10 @@
 
     private async Task OnSuccessfulAdminUpdate()
     {
-        ShowUpdateModal = false;
+        CloseUpdateModal();
         await LoadAdmin();
         StateHasChanged();
     }
+
+    private void CloseUpdateModal() => ShowUpdateModal = false;
 }

@@ -3,8 +3,18 @@
 
 @if (Organization is not null)
 {
-    <h3>Základní informace</h3>
-    <EmployeeOrganizationBaseOverview Organization="Organization" />
+    <div class="stack">
+        <section class="section-card">
+            <h3>Základní informace</h3>
+            <EmployeeOrganizationBaseOverview Organization="Organization" />
+        </section>
+    </div>
+}
+else
+{
+    <section class="section-card empty-state">
+        <p>Načítání informací o organizaci se nezdařilo.</p>
+    </section>
 }
 
 @code

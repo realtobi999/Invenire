@@ -1,358 +1,439 @@
 @using System.Net
 @using System.Drawing
 @using System.Reflection.Metadata
+@using System.Linq
 @using Invenire.Api.Properties.Items
+@using Invenire.Api.Properties.Items.Create
 @using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Suggestions
 @using Invenire.Api.Properties.Suggestions.IndexByAdmin
 @using System.Runtime.InteropServices
 @using Invenire.Components.Forms.Properties.Suggestions
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <h4 style="margin:0;">Všechny návrhy</h4>
-    <button @onclick="() => OnClose.InvokeAsync(true)">X</button>
-</div>
+<div class="suggestions-overview">
+    <div class="modal-toolbar">
+        <div class="modal-toolbar-header">
+            <h3>Všechny návrhy</h3>
+            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zavřít</button>
+        </div>
+    </div>
 
-<div>
-    <input type="text" @bind="SearchTerm" @bind:after="() => LoadSuggestions(0)" placeholder="Hledat ..." />
-</div>
+    <div class="items-toolbar">
+        <div class="form-control grow">
+            <label for="suggestion-search">Hledat</label>
+            <input id="suggestion-search" class="input-control" type="text" @bind="SearchTerm" @bind:after="() => LoadSuggestions(0)" placeholder="Hledat návrhy..." />
+        </div>
+        <div class="form-control">
+            <label for="OrderSelect">Řazení</label>
+            <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadSuggestions(0)">
+                @foreach (var option in OrderOptions)
+                {
+                    <option value="@option.Value">@option.Label</option>
+                }
+            </select>
+        </div>
+    </div>
 
-<div>
-    <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadSuggestions(0)">
-        @foreach (var option in OrderOptions)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
-    </select>
-</div>
+    @if (Suggestions.Any())
+    {
+        <div class="suggestion-list">
+            @foreach (var suggestion in Suggestions)
+            {
+                var status = GetCzechStatus(suggestion.Status);
+                var updatedEntries = GetUpdatedEntries(suggestion).ToList();
+                var deletedEntries = GetDeletedEntries(suggestion).ToList();
 
-@if (Suggestions.Any())
+                <article class="suggestion-card">
+                    <div class="suggestion-card-header">
+                        <div>
+                            <p class="muted-text">Název</p>
+                            <h4>@suggestion.Name</h4>
+                        </div>
+                        <span class="@($"suggestion-status suggestion-status--{status.Color.ToLowerInvariant()}")">@status.Text</span>
+                    </div>
+
+                    <div class="detail-list">
+                        <div class="detail-item">
+                            <span class="detail-label">Předloženo</span>
+                            <span class="detail-value">@suggestion.Employee.EmailAddress</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(suggestion.Description))
+                        {
+                            <div class="detail-item">
+                                <span class="detail-label">Text</span>
+                                <span class="detail-value">@suggestion.Description</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(suggestion.Feedback))
+                        {
+                            <div class="detail-item">
+                                <span class="detail-label">Feedback</span>
+                                <span class="detail-value">@suggestion.Feedback</span>
+                            </div>
+                        }
+                        <div class="detail-item">
+                            <span class="detail-label">Vytvořeno</span>
+                            <span class="detail-value">@suggestion.CreatedAt.ToUserTimeString()</span>
+                        </div>
+                        @if (suggestion.LastUpdatedAt is not null)
+                        {
+                            <div class="detail-item">
+                                <span class="detail-label">Upraveno</span>
+                                <span class="detail-value">@suggestion.LastUpdatedAt.Value.ToString("g")</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (suggestion.Payload is not null)
+                    {
+                        var createdCommands = suggestion.Payload.CreateCommands ?? new List<CreatePropertyItemRequest>();
+
+                        if (createdCommands.Any())
+                        {
+                            <section class="payload-section">
+                                <div class="payload-header">
+                                    <h5>Vytvořené položky</h5>
+                                    <span class="payload-count">@createdCommands.Count()</span>
+                                </div>
+                                <div class="payload-grid">
+                                    @foreach (var command in createdCommands)
+                                    {
+                                        <article class="payload-card payload-card--created">
+                                            <ul class="item-field-list">
+                                                <li class="item-field">
+                                                    <span class="field-label">Název</span>
+                                                    <span class="field-value">@command.Name</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Cena</span>
+                                                    <span class="field-value">@command.Price Kč</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Inventární číslo</span>
+                                                    <span class="field-value">@command.InventoryNumber</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Registrační číslo</span>
+                                                    <span class="field-value">@command.RegistrationNumber</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Sériové číslo</span>
+                                                    <span class="field-value">@(command.SerialNumber ?? "-----")</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Datum nákupu</span>
+                                                    <span class="field-value">@command.DateOfPurchase:d</span>
+                                                </li>
+                                                @if (command.DateOfSale is not null)
+                                                {
+                                                    <li class="item-field">
+                                                        <span class="field-label">Datum prodeje</span>
+                                                        <span class="field-value">@command.DateOfSale:d</span>
+                                                    </li>
+                                                }
+                                                <li class="item-field">
+                                                    <span class="field-label">Umístění</span>
+                                                    <span class="field-value">Budova @command.Location.Building, Místnost @command.Location.Room</span>
+                                                </li>
+                                                @if (!string.IsNullOrWhiteSpace(command.Location.AdditionalNote))
+                                                {
+                                                    <li class="item-field">
+                                                        <span class="field-label">Poznámka</span>
+                                                        <span class="field-value">@command.Location.AdditionalNote</span>
+                                                    </li>
+                                                }
+                                                <li class="item-field">
+                                                    <span class="field-label">Popis</span>
+                                                    <span class="field-value">@command.Description</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Číslo dokladu</span>
+                                                    <span class="field-value">@command.DocumentNumber</span>
+                                                </li>
+                                            </ul>
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
+
+                        if (updatedEntries.Any())
+                        {
+                            <section class="payload-section">
+                                <div class="payload-header">
+                                    <h5>Upravené položky</h5>
+                                    <span class="payload-count">@updatedEntries.Count</span>
+                                </div>
+                                <div class="payload-grid">
+                                    @foreach (var kv in updatedEntries)
+                                    {
+                                        var item = kv.Value;
+                                        var command = kv.Key;
+
+                                        <article class="payload-card payload-card--updated">
+                                            <ul class="item-field-list">
+                                                <li class="item-field">
+                                                    <span class="field-label">ID</span>
+                                                    <span class="field-value">@command.Id</span>
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.Name != item.Name)">
+                                                    <span class="field-label">Název</span>
+                                                    <span class="field-value">@command.Name</span>
+                                                    @if (command.Name != item.Name)
+                                                    {
+                                                        <span class="field-original">Původně: @item.Name</span>
+                                                    }
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.Price != item.Price)">
+                                                    <span class="field-label">Cena</span>
+                                                    <span class="field-value">@command.Price Kč</span>
+                                                    @if (command.Price != item.Price)
+                                                    {
+                                                        <span class="field-original">Původně: @item.Price Kč</span>
+                                                    }
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.InventoryNumber != item.InventoryNumber)">
+                                                    <span class="field-label">Inventární číslo</span>
+                                                    <span class="field-value">@command.InventoryNumber</span>
+                                                    @if (command.InventoryNumber != item.InventoryNumber)
+                                                    {
+                                                        <span class="field-original">Původně: @item.InventoryNumber</span>
+                                                    }
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.RegistrationNumber != item.RegistrationNumber)">
+                                                    <span class="field-label">Registrační číslo</span>
+                                                    <span class="field-value">@command.RegistrationNumber</span>
+                                                    @if (command.RegistrationNumber != item.RegistrationNumber)
+                                                    {
+                                                        <span class="field-original">Původně: @item.RegistrationNumber</span>
+                                                    }
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.SerialNumber != item.SerialNumber)">
+                                                    <span class="field-label">Sériové číslo</span>
+                                                    <span class="field-value">@(command.SerialNumber ?? "-----")</span>
+                                                    @if (command.SerialNumber != item.SerialNumber)
+                                                    {
+                                                        <span class="field-original">Původně: @(item.SerialNumber ?? "-----")</span>
+                                                    }
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.DateOfPurchase != item.DateOfPurchase)">
+                                                    <span class="field-label">Datum nákupu</span>
+                                                    <span class="field-value">@command.DateOfPurchase:d</span>
+                                                    @if (command.DateOfPurchase != item.DateOfPurchase)
+                                                    {
+                                                        <span class="field-original">Původně: @item.DateOfPurchase:d</span>
+                                                    }
+                                                </li>
+                                                @if (command.DateOfSale is not null || item.DateOfSale is not null)
+                                                {
+                                                    <li class="@GetPayloadFieldClass(command.DateOfSale != item.DateOfSale)">
+                                                        <span class="field-label">Datum prodeje</span>
+                                                        <span class="field-value">@(
+                                                            command.DateOfSale?.ToString("d") ?? "-----")</span>
+                                                        @if (command.DateOfSale != item.DateOfSale)
+                                                        {
+                                                            <span class="field-original">Původně: @(item.DateOfSale?.ToString("d") ?? "-----")</span>
+                                                        }
+                                                    </li>
+                                                }
+                                                <li class="@GetPayloadFieldClass(command.Location.Building != item.Location.Building || command.Location.Room != item.Location.Room)">
+                                                    <span class="field-label">Umístění</span>
+                                                    <span class="field-value">Budova @command.Location.Building, Místnost @command.Location.Room</span>
+                                                    @if (command.Location.Building != item.Location.Building || command.Location.Room != item.Location.Room)
+                                                    {
+                                                        <span class="field-original">Původně: Budova @item.Location.Building, Místnost @item.Location.Room</span>
+                                                    }
+                                                </li>
+                                                @if (!string.IsNullOrWhiteSpace(command.Location.AdditionalNote) || !string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
+                                                {
+                                                    <li class="@GetPayloadFieldClass(command.Location.AdditionalNote != item.Location.AdditionalNote)">
+                                                        <span class="field-label">Poznámka</span>
+                                                        <span class="field-value">@(command.Location.AdditionalNote ?? "-----")</span>
+                                                        @if (command.Location.AdditionalNote != item.Location.AdditionalNote)
+                                                        {
+                                                            <span class="field-original">Původně: @(item.Location.AdditionalNote ?? "-----")</span>
+                                                        }
+                                                    </li>
+                                                }
+                                                <li class="item-field">
+                                                    <span class="field-label">Spravuje</span>
+                                                    <span class="field-value">@(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</span>
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.Description != item.Description)">
+                                                    <span class="field-label">Popis</span>
+                                                    <span class="field-value">@command.Description</span>
+                                                    @if (command.Description != item.Description)
+                                                    {
+                                                        <span class="field-original">Původně: @item.Description</span>
+                                                    }
+                                                </li>
+                                                <li class="@GetPayloadFieldClass(command.DocumentNumber != item.DocumentNumber)">
+                                                    <span class="field-label">Číslo dokladu</span>
+                                                    <span class="field-value">@command.DocumentNumber</span>
+                                                    @if (command.DocumentNumber != item.DocumentNumber)
+                                                    {
+                                                        <span class="field-original">Původně: @(item.DocumentNumber ?? "-----")</span>
+                                                    }
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Přidáno</span>
+                                                    <span class="field-value">@item.CreatedAt:g</span>
+                                                </li>
+                                                @if (item.LastUpdatedAt is not null)
+                                                {
+                                                    <li class="item-field">
+                                                        <span class="field-label">Upraveno</span>
+                                                        <span class="field-value">@item.LastUpdatedAt:g</span>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
+
+                        if (deletedEntries.Any())
+                        {
+                            <section class="payload-section">
+                                <div class="payload-header">
+                                    <h5>Smazané položky</h5>
+                                    <span class="payload-count">@deletedEntries.Count</span>
+                                </div>
+                                <div class="payload-grid">
+                                    @foreach (var item in deletedEntries)
+                                    {
+                                        <article class="payload-card payload-card--deleted">
+                                            <ul class="item-field-list">
+                                                <li class="item-field">
+                                                    <span class="field-label">ID</span>
+                                                    <span class="field-value">@item.Id</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Název</span>
+                                                    <span class="field-value">@item.Name</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Cena</span>
+                                                    <span class="field-value">@item.Price Kč</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Inventární číslo</span>
+                                                    <span class="field-value">@item.InventoryNumber</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Registrační číslo</span>
+                                                    <span class="field-value">@item.RegistrationNumber</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Sériové číslo</span>
+                                                    <span class="field-value">@(item.SerialNumber ?? "-----")</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Datum nákupu</span>
+                                                    <span class="field-value">@item.DateOfPurchase:d</span>
+                                                </li>
+                                                @if (item.DateOfSale is not null)
+                                                {
+                                                    <li class="item-field">
+                                                        <span class="field-label">Datum prodeje</span>
+                                                        <span class="field-value">@item.DateOfSale:d</span>
+                                                    </li>
+                                                }
+                                                <li class="item-field">
+                                                    <span class="field-label">Umístění</span>
+                                                    <span class="field-value">Budova @item.Location.Building, Místnost @item.Location.Room</span>
+                                                </li>
+                                                @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
+                                                {
+                                                    <li class="item-field">
+                                                        <span class="field-label">Poznámka</span>
+                                                        <span class="field-value">@item.Location.AdditionalNote</span>
+                                                    </li>
+                                                }
+                                                <li class="item-field">
+                                                    <span class="field-label">Spravuje</span>
+                                                    <span class="field-value">@(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Popis</span>
+                                                    <span class="field-value">@item.Description</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Číslo dokladu</span>
+                                                    <span class="field-value">@(
+                                                        item.DocumentNumber ?? "-----")</span>
+                                                </li>
+                                                <li class="item-field">
+                                                    <span class="field-label">Přidáno</span>
+                                                    <span class="field-value">@item.CreatedAt:g</span>
+                                                </li>
+                                                @if (item.LastUpdatedAt is not null)
+                                                {
+                                                    <li class="item-field">
+                                                        <span class="field-label">Upraveno</span>
+                                                        <span class="field-value">@item.LastUpdatedAt:g</span>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    }
+
+                    <div class="suggestion-actions">
+                        <button class="btn-secondary" type="button" @onclick="() => OpenAcceptSuggestion(suggestion)">Schválit</button>
+                        <button class="btn-destructive" type="button" @onclick="() => OpenDeclineSuggestion(suggestion)">Odmítnout</button>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="items-pagination">
+            <button class="btn-secondary" type="button" @onclick="() => LoadSuggestions(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+            <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+            <button class="btn-secondary" type="button" @onclick="() => LoadSuggestions(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+        </div>
+    }
+    else
+    {
+        <div class="items-empty-state">
+            <p>Žádné návrhy nebyly nalezeny.</p>
+        </div>
+    }
+</div>
+@if (ShowAcceptSuggestionModal && SelectedSuggestion is not null)
 {
-    <div>
-        @foreach (var suggestion in Suggestions)
-        {
-
-            var status = GetCzechStatus(suggestion.Status);
-
-            <h4>Základní informace</h4>
-            <div>
-                <ul>
-                    <li><strong>Název:</strong> @suggestion.Name</li>
-                    <li><strong>Předloženo:</strong> @suggestion.Employee.EmailAddress</li>
-                    @if (!string.IsNullOrEmpty(suggestion.Description))
-                    {
-                        <li><strong>Text:</strong> @suggestion.Description</li>
-                    }
-                    @if (!string.IsNullOrEmpty(suggestion.Feedback))
-                    {
-                        <li><strong>Feedback:</strong> @suggestion.Feedback</li>
-                    }
-                    <li><strong>Status:</strong> <span style="color:@status.Color">@status.Text</span></li>
-                    <li><strong>Vytvořeno:</strong> @suggestion.CreatedAt.ToUserTimeString()</li>
-                    @if (suggestion.LastUpdatedAt is not null)
-                    {
-                        <li><strong>Upraveno:</strong> @suggestion.LastUpdatedAt.Value.ToString("g")</li>
-                    }
-                </ul>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Schválit návrh</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseAcceptSuggestionModal">Zavřít</button>
             </div>
 
-            @if (suggestion.Payload is not null)
-            {
-                @if (suggestion.Payload.CreateCommands.Any())
-                {
-                    <hr style="width:95%;"/>
-                    <h4>Vytvořené položky</h4>
-                    <div style="margin-left:2%; margin-right:2%; display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
-                        @foreach (var command in suggestion.Payload.CreateCommands)
-                        {
-                            <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#BBFF99;">
-                                <ul style="list-style-type:none;padding:0;margin:0;">
-                                    <li><strong>Název:</strong> @command.Name</li>
-                                    <li><strong>Cena:</strong> @command.Price Kč</li>
-                                    <li><strong>Inventární číslo:</strong> @command.InventoryNumber</li>
-                                    <li><strong>Registrační číslo:</strong> @command.RegistrationNumber</li>
-                                    <li><strong>Sériové číslo:</strong> @(command.SerialNumber ?? "-----")</li>
-                                    <li><strong>Datum nákupu:</strong> @command.DateOfPurchase:d</li>
-                                    @if (command.DateOfSale is not null)
-                                    {
-                                        <li><strong>Datum prodeje:</strong> @command.DateOfSale:d</li>
-                                    }
-                                    <li><strong>Umístění:</strong> Budova @command.Location.Building, Místnost @command.Location.Room</li>
-                                    @if (!string.IsNullOrWhiteSpace(command.Location.AdditionalNote))
-                                    {
-                                        <li><strong>Poznámka k umístění:</strong> @command.Location.AdditionalNote</li>
-                                    }
-                                    <li><strong>Popis:</strong> @command.Description</li>
-                                    <li><strong>Číslo dokladu:</strong> @command.DocumentNumber</li>
-                                </ul>
-                            </div>
-                        }
-                    </div>
-                }
-
-
-                @if (UpdatedItems.Any())
-                {
-                <hr style="width:95%;"/>
-                <h4>Upravené položky</h4>
-                <div style="margin-left:2%; margin-right:2%; display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
-                    @foreach (var kv in UpdatedItems)
-                    {
-                        var item = kv.Value;
-                        var command = kv.Key;
-
-                        <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem;">
-                            <ul style="list-style-type:none;padding:0;margin:0;">
-                                <li><strong>ID:</strong> @command.Id</li>
-
-                                <li style="@((command.Name != item.Name) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Název:</strong> @command.Name
-                                    @if (command.Name != item.Name)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.Name)
-                                        </div>
-                                    }
-                                </li>
-
-                                <li style="@((command.Price != item.Price) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Cena:</strong> @command.Price Kč
-                                    @if (command.Price != item.Price)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.Price Kč)
-                                        </div>
-                                    }
-                                </li>
-
-                                <li style="@((command.InventoryNumber != item.InventoryNumber) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Inventární číslo:</strong> @command.InventoryNumber
-                                    @if (command.InventoryNumber != item.InventoryNumber)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.InventoryNumber)
-                                        </div>
-                                    }
-                                </li>
-
-                                <li style="@((command.RegistrationNumber != item.RegistrationNumber) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Registrační číslo:</strong> @command.RegistrationNumber
-                                    @if (command.RegistrationNumber != item.RegistrationNumber)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.RegistrationNumber)
-                                        </div>
-                                    }
-                                </li>
-
-                                <li style="@((command.SerialNumber != item.SerialNumber) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Sériové číslo:</strong> @(command.SerialNumber ?? "-----")
-                                    @if (command.SerialNumber != item.SerialNumber)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @(item.SerialNumber ?? "-----"))
-                                        </div>
-                                    }
-                                </li>
-
-                                <li style="@((command.DateOfPurchase != item.DateOfPurchase) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Datum nákupu:</strong> @command.DateOfPurchase:d
-                                    @if (command.DateOfPurchase != item.DateOfPurchase)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.DateOfPurchase:d)
-                                        </div>
-                                    }
-                                </li>
-
-                                @if (command.DateOfSale is not null)
-                                {
-                                    <li style="@((command.DateOfSale != item.DateOfSale) ? "background-color:#BBFF99;" : "")">
-                                        <strong>Datum prodeje:</strong> @command.DateOfSale:d
-                                        @if (command.DateOfSale != item.DateOfSale)
-                                        {
-                                            <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                                (Původně: @(item.DateOfSale?.ToString("d") ?? "-----"))
-                                            </div>
-                                        }
-                                    </li>
-                                }
-
-                                <li style="@((command.Location.Building != item.Location.Building || command.Location.Room != item.Location.Room) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Umístění:</strong> Budova @command.Location.Building, Místnost @command.Location.Room
-                                    @if (command.Location.Building != item.Location.Building || command.Location.Room != item.Location.Room)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: Budova @item.Location.Building, Místnost @item.Location.Room)
-                                        </div>
-                                    }
-                                </li>
-
-                                @if (!string.IsNullOrWhiteSpace(command.Location.AdditionalNote))
-                                {
-                                    <li style="@((command.Location.AdditionalNote != item.Location.AdditionalNote) ? "background-color:#BBFF99;" : "")">
-                                        <strong>Poznámka k umístění:</strong> @command.Location.AdditionalNote
-                                        @if (command.Location.AdditionalNote != item.Location.AdditionalNote)
-                                        {
-                                            <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                                (Původně: @item.Location.AdditionalNote)
-                                            </div>
-                                        }
-                                    </li>
-                                }
-
-                                <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
-
-                                <li style="@((command.Description != item.Description) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Popis:</strong> @command.Description
-                                    @if (command.Description != item.Description)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @item.Description)
-                                        </div>
-                                    }
-                                </li>
-
-                                <li style="@((command.DocumentNumber != item.DocumentNumber) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Číslo dokladu:</strong> @command.DocumentNumber
-                                    @if (command.DocumentNumber != item.DocumentNumber)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @(item.DocumentNumber ?? "------"))
-                                        </div>
-                                    }
-                                </li>
-
-                                <li><strong>Přidáno:</strong> @item.CreatedAt:g</li>
-
-                                @if (item.LastUpdatedAt is not null)
-                                {
-                                    <li><strong>Upraveno:</strong> @item.LastUpdatedAt:g</li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                </div>
-                }
-
-                @if (DeletedItems.Any())
-                {
-                   <hr style="width:95%; margin-top:2%;"/>
-                    <h4>Smazané položky</h4>
-                    <div style="margin-left:2%; margin-right:2%; display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
-                        @foreach (var item in DeletedItems.Values)
-                        {
-                            <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#FF5B5B;">
-                                <ul style="list-style-type:none;padding:0;margin:0;">
-                                    <li><strong>ID:</strong> @item.Id</li>
-                                    <li><strong>Název:</strong> @item.Name</li>
-                                    <li><strong>Cena:</strong> @item.Price Kč</li>
-                                    <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
-                                    <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
-                                    <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
-                                    <li><strong>Datum nákupu:</strong> @item.DateOfPurchase:d</li>
-                                    @if (item.DateOfSale is not null)
-                                    {
-                                        <li><strong>Datum prodeje:</strong> @item.DateOfSale:d</li>
-                                    }
-                                    <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
-                                    @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote))
-                                    {
-                                        <li><strong>Poznámka k umístění:</strong> @item.Location.AdditionalNote</li>
-                                    }
-                                    <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
-                                    <li><strong>Popis:</strong> @item.Description</li>
-                                    <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
-                                    <li><strong>Přidáno:</strong> @item.CreatedAt:g</li>
-                                    @if (item.LastUpdatedAt is not null)
-                                    {
-                                        <li><strong>Upraveno:</strong> @item.LastUpdatedAt:g</li>
-                                    }
-                                </ul>
-                            </div>
-                        }
-                    </div>
-                }
-
-                <div style="margin-bottom:2%; margin-top:2%;">
-                    <button @onclick="() => ShowAcceptSuggestionModal=true">Schválit</button>
-                    <button @onclick="() => ShowDeclineSuggestionModal=true">Odmítnout</button>
-                </div>
-
-                @if (ShowAcceptSuggestionModal)
-                {
-                    <div style="
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100vw;
-                        height: 100vh;
-                        background-color: rgba(0, 0, 0, 0.5);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 1500;">
-                        <div style="
-                            background-color: white;
-                            padding: 20px;
-                            border-radius: 8px;
-                            width: 500px;
-                            max-width: 90%;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-                                <AcceptPropertySuggestionForm Suggestion="suggestion" OnChange="() => OnAcceptSuggestion()" OnClose="() => ShowAcceptSuggestionModal = false"/>
-                        </div>
-                    </div>
-                }
-                @if (ShowDeclineSuggestionModal)
-                {
-                    <div style="
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100vw;
-                        height: 100vh;
-                        background-color: rgba(0, 0, 0, 0.5);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 1500;">
-                        <div style="
-                            background-color: white;
-                            padding: 20px;
-                            border-radius: 8px;
-                            width: 500px;
-                            max-width: 90%;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-                            <DeclinePropertySuggestionForm Suggestion="suggestion" OnChange="() => OnDeclineSuggestion()" OnClose="() => ShowDeclineSuggestionModal = false"/>
-                        </div>
-                    </div>
-                }
-            }
-        }
-    </div>
-
-    <div style="
-        position: sticky;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 10px 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
-    ">
-        <button @onclick="() => LoadSuggestions(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
-        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
-        <button @onclick="() => LoadSuggestions(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+            <div class="modal-body">
+                <AcceptPropertySuggestionForm Suggestion="SelectedSuggestion" OnChange="() => OnAcceptSuggestion()" OnClose="CloseAcceptSuggestionModal" />
+            </div>
+        </div>
     </div>
 }
-else
+
+@if (ShowDeclineSuggestionModal && SelectedSuggestion is not null)
 {
-    <p>Žádné návrhy nebyly nalezeny.</p>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Odmítnout návrh</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseDeclineSuggestionModal">Zavřít</button>
+            </div>
+
+            <div class="modal-body">
+                <DeclinePropertySuggestionForm Suggestion="SelectedSuggestion" OnChange="() => OnDeclineSuggestion()" OnClose="CloseDeclineSuggestionModal" />
+            </div>
+        </div>
+    </div>
 }
 
 @code
@@ -442,19 +523,60 @@ else
 
     private bool ShowAcceptSuggestionModal { get; set; }
     private bool ShowDeclineSuggestionModal { get; set; }
+    private PropertySuggestionDto? SelectedSuggestion { get; set; }
 
     private async Task OnAcceptSuggestion()
     {
         await LoadSuggestions(0);
         await OnChange.InvokeAsync(true);
-        ShowAcceptSuggestionModal = false;
+        CloseAcceptSuggestionModal();
     }
 
     private async Task OnDeclineSuggestion()
     {
         await LoadSuggestions(0);
         await OnChange.InvokeAsync(true);
+        CloseDeclineSuggestionModal();
+    }
+
+    private void OpenAcceptSuggestion(PropertySuggestionDto suggestion)
+    {
+        SelectedSuggestion = suggestion;
+        ShowAcceptSuggestionModal = true;
+    }
+
+    private void CloseAcceptSuggestionModal()
+    {
+        ShowAcceptSuggestionModal = false;
+        SelectedSuggestion = null;
+    }
+
+    private void OpenDeclineSuggestion(PropertySuggestionDto suggestion)
+    {
+        SelectedSuggestion = suggestion;
+        ShowDeclineSuggestionModal = true;
+    }
+
+    private void CloseDeclineSuggestionModal()
+    {
         ShowDeclineSuggestionModal = false;
+        SelectedSuggestion = null;
+    }
+
+    private IEnumerable<KeyValuePair<UpdatePropertyItemRequestBody, PropertyItemDto>> GetUpdatedEntries(PropertySuggestionDto suggestion)
+    {
+        if (suggestion.Payload is null) return Enumerable.Empty<KeyValuePair<UpdatePropertyItemRequestBody, PropertyItemDto>>();
+
+        return UpdatedItems.Where(kv => suggestion.Payload.UpdateCommands.Any(cmd => cmd.Id == kv.Key.Id));
+    }
+
+    private IEnumerable<PropertyItemDto> GetDeletedEntries(PropertySuggestionDto suggestion)
+    {
+        if (suggestion.Payload is null) return Enumerable.Empty<PropertyItemDto>();
+
+        return DeletedItems
+            .Where(kv => suggestion.Payload.DeleteCommands.Contains(kv.Key))
+            .Select(kv => kv.Value);
     }
 
     private (string Text, string Color) GetCzechStatus(PropertySuggestionDtoStatus status)
@@ -466,4 +588,7 @@ else
             _ => ("Neznámý", "gray")
         };
     }
+
+    private static string GetPayloadFieldClass(bool changed)
+        => changed ? "item-field item-field--changed" : "item-field";
 }

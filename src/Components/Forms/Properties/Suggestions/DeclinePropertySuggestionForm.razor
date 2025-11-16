@@ -3,25 +3,29 @@
 @using Api.Properties.Suggestions.Decline
 @using Invenire.Api.Properties.Suggestions
 
-<h4 style="margin: 0 0 10px 0;">Opravdu chcete odmítnout návrh?</h4>
+<div class="modal-stack">
+    <p class="modal-description">Opravdu chcete odmítnout návrh?</p>
 
-<EditForm Model="Body" OnSubmit="DeclineSuggestion" @ref="Form">
-    <div>
-        <label>Feedback:</label>
-        <InputText @bind-Value="Body.Feedback" style="width:80%"/>
-        <ValidationMessage For="@(() => Body.Feedback)" />
-    </div>
-
-    <button type="submit">Ano, odmítnout</button>
-    <button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
-
-    @if (ErrorGeneralMessage is not null)
-    {
-        <div>
-            <p>@ErrorGeneralMessage</p
+    <EditForm class="modal-form" Model="Body" OnSubmit="DeclineSuggestion" @ref="Form">
+        <div class="form-group">
+            <label>Feedback:</label>
+            <InputTextArea @bind-Value="Body.Feedback" />
+            <ValidationMessage For="@(() => Body.Feedback)" />
         </div>
-    }
-</EditForm>
+
+        <div class="form-actions">
+            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+            <button class="btn-destructive" type="submit">Ano, odmítnout</button>
+        </div>
+
+        @if (ErrorGeneralMessage is not null)
+        {
+            <div class="error-banner">
+                <p>@ErrorGeneralMessage</p>
+            </div>
+        }
+    </EditForm>
+</div>
 
 @code 
 {

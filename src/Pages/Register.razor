@@ -3,24 +3,39 @@
 
 @page "/register"
 
-<h1>@HeaderText</h1>
+<div class="auth-layout">
+    <div class="page-header">
+        <span class="pill">
+            <span class="status-dot"></span>
+            Nový účet
+        </span>
+        <h1>@HeaderText</h1>
+        <p>Zvolte typ uživatele a dokončete registraci v několika jednoduchých krocích.</p>
+    </div>
 
-<label>Vyberte typ registrace:</label>
-<select @bind="SelectedRole">
-    <option value="Employee">Zaměstnanec</option>
-    <option value="Admin">Admin</option>
-</select>
+    <div class="surface-card">
+        <label>Vyberte typ registrace</label>
+        <select @bind="SelectedRole">
+            <option value="Employee">Zaměstnanec</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
 
-@if (SelectedRole == "Employee")
-{
-    <RegisterEmployeeForm></RegisterEmployeeForm>
-}
-else if (SelectedRole == "Admin")
-{
-    <RegisterAdminForm></RegisterAdminForm>
-}
+    <div class="form-stack">
+        @if (SelectedRole == "Employee")
+        {
+            <RegisterEmployeeForm />
+        }
+        else if (SelectedRole == "Admin")
+        {
+            <RegisterAdminForm />
+        }
+    </div>
 
-<p>Máte již účet? <NavLink class="nav-link" href="/login">Přihlaste se zde</NavLink>.</p>
+    <div class="surface-card">
+        <p style="margin: 0.5rem 0 0.5rem 0;">Máte již účet? <NavLink class="nav-link" href="/login">Přihlaste se zde</NavLink>.</p>
+    </div>
+</div>
 
 @code 
 {

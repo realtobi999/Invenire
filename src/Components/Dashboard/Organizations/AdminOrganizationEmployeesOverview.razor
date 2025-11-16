@@ -2,76 +2,109 @@
 @using Invenire.Api.Organizations
 @using Invenire.Api.Users.Employees
 
-@if (Organization is not null)
+@if (Organization?.Employees is not null && Organization.Employees.Any())
 {
-    @if (Organization.Employees is not null && Organization.Employees.Any())
-    {
-        <label for="OrderSelect">Řazení: </label>
-        <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => CurrentOffset = 0">
-            @foreach (var option in OrderOptions)
-            {
-                <option value="@option.Value">@option.Label</option>
-            }
-        </select>
+    var pagedEmployees = PagedEmployees.ToList();
+    var (rangeStart, rangeEnd) = GetDisplayRange();
 
-        <input type="text" @bind="SearchTerm" placeholder="Hledat zaměstnance..." />
+    <div class="employees-overview">
+        <div class="stat-grid employees-summary">
+            <div class="stat-card">
+                <span class="stat-label">Celkem zaměstnanců</span>
+                <span class="stat-value">@TotalCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Aktuálně zobrazeno</span>
+                <span class="stat-value">@pagedEmployees.Count</span>
+                <p class="muted-text">@GetFilterDescription()</p>
+            </div>
+        </div>
 
-        <ul>
-            @foreach (var employee in PagedEmployees)
+        <div class="filter-panel employees-filter-panel">
+            <div class="filter-grid">
+                <div class="form-control">
+                    <label for="employee-order">Řazení</label>
+                    <select id="employee-order" @bind="SelectedOrderOption" @bind:after="() => SetCurrentOffset(0)">
+                        @foreach (var option in OrderOptions)
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-control grow">
+                    <label for="employee-search">Hledat</label>
+                    <input id="employee-search" type="text" @bind="SearchTerm" @bind:after="() => SetCurrentOffset(0)" placeholder="Hledat zaměstnance..." />
+                </div>
+            </div>
+        </div>
+
+        <ul class="employees-list">
+            @foreach (var employee in pagedEmployees)
             {
-                <li>
-                    <strong>@employee.FullName</strong> (@employee.EmailAddress)
-                    <button @onclick="() => (SelectedEmployee, ShowDeletionModal) = (employee, true)">X</button>
+                <li class="employee-card">
+                    <div class="employee-identity">
+                        <span class="employee-avatar">@GetEmployeeInitials(employee)</span>
+                        <div>
+                            <p class="employee-name">@employee.FullName</p>
+                            <p class="employee-email">@employee.EmailAddress</p>
+                        </div>
+                    </div>
+                    <div class="employee-card-actions">
+                        <button class="btn-destructive" type="button" @onclick="() => (SelectedEmployee, ShowDeletionModal) = (employee, true)">Odebrat</button>
+                    </div>
                 </li>
             }
         </ul>
 
-        <div class="pagination">
-            <button @onclick="() => SetCurrentOffset(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
-                ◀
-            </button>
-            <span>
-                @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalCount / Limit))
-            </span>
-            <button @onclick="() => SetCurrentOffset(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
-                ▶
-            </button>
+        <div class="employees-pagination">
+            <div class="employees-pagination-meta">
+                <span>Zobrazuji @rangeStart-@rangeEnd z @TotalCount zaměstnanců</span>
+            </div>
+            <div class="employees-pagination-controls">
+                <button class="btn-secondary" type="button" @onclick="() => SetCurrentOffset(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+                <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalCount / Limit))</span>
+                <button class="btn-secondary" type="button" @onclick="() => SetCurrentOffset(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+            </div>
         </div>
+    </div>
 
-        @if (ShowDeletionModal)
-        {
-            <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background-color: rgba(0, 0, 0, 0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;">
-                <div style="
-                    background-color: white;
-                    padding: 20px;
-                    border-radius: 8px;
-                    width: 400px;
-                    max-width: 90%;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+    @if (ShowDeletionModal && SelectedEmployee is not null)
+    {
+        <div class="modal-overlay">
+            <div class="modal-panel">
+                <div class="modal-header">
+                    <h4>Odebrat zaměstnance</h4>
+                    <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Zavřít</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-description">Opravdu chcete odebrat zaměstnance z organizace?</p>
 
-                    <h4 style="margin: 0 0 10px 0;">Opravdu chcete odebrat zaměstnance?</h4>
-                    <p style="margin: 0 0 10px 0;"><strong>@SelectedEmployee!.FullName</strong> (@SelectedEmployee!.EmailAddress)</p>
+                    <div class="detail-list">
+                        <div class="detail-item">
+                            <span class="detail-label">Jméno</span>
+                            <span class="detail-value">@SelectedEmployee.FullName</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email</span>
+                            <span class="detail-value">@SelectedEmployee.EmailAddress</span>
+                        </div>
+                    </div>
 
-                    <button @onclick="RemoveEmployee">Ano, odebrat</button>
-                    <button @onclick="() => ShowDeletionModal = false">Ne</button>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Ne, ponechat</button>
+                        <button class="btn-destructive" type="button" @onclick="RemoveEmployee">Ano, odebrat</button>
+                    </div>
                 </div>
             </div>
-        }
+        </div>
     }
-    else
-    {
+}
+else
+{
+    <section class="section-card empty-state">
         <p>Žádní zaměstnanci nebyli nalezeni.</p>
-    }
+        <p class="muted-text">Jakmile přidáte zaměstnance, jejich přehled se zobrazí právě zde.</p>
+    </section>
 }
 
 @code
@@ -121,6 +154,57 @@
     private IEnumerable<EmployeeDto> PagedEmployees => SearchedEmployees.Skip(CurrentOffset).Take(Limit);
     private EmployeeDto? SelectedEmployee { get; set; }
 
+    private (int Start, int End) GetDisplayRange()
+    {
+        if (TotalCount == 0)
+        {
+            return (0, 0);
+        }
+
+        var start = CurrentOffset + 1;
+        var end = Math.Min(CurrentOffset + Limit, TotalCount);
+        return (start, end);
+    }
+
+    private string GetFilterDescription()
+    {
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            return $"Filtrované podle \"{SearchTerm}\"";
+        }
+
+        var selectedOrder = OrderOptions.FirstOrDefault(o => o.Value == SelectedOrderOption);
+        var label = string.IsNullOrWhiteSpace(selectedOrder.Label) ? SelectedOrderOption : selectedOrder.Label;
+
+        return $"Řazení: {label}";
+    }
+
+    private string GetEmployeeInitials(EmployeeDto employee)
+    {
+        var initials = new List<char>();
+
+        if (!string.IsNullOrWhiteSpace(employee.FirstName))
+            initials.Add(char.ToUpperInvariant(employee.FirstName!.Trim()[0]));
+
+        if (!string.IsNullOrWhiteSpace(employee.LastName))
+            initials.Add(char.ToUpperInvariant(employee.LastName!.Trim()[0]));
+
+        if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.FullName))
+        {
+            var segments = employee.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var segment in segments.Take(2))
+            {
+                initials.Add(char.ToUpperInvariant(segment[0]));
+            }
+        }
+
+        if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.EmailAddress))
+            initials.Add(char.ToUpperInvariant(employee.EmailAddress![0]));
+
+        return initials.Count == 0 ? "??" : new string(initials.Take(2).ToArray());
+    }
+
     private async Task RemoveEmployee()
     {
         if (SelectedEmployee is null) return;
@@ -130,9 +214,15 @@
         if (response.StatusCode != HttpStatusCode.NoContent)
             throw new Exception("Failed to remove employee from the organization.");
 
-        (ShowDeletionModal, SelectedEmployee) = (false, null);
+        CloseDeletionModal();
         await OnSuccessfulDeletion.InvokeAsync(true);
     }
 
     private void SetCurrentOffset(int offset) => CurrentOffset = Math.Max(0, Math.Min(offset, TotalCount - 1));
+
+    private void CloseDeletionModal()
+    {
+        ShowDeletionModal = false;
+        SelectedEmployee = null;
+    }
 }

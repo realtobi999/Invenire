@@ -12,60 +12,76 @@
 
 @page "/dashboard"
 
-<button @onclick="() => Logout()">Odhlásit se</button>
+<div class="dashboard-shell">
+    <header class="dashboard-header">
+        <div class="dashboard-header-content">
+            <div class="dashboard-header-top">
+                <span class="pill">
+                    <span class="status-dot"></span>
+                    @(Role == JwtRole.Admin ? "Správa organizace" : "Zaměstnanec")
+                </span>
+                <button class="btn-secondary btn-logout" @onclick="() => Logout()">Odhlásit se</button>
+            </div>
+            <h1>@(Role == JwtRole.Admin ? "Dashboard - Admin" : "Dashboard - Zaměstnanec")</h1>
+        </div>
+    </header>
 
-@if (Role == JwtRole.Admin)
-{
-    @if (IsOrganizationNull is true)
+    @if (Role == JwtRole.Admin)
     {
-        <h1>Vytvoření organizace</h1>
-        <CreateOrganizationForm OnSuccessfulCreation="OnSuccessfulCreation" />
+        @if (IsOrganizationNull is true)
+        {
+            <section class="surface-card stack">
+                <h2>Vytvoření organizace</h2>
+                <p>Nejdříve založte svou organizaci. Získáte tím přístup k zaměstnancům, majetku i inventurám.</p>
+                <CreateOrganizationForm OnSuccessfulCreation="OnSuccessfulCreation" />
+            </section>
+        }
+        else
+        {
+            <div class="dashboard-grid">
+                <section class="section-card">
+                    <h2>Přehled vás</h2>
+                    <AdminOverview />
+                </section>
+                <section class="section-card">
+                    <h2>Přehled organizace</h2>
+                    <AdminOrganizationOverview />
+                </section>
+                <section class="section-card">
+                    <h2>Přehled majetku</h2>
+                    <AdminPropertyOverview />
+                </section>
+            </div>
+        }
     }
-    else
+    else if (Role == JwtRole.Employee)
     {
-        <h1>Dashboard - Admin</h1>
-        <div>
-            <div>
-                <h2>Přehled vás</h2>
-                <AdminOverview />
+        @if (IsOrganizationNull is true)
+        {
+            <section class="surface-card stack">
+                <h2>Připojte se k organizaci</h2>
+                <EmployeeOrganizationInvitationOverview OnSuccessfulJoin="OnSuccessfulJoin" />
+            </section>
+        }
+        else
+        {
+            <div class="dashboard-grid">
+                <section class="section-card">
+                    <h2>Přehled vás</h2>
+                    <EmployeeOverview />
+                </section>
+                <section class="section-card">
+                    <h2>Přehled organizace</h2>
+                    <EmployeeOrganizationOverview />
+                </section>
+                <section class="section-card">
+                    <h2>Přehled majetku</h2>
+                    <EmployeePropertyOverview />
+                </section>
             </div>
-            <div>
-                <h2>Přehled organizace</h2>
-                <AdminOrganizationOverview />
-            </div>
-            <div>
-                <h2>Přehled majetku</h2>
-                <AdminPropertyOverview />
-            </div>
-        </div>
+        }
     }
-}
-else if (Role == JwtRole.Employee)
-{
-    @if (IsOrganizationNull is true)
-    {
-        <h1>Připojte se k organizaci</h1>
-        <EmployeeOrganizationInvitationOverview OnSuccessfulJoin="OnSuccessfulJoin" />
-    }
-    else
-    {
-        <h1>Dashboard - Zaměstnanec</h1>
-        <div>
-            <div>
-                <h2>Přehled vás</h2>
-                <EmployeeOverview />
-            </div>
-            <div>
-                <h2>Přehled organizace</h2>
-                <EmployeeOrganizationOverview />
-            </div>
-            <div>
-                <h2>Přehled majetku</h2>
-                <EmployeePropertyOverview />
-            </div>
-        </div>
-    }
-}
+</div>
 
 
 @code 

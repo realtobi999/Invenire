@@ -8,18 +8,44 @@
 
 @if (Property is not null)
 {
-    <h3>Základní informace</h3>
-    <EmployeePropertyBaseOverview Property="Property" />
-    <h3>Položky</h3>
-    <EmployeePropertyItemBaseOverview Property="Property" OnChange="() => LoadProperty()"/>
-    <h3>Návrhy</h3>
-    <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="() => LoadProperty()"/>
-    <h3>Inventury</h3>
-    <EmployeePropertyScanBaseOverview />
+    <div class="stack">
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Základní informace</h3>
+            </div>
+            <EmployeePropertyBaseOverview Property="Property" />
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Položky</h3>
+            </div>
+            <EmployeePropertyItemBaseOverview Property="Property" OnChange="() => LoadProperty()" />
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Návrhy</h3>
+            </div>
+            <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="() => LoadProperty()" />
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Inventura</h3>
+            </div>
+            <EmployeePropertyScanBaseOverview />
+        </section>
+    </div>
 }
 else
 {
-    <p>Admin zatím nevytvořil majetek k organizaci.</p>
+    <section class="section-card">
+        <div class="empty-state">
+            <h3>Admin zatím nevytvořil majetek</h3>
+            <p>Jakmile správce přidá majetek k organizaci, získáte přístup k položkám, návrhům i inventurám.</p>
+        </div>
+    </section>
 }
 
 @code

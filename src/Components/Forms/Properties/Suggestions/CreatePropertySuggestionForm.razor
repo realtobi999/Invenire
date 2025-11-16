@@ -6,32 +6,34 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Properties.Scans.Create;
 
-<EditForm Model="Body" OnSubmit="HandleCreation" @ref="Form">
-    <div>
+<EditForm class="modal-form" Model="Body" OnSubmit="HandleCreation" @ref="Form">
+    <div class="form-group">
         <label>Název:</label>
-        <InputText @bind-Value="Body.Name" style="width:53%;" />
+        <InputText @bind-Value="Body.Name" />
         <ValidationMessage For="@(() => Body.Name)" />
     </div>
 
-    <div>
-        <div style="display:flex; align-items:flex-start; gap:10px;">
-            <label style="white-space:nowrap;">Text:</label>
-            <InputTextArea @bind-Value="Body.Description" style="width:80%; height:100px; resize:vertical;" />
-        </div>
+    <div class="form-group">
+        <label>Text:</label>
+        <InputTextArea @bind-Value="Body.Description" rows="4" />
         <ValidationMessage For="@(() => Body.Description)" />
     </div>
     
-    <button type="submit">Vytvořit</button>
-    <button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+    <div class="form-actions">
+        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+        <button type="submit">Vytvořit</button>
+    </div>
 </EditForm>
 
 @if (Errors.Count != 0)
 {
-    <div>
-        @foreach(var error in Errors)
-        {
-            <p>@error</p>
-        }
+    <div class="error-banner">
+        <ul>
+            @foreach(var error in Errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
     </div>
 }
 

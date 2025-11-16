@@ -1,118 +1,167 @@
 @using System.Net
-@using System.Threading.Tasks
 @using Invenire.Api.Organizations
 @using Invenire.Api.Organizations.Invitations
 @using Invenire.Api.Organizations.Invitations.IndexByEmployee
-@using System.Security.AccessControl
+@using Invenire.Components.Forms.Organizations.Invitations
 
-@if (Invitations.Count == 0)
+@if (Invitations.Any())
 {
-    <div>
-        <h4>Momentálně nemáte žádné pozvánky.</h4>
+    var pagedInvitations = Invitations;
+    var visibleCount = pagedInvitations.Count;
+    var rangeStart = visibleCount == 0 ? 0 : CurrentOffset + 1;
+    var rangeEnd = visibleCount == 0 ? 0 : CurrentOffset + visibleCount;
+
+    <div class="stat-grid invitation-summary">
+        <div class="stat-card">
+            <span class="stat-label">Celkem pozvánek</span>
+            <span class="stat-value">@TotalInvitationsCount.ToString("N0")</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Aktuálně zobrazeno</span>
+            <span class="stat-value">@visibleCount</span>
+            <p class="muted-text">@(rangeStart == 0 ? "—" : $"{rangeStart}-{rangeEnd} z {TotalInvitationsCount}")</p>
+        </div>
+    </div>
+
+    <div class="filter-panel invitation-filter-panel">
+        <div class="filter-grid">
+            <div class="form-control">
+                <label for="invitation-order">Řazení</label>
+                <select id="invitation-order" @bind="SelectedOrderOption" @bind:after="() => SetInvitations(0)">
+                    @foreach (var option in OrderOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="form-control grow">
+                <label for="invitation-search">Hledat</label>
+                <input id="invitation-search" type="text" placeholder="Hledat pozvánky..." @bind="SearchTerm" @bind:after="() => SetInvitations(0)" />
+            </div>
+        </div>
+    </div>
+
+    <div class="invitation-list">
+        @foreach (var invitation in pagedInvitations)
+        {
+            <article class="invitation-card">
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Id</span>
+                        <span class="detail-value">@invitation.Id</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Od</span>
+                        <span class="detail-value">@invitation.OrganizationDto?.Admin?.FullName</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Organizace</span>
+                        <span class="detail-value">@invitation.OrganizationDto?.Name</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(invitation.Description))
+                    {
+                        <div class="detail-item">
+                            <span class="detail-label">Text</span>
+                            <span class="detail-value">@invitation.Description</span>
+                        </div>
+                    }
+                    <div class="detail-item">
+                        <span class="detail-label">Vytvořeno</span>
+                        <span class="detail-value">@invitation.CreatedAt.ToUserTimeString()</span>
+                    </div>
+                    @if (invitation.LastUpdatedAt is not null)
+                    {
+                        <div class="detail-item">
+                            <span class="detail-label">Naposledy upraveno</span>
+                            <span class="detail-value">@invitation.LastUpdatedAt.ToUserTimeString()</span>
+                        </div>
+                    }
+                </div>
+
+
+                <div class="invitation-actions">
+                    <button class="btn-secondary" type="button" @onclick="() => OpenAcceptModal(invitation)">Připojit se</button>
+                    <button class="btn-destructive" type="button" @onclick="() => OpenDeletionModal(invitation)">Odstranit</button>
+                </div>
+            </article>
+        }
+    </div>
+
+    <div class="invitation-pagination">
+        <div class="invitation-pagination-meta">
+            <span>Zobrazuji @rangeStart-@rangeEnd z @TotalInvitationsCount pozvánek</span>
+        </div>
+        <div class="invitation-pagination-controls">
+            <button class="btn-secondary" @onclick="async () => await GoToPreviousPage()" disabled="@(!CanGoPrev)">◀</button>
+            <span>@CurrentPage / @TotalPages</span>
+            <button class="btn-secondary" @onclick="async () => await GoToNextPage()" disabled="@(!CanGoNext)">▶</button>
+        </div>
     </div>
 }
 else
 {
-    @foreach (var invitation in Invitations)
-    {
-        <div>
-            <h5>Pozvánka</h5>
-            <ul>
-                <li><strong>ID:</strong> @invitation.Id</li>
-                @if (invitation.OrganizationDto is not null)
-                {
-                    <li><strong>Jméno organizace:</strong> @invitation.OrganizationDto.Name</li>
-                    @if (invitation.OrganizationDto.Admin is not null)
-                    {
-                        <li><strong>Jméno admina:</strong> @invitation.OrganizationDto.Admin.FullName</li>
-                    }
-                }
-                @if (!string.IsNullOrEmpty(invitation.Description))
-                {
-                    <li><strong>Text:</strong> @invitation.Description <br /></li>
-                }
-                <li><strong>Vytvořeno:</strong> @invitation.CreatedAt.ToUserTimeString()</li>
-                @if (invitation.LastUpdatedAt is not null)
-                {
-                    <li><strong>Naposledy upraveno:</strong> @invitation.LastUpdatedAt.ToUserTimeString()</li>
-                }
-                @if (invitation.Employee is not null)
-                {
-                    <li><strong>Pro:</strong> @invitation.Employee.FullName</li>
-                }
-            </ul>
-            <button @onclick="() => {ShowAcceptInvitationConfirmationModal = true; SelectedInvitation = invitation;}">Připojit se</button>
-            <button @onclick="() => {ShowDeleteInvitationConfirmationModal = true; SelectedInvitation = invitation;}">Odstranit</button>
-        </div>
-    }
-
-    <div class="pagination">
-        <button @onclick="() => SetInvitations(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
-            ◀
-        </button>
-        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationsCount / Limit))</span>
-        <button @onclick="() => SetInvitations(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
-            ▶
-        </button>
+    <div class="empty-state">
+        <p>Momentálně nemáte žádné pozvánky.</p>
     </div>
+}
 
-    @if (ShowAcceptInvitationConfirmationModal && SelectedInvitation is not null)
-    {
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;">
-            <div style="
-                background-color: white;
-                padding: 20px;
-                border-radius: 8px;
-                width: 400px;
-                max-width: 100%;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
 
-                <h4 style="margin: 0 0 10px 0;">Opravdu se chcete připojit k organizaci?</h4>
-                <p> Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
-                <button @onclick="() => AcceptInvitation(SelectedInvitation)">Ano, připojit se</button>
-                <button @onclick="() => { ShowAcceptInvitationConfirmationModal = false; SelectedInvitation = null; }">Zrušit</button>
+@if (ShowAcceptInvitationConfirmationModal && SelectedInvitation is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Připojit se k organizaci</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseAcceptModal">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Opravdu se chcete připojit k organizaci?</p>
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Organizace</span>
+                        <span class="detail-value">@SelectedInvitation.OrganizationDto?.Name</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Od</span>
+                        <span class="detail-value">@SelectedInvitation.OrganizationDto?.Admin?.FullName</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" type="button" @onclick="CloseAcceptModal">Zrušit</button>
+                    <button class="btn-success" type="button" @onclick="() => AcceptInvitation(SelectedInvitation)">Ano, připojit se</button>
+                </div>
             </div>
         </div>
-    }
+    </div>
+}
 
-    @if (ShowDeleteInvitationConfirmationModal && SelectedInvitation is not null)
-    {
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;">
-            <div style="
-                background-color: white;
-                padding: 20px;
-                border-radius: 8px;
-                width: 400px;
-                max-width: 90%;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-                <h4 style="margin: 0 0 10px 0;">Opravdu chcete smazat pozvánku?</h4>
-                <p> Pozvánka od <strong>@SelectedInvitation.OrganizationDto!.Admin!.FullName</strong> z <strong>@SelectedInvitation.OrganizationDto.Name</strong></p>
-                <button @onclick="() => DeleteInvitation(SelectedInvitation)">Ano, smazat</button>
-                <button @onclick="() => { ShowDeleteInvitationConfirmationModal = false; SelectedInvitation = null; }">Zrušit</button>
+@if (ShowDeleteInvitationConfirmationModal && SelectedInvitation is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Smazat pozvánku</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Opravdu chcete smazat pozvánku?</p>
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Od</span>
+                        <span class="detail-value">@SelectedInvitation.OrganizationDto?.Admin?.FullName</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Organizace</span>
+                        <span class="detail-value">@SelectedInvitation.OrganizationDto?.Name</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Zrušit</button>
+                    <button class="btn-destructive" type="button" @onclick="() => DeleteInvitation(SelectedInvitation)">Ano, smazat</button>
+                </div>
             </div>
         </div>
-    }
+    </div>
 }
 
 @code
@@ -121,42 +170,63 @@ else
     [Parameter] public EventCallback<bool> OnSuccessfulJoin { get; set; }
 
     private int Limit { get; set; } = 5;
-    private int CurrentOffset { get; set; } = 0;
+    private int CurrentOffset { get; set; }
     private int TotalInvitationsCount { get; set; }
+
+    private string SearchTerm { get; set; } = string.Empty;
+    private string SelectedOrderOption { get; set; } = "created_desc";
 
     private bool ShowAcceptInvitationConfirmationModal { get; set; }
     private bool ShowDeleteInvitationConfirmationModal { get; set; }
 
-    private OrganizationInvitationDto? SelectedInvitation { get; set;}
+    private OrganizationInvitationDto? SelectedInvitation { get; set; }
     private List<OrganizationInvitationDto> Invitations { get; set; } = [];
 
-    protected override async Task OnInitializedAsync()
+    private readonly List<(string Value, string Label)> OrderOptions = new()
     {
-        await SetInvitations();
-    }
+        ("created_desc", "Datum vytvoření (novější)"),
+        ("created_asc", "Datum vytvoření (starší)"),
+        ("updated_desc", "Datum úprav (novější)"),
+        ("updated_asc", "Datum úprav (starší)"),
+        ("organization_asc", "Organizace (A-Z)"),
+        ("organization_desc", "Organizace (Z-A)")
+    };
+
+    protected override async Task OnInitializedAsync() => await SetInvitations();
 
     private async Task SetInvitations(int offset = 0)
     {
-        CurrentOffset = offset;
+        CurrentOffset = Math.Max(0, offset);
 
-        var response = await Client.GetAsync($"/api/employees/invitations?limit={Limit}&offset={CurrentOffset}");
+        var parameters = new List<string>
+        {
+            $"limit={Limit}",
+            $"offset={CurrentOffset}",
+            $"order={SelectedOrderOption}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+            parameters.Add($"searchQuery={SearchTerm}");
+
+        var response = await Client.GetAsync($"/api/employees/invitations?{string.Join("&", parameters)}");
         if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to index the invitations.");
 
         var content = await response.Content.ReadFromJsonAsync<IndexByEmployeeOrganizationInvitationResponse>() ?? throw new NullReferenceException();
 
-        Invitations.Clear();
-        Invitations.AddRange(content.Data);
+        Invitations = content.Data;
+        TotalInvitationsCount = content.TotalCount;
 
         foreach (var invitation in Invitations)
         {
             invitation.OrganizationDto = await (await Client.GetAsync($"/api/organizations/{invitation.OrganizationId}")).Content.ReadFromJsonAsync<OrganizationDto>();
         }
-
-        TotalInvitationsCount = content.TotalCount;
     }
 
     private bool CanGoPrev => CurrentOffset > 0;
     private bool CanGoNext => CurrentOffset + Limit < TotalInvitationsCount;
+
+    private int CurrentPage => TotalInvitationsCount == 0 ? 0 : CurrentOffset / Limit + 1;
+    private int TotalPages => TotalInvitationsCount == 0 ? 1 : (int)Math.Ceiling((double)TotalInvitationsCount / Limit);
 
     private async Task AcceptInvitation(OrganizationInvitationDto invitation)
     {
@@ -164,6 +234,7 @@ else
 
         if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to accept the invitation.");
 
+        CloseAcceptModal();
         await OnSuccessfulJoin.InvokeAsync(true);
     }
 
@@ -174,7 +245,47 @@ else
         if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to delete the invitation.");
 
         Invitations.Remove(invitation);
-
+        CloseDeletionModal();
         StateHasChanged();
+    }
+
+    private void OpenAcceptModal(OrganizationInvitationDto invitation)
+    {
+        SelectedInvitation = invitation;
+        ShowAcceptInvitationConfirmationModal = true;
+    }
+
+    private void CloseAcceptModal()
+    {
+        ShowAcceptInvitationConfirmationModal = false;
+        SelectedInvitation = null;
+    }
+
+    private void OpenDeletionModal(OrganizationInvitationDto invitation)
+    {
+        SelectedInvitation = invitation;
+        ShowDeleteInvitationConfirmationModal = true;
+    }
+
+    private void CloseDeletionModal()
+    {
+        ShowDeleteInvitationConfirmationModal = false;
+        SelectedInvitation = null;
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (CanGoPrev)
+        {
+            await SetInvitations(CurrentOffset - Limit);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (CanGoNext)
+        {
+            await SetInvitations(CurrentOffset + Limit);
+        }
     }
 }

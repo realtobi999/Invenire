@@ -6,21 +6,62 @@
 
 @page "/send-email"
 
-<h1>Emailová verifikace</h1>
+<div class="auth-layout verification-page">
+    <section class="surface-card verification-hero">
+        <div class="verification-heading">
+            <div class="status-pill">
+                <span class="status-dot success"></span>
+                Ověření
+            </div>
+            <h1>Připravujeme pro vás přístup</h1>
+            <p>Ověřte svůj e-mail a pokračujte v nastavení účtu i organizace.</p>
+        </div>
+        <div class="verification-progress">
+            <div class="step step--completed">
+                <span>Registrace</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step step--active">
+                <span>Ověření e-mailu</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step">
+                <span>Vstup do aplikace</span>
+            </div>
+        </div>
+    </section>
 
-@if (IsLoading)
-{
-    <p>Probíhá načítání...</p>
-}
-else
-{
-    <p class="mb-6">
-        Na e-mail <strong>@EmailAddress</strong> jsme poslali ověřovací odkaz.
-        Klikněte na odkaz v e-mailu pro dokončení registrace.
-    </p>
+    <section class="surface-card verification-card stack">
+        @if (IsLoading)
+        {
+            <div class="loading-state">
+                <div class="pulse-bar"></div>
+                <p>Odesíláme ověřovací e-mail…</p>
+            </div>
+        }
+        else
+        {
+            <div class="message-block">
+                <h2>Ověřovací odkaz byl odeslán</h2>
+                <p>
+                    Zkontrolujte schránku na adrese <strong>@EmailAddress</strong> a klikněte na odkaz pro dokončení registrace.
+                </p>
+            </div>
 
-    <button @onclick="SendEmailAsync">Poslat znovu</button>
-}
+            <div class="info-grid">
+                <div>
+                    <span class="label">Tip</span>
+                    <p>Pokud e-mail nevidíte, prohledejte složku spam nebo promo akce.</p>
+                </div>
+                <div class="info-action">
+                    <span class="label">Potřebujete znovu?</span>
+                    <button class="btn-secondary" type="button" @onclick="SendEmailAsync">Poslat znovu</button>
+                </div>
+            </div>
+
+        }
+    </section>
+</div>
 
 @code 
 {

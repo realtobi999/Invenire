@@ -2,43 +2,45 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Users.Admin.Register
 
-<EditForm Model="Body" OnSubmit="HandleRegistration" @ref="Form">
-    <div>
+<EditForm class="form-card" Model="Body" OnSubmit="HandleRegistration" @ref="Form">
+    <div class="form-group">
         <label>Křestní jméno:</label>
         <InputText @bind-Value="Body.FirstName" />
         <ValidationMessage For="@(() => Body.FirstName)" />
     </div>
 
-    <div>
+    <div class="form-group">
         <label>Příjmení:</label>
         <InputText @bind-Value="Body.LastName" />
         <ValidationMessage For="@(() => Body.LastName)" />
     </div>
 
-    <div>
+    <div class="form-group">
         <label>Emailová adresa:</label>
         <InputText @bind-Value="Body.EmailAddress" type="email" />
         <ValidationMessage For="@(() => Body.EmailAddress)" />
     </div>
 
-    <div>
+    <div class="form-group">
         <label>Heslo:</label>
         <InputText @bind-Value="Body.Password" type="password" />
         <ValidationMessage For="@(() => Body.Password)" />
     </div>
 
-    <div>
+    <div class="form-group">
         <label>Potvrzení hesla:</label>
         <InputText @bind-Value="Body.PasswordConfirm" type="password" />
         <ValidationMessage For="@(() => Body.PasswordConfirm)" />
     </div>
 
-    <button type="submit">Registrovat</button>
+    <div class="form-actions">
+        <button type="submit">Registrovat</button>
+    </div>
 </EditForm>
 
 @if (ErrorGeneralMessage is not null)
 {
-    <div>
+    <div class="error-banner">
         @ErrorGeneralMessage
     </div>
 }

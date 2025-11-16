@@ -1,0 +1,23 @@
+:host {
+    display: block;
+}
+
+.app-shell {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.backdrop-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 20%, rgba(122, 90, 248, 0.25), transparent 45%), radial-gradient(circle at 80% 0%, rgba(147, 81, 255, 0.15), transparent 40%);
+    filter: blur(90px);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.app-main {
+    position: relative;
+    z-index: 1;
+}

@@ -8,19 +8,47 @@
 
 @if (Property is not null)
 {
-    <h3>Základní informace</h3>
-    <AdminPropertyBaseOverview Property="Property" />
-    <h3>Položky</h3>
-    <AdminPropertyItemBaseOverview Property="Property" OnChange="() => ReloadProperty()"/>
-    <h3>Návrhy</h3>
-    <AdminPropertySuggestionBaseOverview Property="Property" OnChange="() => ReloadProperty()" /> 
-    <h3>Inventury</h3>
-    <AdminPropertyScanBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+    <div class="stack">
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Základní informace</h3>
+            </div>
+            <AdminPropertyBaseOverview Property="Property" />
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Položky</h3>
+            </div>
+            <AdminPropertyItemBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Návrhy</h3>
+            </div>
+            <AdminPropertySuggestionBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h3>Inventury</h3>
+            </div>
+            <AdminPropertyScanBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+        </section>
+    </div>
 }
 else
 {
-    <p>Zatím jste nevytvořil majetek k organizaci.</p>
-    <CreatePropertyForm OnSuccessfulCreation="ReloadProperty"/>
+    <section class="section-card">
+        <div class="empty-state">
+            <div>
+                <h3>Zatím nemáte vytvořený majetek</h3>
+                <p>Vytvořte svůj první záznam majetku, abyste mohli sledovat položky, návrhy i inventury.</p>
+            </div>
+            <CreatePropertyForm OnSuccessfulCreation="ReloadProperty" />
+        </div>
+    </section>
 }
 
 @code

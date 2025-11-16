@@ -3,17 +3,21 @@
 @using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.GenerateCodes
 
-<h4 style="margin:0;">Opravdu chcete stáhnout QR kódy vybraných položek?</h4>
+<div class="modal-stack">
+    @if (!IsProcessing)
+    {
+        <p class="modal-description">Opravdu chcete stáhnout QR kódy vybraných položek?</p>
 
-@if (!IsProcessing)
-{
-    <button @onclick="() => DownloadCodes()">Ano, stáhnout</button>
-    <button style="width:20%" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
-}
-else
-{
-    <p>Žádost se zpracovává... Může to chvíli trvat.</p>
-}
+        <div class="modal-footer">
+            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+            <button class="btn-success" type="button" @onclick="() => DownloadCodes()">Ano, stáhnout</button>
+        </div>
+    }
+    else
+    {
+        <p class="modal-description">Žádost se zpracovává... Může to chvíli trvat.</p>
+    }
+</div>
 
 @code
 {

@@ -3,42 +3,59 @@
 
 @if (Employees.Any())
 {
-    <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption">
-        @foreach (var option in OrderOptions)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
-    </select>
+    var filteredEmployees = FilteredEmployees.ToList();
 
-    <input 
-        type="text" 
-        placeholder="Hledat..." 
-        @bind="SearchTerm" 
-        style="margin-bottom:8px; padding:4px 8px; width:100%; box-sizing:border-box; margin-top:5px;" 
-    />
-
-    <div style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:8px; border-radius:4px;">
-        @if (FilteredEmployees.Any())
-        {
-            @foreach (var employee in FilteredEmployees)
-            {
-                <div style="margin-bottom:12px; cursor:pointer; padding:4px; border-radius:4px;" 
-                     @onclick="() => ChooseEmployee(employee)">
-                    <div style="font-weight:bold;">@employee.FullName</div>
-                    <div style="font-size:0.9em; color:gray;">@employee.EmailAddress</div>
+    <div class="employee-dropdown">
+        <div class="filter-panel employee-dropdown-filter">
+            <div class="filter-grid">
+                <div class="form-control">
+                    <label for="dropdown-order">Řazení</label>
+                    <select id="dropdown-order" @bind="SelectedOrderOption">
+                        @foreach (var option in OrderOptions)
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </select>
                 </div>
-            }
+                <div class="form-control grow">
+                    <label for="dropdown-search">Hledat</label>
+                    <input id="dropdown-search" type="text" placeholder="Hledat zaměstnance..." @bind="SearchTerm" />
+                </div>
+            </div>
+            <p class="muted-text">Vyberte zaměstnance a modal se automaticky zavře.</p>
+        </div>
+
+        @if (filteredEmployees.Any())
+        {
+            <div class="employee-dropdown-list">
+                @foreach (var employee in filteredEmployees)
+                {
+                    <button type="button" class="employee-option" @onclick="() => ChooseEmployee(employee)">
+                        <span class="employee-avatar">@GetEmployeeInitials(employee)</span>
+                        <div class="employee-option-body">
+                            <span class="employee-name">@employee.FullName</span>
+                            <span class="employee-email">@employee.EmailAddress</span>
+                        </div>
+                        <span class="employee-option-cta">Vybrat</span>
+                    </button>
+                }
+            </div>
         }
         else
         {
-            <p>Žádný zaměstnanec nebyl nalezen.</p>
+            <div class="employee-dropdown-empty empty-state">
+                <p>Žádný zaměstnanec nebyl nalezen.</p>
+                <p class="muted-text">Zkuste upravit vyhledávání nebo řazení.</p>
+            </div>
         }
     </div>
 }
 else
 {
-    <p>Vaše organizace zatím nemá zaměstnance.</p>
+    <div class="empty-state">
+        <p>Vaše organizace zatím nemá zaměstnance.</p>
+        <p class="muted-text">Po přidání zaměstnanců je budete moci přiřazovat k položkám.</p>
+    </div>
 }
 
 @code {
@@ -90,5 +107,46 @@ else
     {
         await OnClose.InvokeAsync(true);
         await OnEmployeeSelected.InvokeAsync(employee);
+    }
+
+    private void ClearSearchTerm() => SearchTerm = string.Empty;
+
+    private static string FormatResultLabel(int count) => count switch
+    {
+        1 => "výsledek",
+        >= 2 and <= 4 => "výsledky",
+        _ => "výsledků"
+    };
+
+    private string GetOrderLabel(string value)
+    {
+        var option = OrderOptions.FirstOrDefault(o => o.Value == value);
+        return string.IsNullOrWhiteSpace(option.Label) ? value : option.Label;
+    }
+
+    private string GetEmployeeInitials(EmployeeDto employee)
+    {
+        var initials = new List<char>();
+
+        if (!string.IsNullOrWhiteSpace(employee.FirstName))
+            initials.Add(char.ToUpperInvariant(employee.FirstName!.Trim()[0]));
+
+        if (!string.IsNullOrWhiteSpace(employee.LastName))
+            initials.Add(char.ToUpperInvariant(employee.LastName!.Trim()[0]));
+
+        if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.FullName))
+        {
+            var segments = employee.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var segment in segments.Take(2))
+            {
+                initials.Add(char.ToUpperInvariant(segment[0]));
+            }
+        }
+
+        if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.EmailAddress))
+            initials.Add(char.ToUpperInvariant(employee.EmailAddress![0]));
+
+        return initials.Count == 0 ? "??" : new string(initials.Take(2).ToArray());
     }
 }

@@ -3,16 +3,20 @@
 @using Api.Properties.Suggestions.Decline
 @using Invenire.Api.Properties.Suggestions
 
-<h4 style="margin: 0 0 10px 0;">Opravdu chcete schválit návrh?</h4>
-<button @onclick="() => AcceptSuggestion()">Ano, schválit</button>
-<button @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
-
-@if (ErrorGeneralMessage is not null)
-{
-    <div>
-        <p>@ErrorGeneralMessage</p
+<div class="modal-stack">
+    <p class="modal-description">Opravdu chcete schválit návrh?</p>
+    <div class="modal-footer">
+        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+        <button class="btn-success" type="button" @onclick="() => AcceptSuggestion()">Ano, schválit</button>
     </div>
-}
+
+    @if (ErrorGeneralMessage is not null)
+    {
+        <div class="error-banner">
+            <p>@ErrorGeneralMessage</p>
+        </div>
+    }
+</div>
 @code 
 {
     [Inject] private HttpClient Client { get; set; } = default!;

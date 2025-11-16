@@ -3,22 +3,44 @@
 
 @if (Organization is not null)
 {
-    <ul>
-        <li><strong>Id:</strong> @Organization.Id</li>
-        <li><strong>Název:</strong> @Organization.Name</li>
-        <li>
-            <strong>Admin:</strong>
-            <ul>
-                <li><strong>Id:</strong> @Organization.Admin?.Id</li>
-                <li><strong>Jméno:</strong> @Organization.Admin?.FullName</li>
-                <li><strong>Email:</strong> @Organization.Admin?.EmailAddress</li>
-                <li><strong>Vytvořen:</strong> @Organization.Admin?.CreatedAt.ToUserTimeString()</li>
-                <li><strong>Naposledy upraven:</strong> @Organization.Admin?.LastUpdatedAt.ToUserTimeString()</li>
-            </ul>
-        </li>
-        <li><strong>Vytvořeno:</strong> @Organization.CreatedAt.ToUserTimeString()</li>
-        <li><strong>Naposledy upraveno:</strong> @Organization.LastUpdatedAt.ToUserTimeString()</li>
-    </ul>
+    <div class="stack">
+        <div class="detail-list">
+            <div class="detail-item">
+                <span class="detail-label">Id</span>
+                <span class="detail-value">@Organization.Id</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Název</span>
+                <span class="detail-value">@Organization.Name</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Vytvořeno</span>
+                <span class="detail-value">@Organization.CreatedAt.ToUserTimeString()</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Naposledy upraveno</span>
+                <span class="detail-value">@Organization.LastUpdatedAt.ToUserTimeString()</span>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h4>Admin</h4>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <span class="detail-label">Jméno</span>
+                    <span class="detail-value">@Organization.Admin?.FullName</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">@Organization.Admin?.EmailAddress</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Vytvořen</span>
+                    <span class="detail-value">@Organization.Admin?.CreatedAt.ToUserTimeString()</span>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code

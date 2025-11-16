@@ -2,162 +2,211 @@
 @using Invenire.Api.Organizations.Invitations
 @using Invenire.Components.Forms.Organizations.Invitations
 
-<button @onclick="() => ShowCreationFormModal = true ">Vytvořit</button>
 
-@if (Organization?.Invitations is not null && Organization.Invitations.Any())
+@if (HasInvitations)
 {
-    <ul>
-        @foreach (var invitation in PagedInvitations)
-        {
-            <li>
-                <div>
-                    <strong>Id:</strong> @invitation.Id <br />
-                    @if (!string.IsNullOrEmpty(invitation.Description))
+    var pagedInvitations = PagedInvitations.ToList();
+    var visibleCount = pagedInvitations.Count;
+    var rangeStart = visibleCount == 0 ? 0 : CurrentOffset + 1;
+    var rangeEnd = visibleCount == 0 ? 0 : CurrentOffset + visibleCount;
+
+    <div class="stat-grid invitation-summary">
+        <div class="stat-card">
+            <span class="stat-label">Celkem pozvánek</span>
+            <span class="stat-value">@TotalInvitationCount.ToString("N0")</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Aktuálně zobrazeno</span>
+            <span class="stat-value">@visibleCount</span>
+            <p class="muted-text">@(rangeStart == 0 ? "—" : $"{rangeStart}-{rangeEnd} z {TotalInvitationCount}")</p>
+        </div>
+    </div>
+
+    <div class="filter-panel invitation-filter-panel">
+        <div class="filter-grid">
+            <div class="form-control">
+                <label for="invitation-order">Řazení</label>
+                <select id="invitation-order" @bind="SelectedOrderOption" @bind:after="() => SetCurrentOffset(0)">
+                    @foreach (var option in OrderOptions)
                     {
-                        <strong>Text:</strong> @invitation.Description <br />
+                        <option value="@option.Value">@option.Label</option>
                     }
-                    <strong>Vytvořeno:</strong> @invitation.CreatedAt.ToUserTimeString() <br />
+                </select>
+            </div>
+            <div class="form-control grow">
+                <label for="invitation-search">Hledat</label>
+                <input id="invitation-search" type="text" placeholder="Hledat pozvánky..." @bind="SearchTerm" @bind:after="() => SetCurrentOffset(0)" />
+            </div>
+        </div>
+    </div>
+
+    <div class="invitation-list">
+        @foreach (var invitation in pagedInvitations)
+        {
+            <article class="invitation-card">
+                <div class="detail-list">
+                    <div class="detail-item">
+                        <span class="detail-label">Id</span>
+                        <span class="detail-value">@invitation.Id</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Pro</span>
+                        <span class="detail-value">@GetRecipient(invitation)</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(invitation.Description))
+                    {
+                        <div class="detail-item">
+                            <span class="detail-label">Text</span>
+                            <span class="detail-value">@invitation.Description</span>
+                        </div>
+                    }
+                    <div class="detail-item">
+                        <span class="detail-label">Vytvořeno</span>
+                        <span class="detail-value">@invitation.CreatedAt.ToUserTimeString()</span>
+                    </div>
                     @if (invitation.LastUpdatedAt is not null)
                     {
-                        <strong>Naposledy upraveno: </strong> @invitation.LastUpdatedAt.ToUserTimeString() <br />
-                    }
-                    @if (invitation.Employee is not null)
-                    {
-                        <strong>Pro: </strong>@($"{invitation.Employee.FullName} ({invitation.Employee.EmailAddress})")
+                        <div class="detail-item">
+                            <span class="detail-label">Naposledy upraveno</span>
+                            <span class="detail-value">@invitation.LastUpdatedAt.ToUserTimeString()</span>
+                        </div>
                     }
                 </div>
-            </li>
 
-            <button @onclick="() => ShowUpdateFormModal = true ">Upravit</button>
-            <button @onclick="() => ShowDeletionFormModal = true ">Smazat</button>
+
+                <div class="invitation-actions">
+                    <button class="btn-secondary" @onclick="() => OpenUpdateModal(invitation)">Upravit</button>
+                    <button class="btn-destructive" @onclick="() => OpenDeletionModal(invitation)">Smazat</button>
+                </div>
+            </article>
         }
-    </ul>
+    </div>
 
-    <div class="pagination">
-        <button @onclick="() => SetCurrentOffset(CurrentOffset - Limit)" disabled="@( !CanGoPrev )">
-            ◀
-        </button>
-        <span>
-            @(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalInvitationCount / Limit))
-        </span>
-        <button @onclick="() => SetCurrentOffset(CurrentOffset + Limit)" disabled="@( !CanGoNext )">
-            ▶
-        </button>
+    <div class="invitation-pagination">
+        <div class="invitation-pagination-meta">
+            <span>Zobrazuji @rangeStart-@rangeEnd z @TotalInvitationCount pozvánek</span>
+        </div>
+        <div class="invitation-pagination-controls">
+            <button class="btn-secondary" @onclick="GoToPreviousPage" disabled="@(!CanGoPrev)">◀</button>
+            <span>@CurrentPage / @TotalPages</span>
+            <button class="btn-secondary" @onclick="GoToNextPage" disabled="@(!CanGoNext)">▶</button>
+        </div>
     </div>
 }
 else
 {
-    <p>Žádné pozvánky nebyly nalezeny.</p>
+    <p class="invitation-empty-state">Žádné pozvánky nebyly nalezeny.</p>
 }
+
+<button class="btn-secondary" @onclick="ShowCreationModal">Vytvořit pozvánku</button>
 
 @if (ShowCreationFormModal)
-{
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Vytvořit novou pozvánku</h4>
-                <button @onclick="() => ShowCreationFormModal = false">X</button>
+    {
+        <div class="modal-overlay">
+            <div class="modal-panel">
+                <div class="modal-header">
+                    <h4>Vytvořit novou pozvánku</h4>
+                    <button class="btn-secondary" type="button" @onclick="CloseCreationModal">Zavřít</button>
+                </div>
+                <div class="modal-body">
+                    <CreateOrganizationInvitationForm OnSuccessfulCreation="HandleCreationSuccess" OnClose="CloseCreationModal" />
+                </div>
             </div>
-
-            <CreateOrganizationInvitationForm OnSuccessfulCreation="() => OnChange.InvokeAsync(true)" OnClose="() => ShowCreationFormModal = false" />
         </div>
-    </div>
-}
+    }
 
-@if (ShowUpdateFormModal)
-{
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Upravit pozvánku</h4>
-                <button @onclick="() => ShowUpdateFormModal = false">X</button>
+@if (ShowUpdateFormModal && SelectedInvitation is not null)
+    {
+        <div class="modal-overlay">
+            <div class="modal-panel">
+                <div class="modal-header">
+                    <h4>Upravit pozvánku</h4>
+                    <button class="btn-secondary" type="button" @onclick="CloseUpdateModal">Zavřít</button>
+                </div>
+                <div class="modal-body">
+                    <UpdateOrganizationInvitationForm Invitation="SelectedInvitation" OnSuccessfulUpdate="HandleUpdateSuccess" OnClose="CloseUpdateModal" />
+                </div>
             </div>
-
-            <UpdateOrganizationInvitationForm Invitation="PagedInvitations.ToList()[CurrentOffset]" OnSuccessfulUpdate="() => OnChange.InvokeAsync(true)" OnClose="() => ShowUpdateFormModal = false" />
         </div>
-    </div>
-}
+    }
 
-@if (ShowDeletionFormModal)
-{
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <DeleteOrganizationInvitationForm Invitation="PagedInvitations.ToList()[CurrentOffset]" OnSuccessfulDeletion="() => OnChange.InvokeAsync(true)" OnClose="() => ShowDeletionFormModal = false" />
+@if (ShowDeletionFormModal && SelectedInvitation is not null)
+    {
+        <div class="modal-overlay">
+            <div class="modal-panel">
+                <div class="modal-header">
+                    <h4>Smazat pozvánku</h4>
+                    <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Zavřít</button>
+                </div>
+                <div class="modal-body">
+                    <DeleteOrganizationInvitationForm Invitation="SelectedInvitation" OnSuccessfulDeletion="HandleDeletionSuccess" OnClose="CloseDeletionModal" />
+                </div>
+            </div>
         </div>
-    </div>
-}
+    }
 
 
 
 @code
 {
-    [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public OrganizationDto? Organization { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
+    private OrganizationInvitationDto? SelectedInvitation { get; set; }
     private bool ShowUpdateFormModal { get; set; }
     private bool ShowCreationFormModal { get; set; }
     private bool ShowDeletionFormModal { get; set; }
 
-    private int Limit { get; set; } = 1;
-    private int CurrentOffset { get; set; } = 0;
-    private int TotalInvitationCount => Organization?.Invitations?.Count ?? 0;
+    private int Limit { get; set; } = 2;
+    private int CurrentOffset { get; set; }
+    private string SearchTerm { get; set; } = string.Empty;
+    private string SelectedOrderOption { get; set; } = "created_desc";
 
-    private IEnumerable<OrganizationInvitationDto> PagedInvitations => Organization?.Invitations?.Skip(CurrentOffset).Take(Limit) ?? Enumerable.Empty<OrganizationInvitationDto>();
+    private readonly List<(string Value, string Label)> OrderOptions = new()
+    {
+        ("created_desc", "Datum vytvoření (novější)"),
+        ("created_asc", "Datum vytvoření (starší)"),
+        ("updated_desc", "Datum úprav (novější)"),
+        ("updated_asc", "Datum úprav (starší)"),
+        ("recipient_asc", "Příjemce (A-Z)"),
+        ("recipient_desc", "Příjemce (Z-A)")
+    };
 
+    private IEnumerable<OrganizationInvitationDto> FilteredInvitations
+    {
+        get
+        {
+            var source = Organization?.Invitations ?? Enumerable.Empty<OrganizationInvitationDto>();
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                source = source.Where(invitation =>
+                    invitation.Id.ToString().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrWhiteSpace(invitation.Description) && invitation.Description.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    GetRecipient(invitation).Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var (field, order) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1]) };
+            var descending = order == "desc";
+
+            return field switch
+            {
+                "created" => descending ? source.OrderByDescending(i => i.CreatedAt) : source.OrderBy(i => i.CreatedAt),
+                "updated" => descending ? source.OrderByDescending(i => i.LastUpdatedAt ?? DateTimeOffset.MinValue) : source.OrderBy(i => i.LastUpdatedAt ?? DateTimeOffset.MinValue),
+                "recipient" => descending ? source.OrderByDescending(GetRecipient) : source.OrderBy(GetRecipient),
+                _ => source
+            };
+        }
+    }
+
+    private int TotalInvitationCount => FilteredInvitations.Count();
+    private IEnumerable<OrganizationInvitationDto> PagedInvitations => FilteredInvitations.Skip(CurrentOffset).Take(Limit);
+
+    private bool HasInvitations => Organization?.Invitations?.Any() ?? false;
     private bool CanGoPrev => CurrentOffset > 0;
     private bool CanGoNext => CurrentOffset + Limit < TotalInvitationCount;
+    private int CurrentPage => TotalInvitationCount == 0 ? 0 : CurrentOffset / Limit + 1;
+    private int TotalPages => TotalInvitationCount == 0 ? 0 : (int)Math.Ceiling((double)TotalInvitationCount / Limit);
 
     private void SetCurrentOffset(int newOffset)
     {
@@ -165,5 +214,85 @@ else
             return;
 
         CurrentOffset = newOffset;
+    }
+
+    private void GoToPreviousPage() => SetCurrentOffset(CurrentOffset - Limit);
+    private void GoToNextPage() => SetCurrentOffset(CurrentOffset + Limit);
+
+    private void ShowCreationModal()
+    {
+        ShowCreationFormModal = true;
+    }
+
+    private void CloseCreationModal()
+    {
+        ShowCreationFormModal = false;
+    }
+
+    private async Task HandleCreationSuccess()
+    {
+        await OnChange.InvokeAsync(true);
+    }
+
+    private void OpenUpdateModal(OrganizationInvitationDto invitation)
+    {
+        SelectedInvitation = invitation;
+        ShowUpdateFormModal = true;
+    }
+
+    private void CloseUpdateModal()
+    {
+        ShowUpdateFormModal = false;
+        SelectedInvitation = null;
+    }
+
+    private async Task HandleUpdateSuccess()
+    {
+        await OnChange.InvokeAsync(true);
+        CloseUpdateModal();
+    }
+
+    private void OpenDeletionModal(OrganizationInvitationDto invitation)
+    {
+        SelectedInvitation = invitation;
+        ShowDeletionFormModal = true;
+    }
+
+    private void CloseDeletionModal()
+    {
+        ShowDeletionFormModal = false;
+        SelectedInvitation = null;
+    }
+
+    private async Task HandleDeletionSuccess()
+    {
+        await OnChange.InvokeAsync(true);
+        CloseDeletionModal();
+    }
+
+    private string GetFilterDescription(int start, int end)
+    {
+        if (TotalInvitationCount == 0)
+        {
+            return string.IsNullOrWhiteSpace(SearchTerm)
+                ? "Žádné pozvánky nejsou k dispozici."
+                : $"Žádné pozvánky neodpovídají filtru \"{SearchTerm}\".";
+        }
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            return $"Filtrované podle \"{SearchTerm}\" – zobrazuji {start}-{end} z {TotalInvitationCount}.";
+        }
+
+        var selectedOrder = OrderOptions.FirstOrDefault(o => o.Value == SelectedOrderOption);
+        var label = string.IsNullOrWhiteSpace(selectedOrder.Label) ? SelectedOrderOption : selectedOrder.Label;
+
+        return $"Zobrazuji {start}-{end} z {TotalInvitationCount}. Řazení: {label}.";
+    }
+
+    private static string GetRecipient(OrganizationInvitationDto invitation)
+    {
+        if (invitation.Employee is null) return "Není přiřazeno";
+        return $"{invitation.Employee.FullName} ({invitation.Employee.EmailAddress})";
     }
 }

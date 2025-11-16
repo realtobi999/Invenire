@@ -1,123 +1,92 @@
 @using Invenire.Api.Properties
 @using Invenire.Components.Forms.Properties.Scans
 
-<h4>Přehled inventur</h4>
+<div class="section-heading">
+    <h4>Přehled inventur</h4>
+</div>
 
-@if (Property is not null && Property.ScansSummary is not null)
+@if (Property?.ScansSummary is PropertyDtoScansSummary summary)
 {
-    <ul>
-        <li><strong>Celkový počet:</strong> @Property.ScansSummary.TotalScans</li>
-        <li><strong>Aktivní inventura:</strong> @(Property.ScansSummary.TotalActiveScans == 1 ? "Ano" : "Ne")</li>
-        @if (Property.ScansSummary.LastActiveScan is not null)
-        {
-            <li><strong>Datum poslední dokončení inventury:</strong> @(Property.ScansSummary.LastActiveScan?.ToString("dd.MM.yyyy HH:mm"))</li>
-        }
-    </ul>
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-label">Celkový počet</span>
+            <span class="stat-value">@((summary.TotalScans ?? 0).ToString("N0"))</span>
+        </div>
+        <div class="stat-card @(summary.TotalActiveScans.GetValueOrDefault() == 1 ? "stat-card--success" : string.Empty)">
+            <span class="stat-label">Aktivní inventura</span>
+            <span class="stat-value">@((summary.TotalActiveScans.GetValueOrDefault() == 1) ? "Ano" : "Ne")</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Poslední dokončení</span>
+            <span class="stat-value">@GetLastCompletion(summary)</span>
+        </div>
+    </div>
 
-    @if (Property.ScansSummary.TotalActiveScans != 0)
+    @if (summary.TotalActiveScans.GetValueOrDefault() != 0)
     {
-        <div style="margin-bottom: 16px;">
-            <h4>Aktivní inventura</h4>
+        <div class="active-scan-card">
+            <div class="section-heading">
+                <h5>Aktivní inventura</h5>
+            </div>
             <AdminPropertyScanActiveOverview />
         </div>
     }
 
-    <button @onclick="() => ShowAllScansModal = true" disabled="@(Property?.ScansSummary?.TotalScans - @Property?.ScansSummary?.TotalActiveScans == 0)">Zobrazit inventury</button>
+    <div class="action-row">
+        <button class="btn-secondary" @onclick="OpenScansModal" disabled="@(summary.TotalScans.GetValueOrDefault() - summary.TotalActiveScans.GetValueOrDefault() == 0)">Historie inventur</button>
+        <button class="btn-secondary" @onclick="OpenCreationModal" disabled="@(summary.TotalActiveScans.GetValueOrDefault() == 1)">Spustit novou inventuru</button>
+        <button class="btn-secondary" @onclick="OpenCompletionModal" disabled="@(summary.TotalActiveScans.GetValueOrDefault() != 1)">Dokončit inventuru</button>
+    </div>
 }
 else
 {
-    <p>Zatím nebyli zhotovené žádné inventury.</p>
+    <div class="empty-state">
+        <p>Zatím nebyly zhotovené žádné inventury.</p>
+        <div class="action-row">
+            <button class="btn-secondary" @onclick="OpenCreationModal">Spustit první inventuru</button>
+        </div>
+    </div>
 }
-
-<button @onclick="() => ShowCreationModal = true" disabled="@(Property?.ScansSummary?.TotalActiveScans == 1)">Spustit inventuru</button>
-<button @onclick="() => ShowCompletionModal = true" disabled="@(Property?.ScansSummary?.TotalActiveScans != 1 )">Dokončit inveturu</button>
 
 @if (ShowCreationModal)
 {
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Začít novou inventuru</h4>
-                <button @onclick="() => ShowCreationModal = false">X</button>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Začít novou inventuru</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseCreationModal">Zavřít</button>
             </div>
 
-            <CreatePropertyScanForm OnSuccessfulCreation="() => OnChange.InvokeAsync(true)" OnClose="() => ShowCreationModal = false" />
+            <div class="modal-body">
+                <CreatePropertyScanForm OnSuccessfulCreation="HandleScanCreated" OnClose="CloseCreationModal" />
+            </div>
         </div>
     </div>
 }
 
 @if (ShowCompletionModal)
 {
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Dokončit inventuru</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseCompletionModal">Zavřít</button>
+            </div>
             
-            <CompletePropertyScanForm OnSuccessfulCompletion="() => OnChange.InvokeAsync(true)" OnClose="() => ShowCompletionModal = false" />
+            <div class="modal-body">
+                <CompletePropertyScanForm OnSuccessfulCompletion="HandleScanCompleted" OnClose="CloseCompletionModal" />
+            </div>
         </div>
     </div>
 }
 
 @if (ShowAllScansModal)
 {
-    <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0,0,0,0.5);
-                z-index: 9999;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                overflow: auto; /* allow modal to scroll if too tall */
-                padding: 1rem;  /* optional: spacing around modal */
-            ">
-        <div style="
-                    background: white;
-                    border-radius: 6px;
-                    max-height: 90vh;  /* don't exceed viewport height */
-                    overflow-y: auto;  /* scroll inside modal */
-                    padding: 1rem;
-                    min-width: 300px;
-                    max-width: 90%;
-                ">
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Všechny inventury</h4>
-                <button @onclick="() => ShowAllScansModal = false">X</button>
+    <div class="modal-overlay">
+        <div class="modal-panel modal-panel--wide">
+            <div class="modal-header">
+                <h4>Historie inventur</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseScansModal">Zavřít</button>
             </div>
 
             <AdminPropertyScanOverview />
@@ -134,4 +103,26 @@ else
     private bool ShowCreationModal { get; set;}
     private bool ShowAllScansModal { get; set;}
     private bool ShowCompletionModal { get; set;}
+
+    private static string GetLastCompletion(PropertyDtoScansSummary summary)
+        => summary.LastActiveScan?.ToString("dd.MM.yyyy HH:mm") ?? "—";
+
+    private void OpenCreationModal() => ShowCreationModal = true;
+    private void CloseCreationModal() => ShowCreationModal = false;
+    private void OpenCompletionModal() => ShowCompletionModal = true;
+    private void CloseCompletionModal() => ShowCompletionModal = false;
+    private void OpenScansModal() => ShowAllScansModal = true;
+    private void CloseScansModal() => ShowAllScansModal = false;
+
+    private async Task HandleScanCreated()
+    {
+        ShowCreationModal = false;
+        await OnChange.InvokeAsync(true);
+    }
+
+    private async Task HandleScanCompleted()
+    {
+        ShowCompletionModal = false;
+        await OnChange.InvokeAsync(true);
+    }
 }

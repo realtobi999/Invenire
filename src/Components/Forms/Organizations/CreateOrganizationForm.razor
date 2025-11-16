@@ -2,19 +2,21 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Organizations.Create
 
-<EditForm Model="Body" OnSubmit="HandleCreation" @ref="Form">
-    <div>
+<EditForm class="form-card" Model="Body" OnSubmit="HandleCreation" @ref="Form">
+    <div class="form-group">
         <label>Název:</label>
         <InputText @bind-Value="Body.Name" />
         <ValidationMessage For="@(() => Body.Name)" />
     </div>
 
-    <button type="submit">Vytvořit</button>
+    <div class="form-actions">
+        <button type="submit">Vytvořit</button>
+    </div>
 </EditForm>
 
 @if (ErrorGeneralMessage is not null)
 {
-    <div>
+    <div class="error-banner">
         @ErrorGeneralMessage
     </div>
 }

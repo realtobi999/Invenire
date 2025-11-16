@@ -3,24 +3,39 @@
 
 @page "/login"
 
-<h1>@HeaderText</h1>
+<div class="auth-layout">
+    <div class="page-header">
+        <span class="pill">
+            <span class="status-dot success"></span>
+            Přístup
+        </span>
+        <h1>@HeaderText</h1>
+        <p>Vyberte roli, kterou zastáváte. Přihlášení je zabezpečeno tokeny a uloženými relacemi.</p>
+    </div>
 
-<label>Vyberte typ přihlášení:</label>
-<select @bind="SelectedRole">
-    <option value="Employee">Zaměstnanec</option>
-    <option value="Admin">Admin</option>
-</select>
+    <div class="surface-card">
+        <label>Vyberte typ přihlášení</label>
+        <select @bind="SelectedRole">
+            <option value="Employee">Zaměstnanec</option>
+            <option value="Admin">Admin</option>
+        </select>
+    </div>
 
-@if (SelectedRole == "Employee")
-{
-    <LoginEmployeeForm></LoginEmployeeForm>
-}
-else if (SelectedRole == "Admin")
-{
-    <LoginAdminForm></LoginAdminForm>
-}
+    <div class="form-stack">
+        @if (SelectedRole == "Employee")
+        {
+            <LoginEmployeeForm />
+        }
+        else if (SelectedRole == "Admin")
+        {
+            <LoginAdminForm />
+        }
+    </div>
 
-<p>Nemáte ještě účet? <NavLink class="nav-link" href="/register">Zaregistrujte se zde</NavLink>.</p>
+    <div class="surface-card">
+        <p style="margin: 0.5rem 0 0.5rem 0;">Nemáte ještě účet? <NavLink class="nav-link" href="/register">Zaregistrujte se zde</NavLink>.</p>
+    </div>
+</div>
 
 @code 
 {

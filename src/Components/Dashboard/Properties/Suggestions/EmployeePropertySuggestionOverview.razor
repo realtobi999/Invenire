@@ -9,81 +9,97 @@
 @using Invenire.Components.Dashboard.Properties.Items
 @using Invenire.Components.Forms.Properties.Suggestions
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <h4 style="margin:0;">Všechny návrhy</h4>
-    <button @onclick="() => OnClose.InvokeAsync(true)">X</button>
-</div>
-
-<div>
-    <input type="text" @bind="SearchTerm" @bind:after="() => LoadSuggestions(0)" placeholder="Hledat ..." />
-</div>
-
-<div>
-    <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadSuggestions(0)">
-        @foreach (var option in OrderOptions)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
-    </select>
-</div>
-
-@if (Suggestions.Any())
-{
-    <div>
-        @foreach (var suggestion in Suggestions)
-        {
-
-            var status = GetCzechStatus(suggestion.Status);
-
-            <h4>Základní informace</h4>
-            <div>
-                <ul>
-                    <li><strong>Název:</strong> @suggestion.Name</li>
-                    <li><strong>Předloženo:</strong> @suggestion.Employee.EmailAddress</li>
-                    @if (!string.IsNullOrEmpty(suggestion.Description))
-                    {
-                        <li><strong>Text:</strong> @suggestion.Description</li>
-                    }
-                    @if (!string.IsNullOrEmpty(suggestion.Feedback))
-                    {
-                        <li><strong>Feedback:</strong> @suggestion.Feedback</li>
-                    }
-                    <li><strong>Status:</strong> <span style="color:@status.Color">@status.Text</span></li>
-                    <li><strong>Vytvořeno:</strong> @suggestion.CreatedAt.ToUserTimeString()</li>
-                    @if (suggestion.LastUpdatedAt is not null)
-                    {
-                        <li><strong>Upraveno:</strong> @suggestion.LastUpdatedAt.Value.ToString("g")</li>
-                    }
-                </ul>
-            </div>
-
-            <EmployeePropertySuggestionItemOverview Suggestion="suggestion" OnChange="async () => {await OnChange.InvokeAsync(true); await LoadSuggestions(CurrentOffset);}"/>
-        }
+<div class="suggestions-overview">
+    <div class="modal-toolbar">
+        <div class="modal-toolbar-header">
+            <h3>Všechny návrhy</h3>
+            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zavřít</button>
+        </div>
+        <p class="muted-text">Prohlédněte si zamítnuté návrhy a zjistěte důvody jejich odmítnutí.</p>
     </div>
 
-    <div style="
-        position: sticky;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 10px 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
-    ">
-        <button @onclick="() => LoadSuggestions(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
-        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
-        <button @onclick="() => LoadSuggestions(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+    <div class="items-toolbar">
+        <div class="form-control grow">
+            <label for="suggestion-search">Hledat</label>
+            <input id="suggestion-search" class="input-control" type="text" @bind="SearchTerm" @bind:after="() => LoadSuggestions(0)" placeholder="Hledat návrhy..." />
+        </div>
+        <div class="form-control">
+            <label for="suggestion-order">Řazení</label>
+            <select id="suggestion-order" @bind="SelectedOrderOption" @bind:after="() => LoadSuggestions(0)">
+                @foreach (var option in OrderOptions)
+                {
+                    <option value="@option.Value">@option.Label</option>
+                }
+            </select>
+        </div>
     </div>
-}
-else
-{
-    <p>Žádné návrhy nebyly nalezeny.</p>
-}
+
+    @if (Suggestions.Any())
+    {
+        <div class="suggestion-list">
+            @foreach (var suggestion in Suggestions)
+            {
+                var status = GetCzechStatus(suggestion.Status);
+
+                <article class="suggestion-card">
+                    <div class="suggestion-card-header">
+                        <div>
+                            <p class="muted-text">Název</p>
+                            <h4>@suggestion.Name</h4>
+                        </div>
+                        <span class="suggestion-status suggestion-status--@status.Color.ToLowerInvariant()">@status.Text</span>
+                    </div>
+
+                    <div class="detail-list">
+                        <div class="detail-item">
+                            <span class="detail-label">Předloženo</span>
+                            <span class="detail-value">@suggestion.Employee.EmailAddress</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(suggestion.Description))
+                        {
+                            <div class="detail-item">
+                                <span class="detail-label">Text</span>
+                                <span class="detail-value">@suggestion.Description</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(suggestion.Feedback))
+                        {
+                            <div class="detail-item">
+                                <span class="detail-label">Důvod odmítnutí</span>
+                                <span class="detail-value">@suggestion.Feedback</span>
+                            </div>
+                        }
+                        <div class="detail-item">
+                            <span class="detail-label">Vytvořeno</span>
+                            <span class="detail-value">@suggestion.CreatedAt.ToUserTimeString()</span>
+                        </div>
+                        @if (suggestion.LastUpdatedAt is not null)
+                        {
+                            <div class="detail-item">
+                                <span class="detail-label">Upraveno</span>
+                                <span class="detail-value">@suggestion.LastUpdatedAt.Value.ToString("g")</span>
+                            </div>
+                        }
+                    </div>
+
+                    <EmployeePropertySuggestionItemOverview Suggestion="suggestion" OnChange="async () => { await OnChange.InvokeAsync(true); await LoadSuggestions(CurrentOffset); }" />
+                </article>
+            }
+        </div>
+
+        <div class="items-pagination">
+            <button class="btn-secondary" type="button" @onclick="() => LoadSuggestions(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+            <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+            <button class="btn-secondary" type="button" @onclick="() => LoadSuggestions(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+        </div>
+    }
+    else
+    {
+        <div class="items-empty-state">
+            <p>Žádné návrhy nebyly nalezeny.</p>
+        </div>
+    }
+</div>
 
 @code
 {

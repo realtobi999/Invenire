@@ -6,17 +6,22 @@
 
 @if (Organization is not null)
 {
-    <h3>Základní informace</h3>
+    <div class="stack">
+        <section class="section-card">
+            <h3>Základní informace</h3>
+            <AdminOrganizationBaseOverview Organization="Organization" OnSuccessfulUpdate="ReloadOrganization" />
+        </section>
 
-    <AdminOrganizationBaseOverview Organization="Organization" OnSuccessfulUpdate="ReloadOrganization" />
+        <section class="section-card">
+            <h3>Zaměstnanci</h3>
+            <AdminOrganizationEmployeesOverview Organization="Organization" OnSuccessfulDeletion="ReloadOrganization"/>
+        </section>
 
-    <h3>Zaměstnanci</h3>
-
-    <AdminOrganizationEmployeesOverview Organization="Organization" OnSuccessfulDeletion="ReloadOrganization"/>
-
-    <h3>Pozvánky</h3>
-
-    <AdminOrganizationInvitationOverview Organization="Organization" OnChange="ReloadOrganization"/>
+        <section class="section-card">
+            <h3>Pozvánky</h3>
+            <AdminOrganizationInvitationOverview Organization="Organization" OnChange="ReloadOrganization"/>
+        </section>
+    </div>
 }
 
 

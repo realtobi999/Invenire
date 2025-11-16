@@ -1,353 +1,386 @@
 @using System.Net
-@using Blazored.LocalStorage
 @using Invenire.Api.Properties.Suggestions
 @using Invenire.Common.Errors
 @using System.Threading.Tasks
 @using Invenire.Api.Properties
 @using Invenire.Api.Users.Employees
 @using Invenire.Api.Properties.Items
-@using Invenire.Api.Organizations.Create
 @using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.IndexByAdmin
-@using Invenire.Components.Forms.Properties.Items
 @using Invenire.Components.Forms.Properties.Suggestions
-@using System.Formats.Asn1
-@using System.Runtime.InteropServices
 
-<div>
-    <input type="text" @bind="SearchTerm" @bind:after="() => LoadItems(0)" placeholder="Hledat ..." />
-</div>
+<div class="items-overview">
+    <div class="modal-toolbar">
+        <div class="modal-toolbar-header">
+            <h3>Položky návrhu</h3>
+        </div>
+        <p class="muted-text">Vyhodnoťte položky zahrnuté v návrhu, upravte je a odešlete změny znovu.</p>
+    </div>
 
-<div>
-    <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItems(0)">
-        @foreach (var option in OrderOptions)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
-    </select>
-</div>
+    <div class="items-toolbar">
+        <div class="form-control grow">
+            <label for="suggestion-items-search">Hledat</label>
+            <input id="suggestion-items-search"
+                   class="input-control"
+                   type="text"
+                   @bind="SearchTerm"
+                   @bind:after="() => LoadItems(0)"
+                   placeholder="Hledat položky v návrhu..." />
+        </div>
+        <div class="form-control">
+            <label for="suggestion-items-order">Řazení</label>
+            <select id="suggestion-items-order"
+                    @bind="SelectedOrderOption"
+                    @bind:after="() => LoadItems(0)">
+                @foreach (var option in OrderOptions)
+                {
+                    <option value="@option.Value">@option.Label</option>
+                }
+            </select>
+        </div>
+        <button class="btn-secondary" type="button" @onclick="ToggleFilters">
+            @(ShowFilteringOptions ? "Zrušit filtrování" : "Filtrovat")
+        </button>
+    </div>
 
-<div>
-    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await ClearFilters();}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
     @if (ShowFilteringOptions)
     {
-        <div>
-            <label for="PriceMin">Cena od:</label>
-            <input id="PriceMin" type="number" @bind="PriceMin" min="0" />
-
-            <label for="PriceMax">do:</label>
-            <input id="PriceMax" type="number" @bind="PriceMax" min="0" />
-
-            <br />
-
-            <label for="DateOfPurchaseFrom">Datum nákupu od:</label>
-            <input id="DateOfPurchaseFrom" type="date" @bind="DateOfPurchaseFrom" />
-
-            <label for="DateOfPurchaseTo">do:</label>
-            <input id="DateOfPurchaseTo" type="date" @bind="DateOfPurchaseTo" />
-
-            <br />
-
-            <label for="CreatedAtFrom">Datum přidání od:</label>
-            <input id="CreatedAtFrom" type="date" @bind="CreatedAtFrom" />
-
-            <label for="CreatedAtTo">do:</label>
-            <input id="CreatedAtTo" type="date" @bind="CreatedAtTo" />
-
-            <br />
-
-            <label for="Building">V budově:</label>
-            <input id="Building" type="text" @bind="Building" />
-
-            <label for="Room">V místnosti:</label>
-            <input id="Room" type="text" @bind="Room" />
-
-            <br />
-            
-            <label for="WithGeneratedCode">Vygenerovaný kód:</label>
-            <select id="WithGeneratedCode" @bind="WithGeneratedCode" >
-                <option value="">Nezáleží</option>
-                <option value="true">S kódem</option>
-                <option value="false">Bez kódu</option>
-            </select>
-
-            <br />
-
-            <button @onclick="() => LoadItems(0)" >Použít</button>
-            <button @onclick="() => ClearFilters()">Vymazat</button>
-        </div>
+        <section class="filter-panel">
+            <div class="filter-grid">
+                <div class="form-control">
+                    <label>Cena od</label>
+                    <input class="input-control" type="number" min="0" @bind="PriceMin" />
+                </div>
+                <div class="form-control">
+                    <label>Cena do</label>
+                    <input class="input-control" type="number" min="0" @bind="PriceMax" />
+                </div>
+                <div class="form-control">
+                    <label>Datum nákupu od</label>
+                    <input class="input-control" type="date" @bind="DateOfPurchaseFrom" />
+                </div>
+                <div class="form-control">
+                    <label>Datum nákupu do</label>
+                    <input class="input-control" type="date" @bind="DateOfPurchaseTo" />
+                </div>
+                <div class="form-control">
+                    <label>Datum přidání od</label>
+                    <input class="input-control" type="date" @bind="CreatedAtFrom" />
+                </div>
+                <div class="form-control">
+                    <label>Datum přidání do</label>
+                    <input class="input-control" type="date" @bind="CreatedAtTo" />
+                </div>
+                <div class="form-control">
+                    <label>Budova</label>
+                    <input class="input-control" type="text" @bind="Building" />
+                </div>
+                <div class="form-control">
+                    <label>Místnost</label>
+                    <input class="input-control" type="text" @bind="Room" />
+                </div>
+                <div class="form-control">
+                    <label>Vygenerovaný kód</label>
+                    <select class="input-control" @bind="WithGeneratedCode">
+                        <option value="">Nezáleží</option>
+                        <option value="true">S kódem</option>
+                        <option value="false">Bez kódu</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn-secondary" type="button" @onclick="() => LoadItems(0)">Použít</button>
+                <button class="btn-secondary" type="button" @onclick="async () => await ClearFilters()">Vymazat</button>
+            </div>
+        </section>
     }
-</div>
 
-<br />
-
-<div>
-    <label for="limit_slider">Limit:</label>
-    <input id="limit_slider" type="range" min="28" max="200" step="4" @bind="Limit" @bind:after="() => LoadItems(CurrentOffset)" />
-    <span>Limit: @Limit, Počet položek na stránce: @Items.Count, Celkově položek: @TotalItemsCount</span>
-</div>
-    
-<br />
-
-@if (Items.Any())
-{
-    <div>
+    <div class="limit-row">
+        <span class="limit-meta">Na stránce @Items.Count z @TotalItemsCount položek</span>
         <div>
-            <button @onclick="() => SelectItems(Items)" disabled="@(Items.Except(DeletedItems).All(i => SelectedItems.Contains(i)))" >Vybrat vše</button>
-            <button @onclick="() => ClearSelectedItems()" disabled="@(!SelectedItems.Any())">Zrušit výběr</button>
-            <span>Počet vybraných: @SelectedItems.Count</span>
+            <label for="limit_slider">Limit položek</label>
+            <input id="limit_slider"
+                   class="range-control"
+                   type="range"
+                   min="28"
+                   max="200"
+                   step="4"
+                   @bind="Limit"
+                   @bind:after="() => LoadItems(CurrentOffset)" />
         </div>
-        <div>
-            <button @onclick="() => DeleteSelectedItems()" disabled="@(!SelectedItems.Any())">Označit vybrané jako smazané</button>
-            <button @onclick="() => ClearDeletedItems()" disabled="@(!DeletedItemIds.Any())">Ponechat všechny smazané položky</button>
-        </div>
+    </div>
 
-        <div style="margin-bottom:2%">
-            <button @onclick="() => ShowUpdateSuggestionModal = true" disabled="@(!HasPendingChanges)">Upravit návrh</button>
-            <button @onclick="async () => {await ClearDeletedItems(); await ClearUpdatedItems();}" disabled="@(!HasPendingChanges)">Zrušit změny</button>
-            <button @onclick="async () => await OnInitializedAsync()">Vrátit zpět původní změny</button>
-        </div>
+    @if (Items.Any())
+    {
+        <section class="bulk-panel">
+            <div class="bulk-group">
+                <button class="btn-secondary" type="button" @onclick="() => SelectItems(Items)" disabled="@(Items.Except(DeletedItems).All(i => SelectedItems.Contains(i)))">Vybrat vše</button>
+                <button class="btn-secondary" type="button" @onclick="ClearSelectedItems" disabled="@(!SelectedItems.Any())">Zrušit výběr</button>
+                <span>Počet vybraných: @SelectedItems.Count</span>
+            </div>
+            <div class="bulk-group">
+                <button class="btn-secondary" type="button" @onclick="DeleteSelectedItems" disabled="@(!SelectedItems.Any())">Označit vybrané jako smazané</button>
+                <button class="btn-secondary" type="button" @onclick="ClearDeletedItems" disabled="@(!DeletedItems.Any())">Ponechat všechny smazané položky</button>
+            </div>
+            <div class="bulk-group">
+                <button class="btn-secondary" type="button" @onclick="() => ShowUpdateSuggestionModal = true" disabled="@(!HasPendingChanges)">Uložit návrh</button>
+                <button class="btn-secondary" type="button" @onclick="async () => { await ClearDeletedItems(); await ClearUpdatedItems(); }" disabled="@(!HasPendingChanges)">Zrušit změny</button>
+                <button class="btn-secondary" type="button" @onclick="async () => { await ClearDeletedItems(); await ClearUpdatedItems(); await OnInitializedAsync(); }">Obnovit původní stav</button>
+            </div>
+        </section>
 
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;">
+        <div class="items-grid">
             @foreach (var item in Items.Select(i => UpdatedItemDtos.GetValueOrDefault(i.Id, i)))
             {
                 var isPendingUpdate = UpdatedItemDtos.ContainsKey(item.Id);
                 var original = isPendingUpdate ? Items.FirstOrDefault(i => i.Id == item.Id) : item;
+                var isEditing = EditedItems.ContainsKey(item.Id);
 
-                <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@GetItemColor(item);">
-                    <ul style="list-style-type:none;padding:0;margin:0; cursor:pointer;" @onclick="() => SelectItem(item)">
-                        @if (EditedItems.ContainsKey(item.Id))
-                        {
-                            var edit = EditedItems[item.Id].Updated;
-
-                            <li><strong>ID:</strong> @edit.Id</li>
-                            <li><strong>Název:</strong> <input @bind="edit.Name" style="width:70%;"/></li>
-                            <li><strong>Cena:</strong> <input type="number" @bind="edit.Price"/></li>
-                            <li><strong>Inventární číslo:</strong> <input @bind="edit.InventoryNumber" required/></li>
-                            <li><strong>Registrační číslo:</strong> <input @bind="edit.RegistrationNumber"/> </li>
-                            <li><strong>Sériové číslo:</strong> <input @bind="edit.SerialNumber"/></li>
-                            <li><strong>Datum nákupu:</strong> <input type="date" @bind="edit.DateOfPurchase"/></li>
-                            <li><strong>Datum prodeje:</strong> <input type="date" @bind="edit.DateOfSale"/></li>
-                            <li><strong>Umístění:</strong> Budova <input @bind="edit.Location.Building"/> , Místnost <input @bind="edit.Location.Room"/></li>
-                            <li><strong>Poznámka k umístění:</strong> <input @bind="edit.Location.AdditionalNote"/></li>
-                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
-                            <li><strong>Popis:</strong> <input @bind="edit.Description" style="width:70%;"/></li>
-                            <li><strong>Číslo dokladu:</strong> <input @bind="edit.DocumentNumber"/></li>
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
-                        }
-                        else
-                        {
-                            <li><strong>ID:</strong> @item.Id</li>
-
-                            <li style="@((isPendingUpdate && item.Name != original!.Name) ? "background-color:#BBFF99;" : "")">
-                                <strong>Název:</strong> @item.Name
-                                @if (isPendingUpdate && item.Name != original!.Name)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @original!.Name)
-                                    </div>
-                                }
-                            </li>
-
-                            <li style="@((isPendingUpdate && item.Price != original!.Price) ? "background-color:#BBFF99;" : "")">
-                                <strong>Cena:</strong> @item.Price Kč
-                                @if (isPendingUpdate && item.Price != original!.Price)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @original!.Price Kč)
-                                    </div>
-                                }
-                            </li>
-
-                            <li style="@((isPendingUpdate && item.InventoryNumber != original!.InventoryNumber) ? "background-color:#BBFF99;" : "")">
-                                <strong>Inventární číslo:</strong> @item.InventoryNumber
-                                @if (isPendingUpdate && item.InventoryNumber != original!.InventoryNumber)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @original!.InventoryNumber)
-                                    </div>
-                                }
-                            </li>
-
-                            <li style="@((isPendingUpdate && item.RegistrationNumber != original!.RegistrationNumber) ? "background-color:#BBFF99;" : "")">
-                                <strong>Registrační číslo:</strong> @item.RegistrationNumber
-                                @if (isPendingUpdate && item.RegistrationNumber != original!.RegistrationNumber)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @original!.RegistrationNumber)
-                                    </div>
-                                }
-                            </li>
-
-                            <li style="@((isPendingUpdate && item.SerialNumber != original!.SerialNumber) ? "background-color:#BBFF99;" : "")">
-                                <strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")
-                                @if (isPendingUpdate && item.SerialNumber != original!.SerialNumber)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @(original!.SerialNumber ?? "-----"))
-                                    </div>
-                                }
-                            </li>
-
-                            <li style="@((isPendingUpdate && item.DateOfPurchase != original!.DateOfPurchase) ? "background-color:#BBFF99;" : "")">
-                                <strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")
-                                @if (isPendingUpdate && item.DateOfPurchase != original!.DateOfPurchase)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @original!.DateOfPurchase.ToString("dd.MM.yyyy"))
-                                    </div>
-                                }
-                            </li>
-                            
-                            @if (item.DateOfSale is not null || original!.DateOfSale is not null)
-                            {
-                                <li style="@((isPendingUpdate && item.DateOfSale != original!.DateOfSale) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Datum prodeje:</strong> @(item.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----")
-                                    @if (isPendingUpdate && item.DateOfSale != original!.DateOfSale)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @(original!.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----"))
-                                        </div>
-                                    }
-                                </li>
-                            }
-
-                            <li style="@((isPendingUpdate && (item.Location.Building != original!.Location.Building || item.Location.Room != original!.Location.Room)) ? "background-color:#BBFF99;" : "")">
-                                <strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room
-                                @if (isPendingUpdate && (item.Location.Building != original!.Location.Building || item.Location.Room != original!.Location.Room))
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: Budova @original!.Location.Building, Místnost @original!.Location.Room)
-                                    </div>
-                                }
-                            </li>
-
-                            @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote) || !string.IsNullOrWhiteSpace(original!.Location.AdditionalNote))
-                            {
-                                <li style="@((isPendingUpdate && item.Location.AdditionalNote != original!.Location.AdditionalNote) ? "background-color:#BBFF99;" : "")">
-                                    <strong>Poznámka k umístění:</strong> @(item.Location.AdditionalNote ?? "-----")
-                                    @if (isPendingUpdate && item.Location.AdditionalNote != original!.Location.AdditionalNote)
-                                    {
-                                        <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                            (Původně: @(original!.Location.AdditionalNote ?? "-----"))
-                                        </div>
-                                    }
-                                </li>
-                            }
-                            
-                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
-
-                            <li style="@((isPendingUpdate && item.Description != original!.Description) ? "background-color:#BBFF99;" : "")">
-                                <strong>Popis:</strong> @(item.Description ?? "------")
-                                @if (isPendingUpdate && item.Description != original!.Description)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @(original!.Description ?? "------"))
-                                    </div>
-                                }
-                            </li>
-
-                            <li style="@((isPendingUpdate && item.DocumentNumber != original!.DocumentNumber) ? "background-color:#BBFF99;" : "")">
-                                <strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")
-                                @if (isPendingUpdate && item.DocumentNumber != original!.DocumentNumber)
-                                {
-                                    <div style="font-size:0.75rem; color:#666; margin-left:0.5rem;">
-                                        (Původně: @(original!.DocumentNumber ?? "-----"))
-                                    </div>
-                                }
-                            </li>
-
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
-                        }
-                    </ul>
-
-                        @if (EditedItems.ContainsKey(item.Id))
-                        {
-                            <button @onclick="() => UpdateItem(item)" type="submit">Uložit úpravy</button>
-                        }
-
-                        <button @onclick="() => EditItem(item)" disabled="@(DeletedItemIds.Contains(item.Id))">
-                            @(EditedItems.ContainsKey(item.Id) ? "Zrušit úpravy" : "Upravit")
-                        </button>
-
-                        @if (!EditedItems.ContainsKey(item.Id) && UpdatedItemDtos.ContainsKey(item.Id))
-                        {
-                            <button @onclick="async () => { UpdatedItemDtos.Remove(item.Id); await Task.CompletedTask; }">Vrátit změny</button>
-                        }
-
-                        <button @onclick="() => DeleteItem(item)" disabled="@(EditedItems.ContainsKey(item.Id))">
-                            @(DeletedItemIds.Contains(item.Id) ? "Zrušit Smazání" : "Smazat")
-                        </button>
-                </div>
-            }
-        </div>
-        <br/>
-        <div style="
-            position: sticky;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: white;
-            padding: 10px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
-        ">
-            <button @onclick="() => LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
-            <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
-            <button @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
-        </div>
-    </div>
-
-    @if (ShowUpdateSuggestionModal)
-    {
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;">
-            <div style="
-                background-color: white;
-                padding: 20px;
-                border-radius: 8px;
-                width: 500px;
-                max-width: 90%;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="margin: 0;">Upravit návrh</h4>
-                        <button @onclick="() => ShowUpdateSuggestionModal = false">X</button>
+                <article class="@GetItemCardClass(item)" @onclick="() => SelectItem(item)" tabindex="0">
+                    <div class="item-card-header">
+                        <div>
+                            <p class="muted-text item-id">ID: @item.Id</p>
+                            <h5>@item.Name</h5>
+                        </div>
+                        <span class="item-price"><span>@item.Price</span><span>Kč</span></span>
                     </div>
 
-                    <UpdatePropertySuggestionForm OnClose="() => ShowUpdateSuggestionModal = false" OnSuccessfulCreation="() => OnSuggestionUpdate()" ItemsToDelete="DeletedItems.ToList()" ItemsToUpdate="UpdatedItems.ToList()" Suggestion="Suggestion"/>
-                </div>
+                    @if (isEditing)
+                    {
+                        var edit = EditedItems[item.Id].Updated;
+                        <div class="item-edit-grid" @onclick:stopPropagation="true">
+                            <div class="form-control">
+                                <label>Název</label>
+                                <input class="input-control" @bind="edit.Name" />
+                            </div>
+                            <div class="form-control">
+                                <label>Cena</label>
+                                <input class="input-control" type="number" @bind="edit.Price" />
+                            </div>
+                            <div class="form-control">
+                                <label>Inventární číslo</label>
+                                <input class="input-control" @bind="edit.InventoryNumber" required />
+                            </div>
+                            <div class="form-control">
+                                <label>Registrační číslo</label>
+                                <input class="input-control" @bind="edit.RegistrationNumber" />
+                            </div>
+                            <div class="form-control">
+                                <label>Sériové číslo</label>
+                                <input class="input-control" @bind="edit.SerialNumber" />
+                            </div>
+                            <div class="form-control">
+                                <label>Datum nákupu</label>
+                                <input class="input-control" type="date" @bind="edit.DateOfPurchase" />
+                            </div>
+                            <div class="form-control">
+                                <label>Datum prodeje</label>
+                                <input class="input-control" type="date" @bind="edit.DateOfSale" />
+                            </div>
+                            <div class="form-control">
+                                <label>Budova</label>
+                                <input class="input-control" @bind="edit.Location.Building" />
+                            </div>
+                            <div class="form-control">
+                                <label>Místnost</label>
+                                <input class="input-control" @bind="edit.Location.Room" />
+                            </div>
+                            <div class="form-control">
+                                <label>Poznámka k umístění</label>
+                                <input class="input-control" @bind="edit.Location.AdditionalNote" />
+                            </div>
+                            <div class="form-control">
+                                <label>Spravuje</label>
+                                <p class="muted-text">@(string.IsNullOrEmpty(edit.Employee.EmailAddress) ? "-----" : edit.Employee.EmailAddress)</p>
+                            </div>
+                            <div class="form-control">
+                                <label>Popis</label>
+                                <textarea class="input-control" rows="2" @bind="edit.Description"></textarea>
+                            </div>
+                            <div class="form-control">
+                                <label>Číslo dokladu</label>
+                                <input class="input-control" @bind="edit.DocumentNumber" />
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="item-field-list">
+                            <li class="item-field">
+                                <span class="field-label">ID</span>
+                                <span class="field-value">@item.Id</span>
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.Name != original!.Name)">
+                                <span class="field-label">Název</span>
+                                <span class="field-value">@item.Name</span>
+                                @if (isPendingUpdate && item.Name != original!.Name)
+                                {
+                                    <span class="field-original">Původně: @original!.Name</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.Price != original!.Price)">
+                                <span class="field-label">Cena</span>
+                                <span class="field-value">@item.Price Kč</span>
+                                @if (isPendingUpdate && item.Price != original!.Price)
+                                {
+                                    <span class="field-original">Původně: @original!.Price Kč</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.InventoryNumber != original!.InventoryNumber)">
+                                <span class="field-label">Inventární číslo</span>
+                                <span class="field-value">@item.InventoryNumber</span>
+                                @if (isPendingUpdate && item.InventoryNumber != original!.InventoryNumber)
+                                {
+                                    <span class="field-original">Původně: @original!.InventoryNumber</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.RegistrationNumber != original!.RegistrationNumber)">
+                                <span class="field-label">Registrační číslo</span>
+                                <span class="field-value">@item.RegistrationNumber</span>
+                                @if (isPendingUpdate && item.RegistrationNumber != original!.RegistrationNumber)
+                                {
+                                    <span class="field-original">Původně: @original!.RegistrationNumber</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.SerialNumber != original!.SerialNumber)">
+                                <span class="field-label">Sériové číslo</span>
+                                <span class="field-value">@(item.SerialNumber ?? "-----")</span>
+                                @if (isPendingUpdate && item.SerialNumber != original!.SerialNumber)
+                                {
+                                    <span class="field-original">Původně: @(original!.SerialNumber ?? "-----")</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.DateOfPurchase != original!.DateOfPurchase)">
+                                <span class="field-label">Datum nákupu</span>
+                                <span class="field-value">@item.DateOfPurchase.ToUserTimeString()</span>
+                                @if (isPendingUpdate && item.DateOfPurchase != original!.DateOfPurchase)
+                                {
+                                    <span class="field-original">Původně: @original!.DateOfPurchase.ToUserTimeString()</span>
+                                }
+                            </li>
+                            @if (item.DateOfSale is not null || original!.DateOfSale is not null)
+                            {
+                                <li class="@GetFieldClass(isPendingUpdate && item.DateOfSale != original!.DateOfSale)">
+                                    <span class="field-label">Datum prodeje</span>
+                                    <span class="field-value">@(item.DateOfSale?.ToUserTimeString() ?? "-----")</span>
+                                    @if (isPendingUpdate && item.DateOfSale != original!.DateOfSale)
+                                    {
+                                        <span class="field-original">Původně: @(original!.DateOfSale?.ToUserTimeString() ?? "-----")</span>
+                                    }
+                                </li>
+                            }
+                            <li class="@GetFieldClass(isPendingUpdate && item.Location.Building != original!.Location.Building)">
+                                <span class="field-label">Budova</span>
+                                <span class="field-value">@item.Location.Building</span>
+                                @if (isPendingUpdate && item.Location.Building != original!.Location.Building)
+                                {
+                                    <span class="field-original">Původně: @original!.Location.Building</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.Location.Room != original!.Location.Room)">
+                                <span class="field-label">Místnost</span>
+                                <span class="field-value">@item.Location.Room</span>
+                                @if (isPendingUpdate && item.Location.Room != original!.Location.Room)
+                                {
+                                    <span class="field-original">Původně: @original!.Location.Room</span>
+                                }
+                            </li>
+                            @if (!string.IsNullOrWhiteSpace(item.Location.AdditionalNote) || !string.IsNullOrWhiteSpace(original!.Location.AdditionalNote))
+                            {
+                                <li class="@GetFieldClass(isPendingUpdate && item.Location.AdditionalNote != original!.Location.AdditionalNote)">
+                                    <span class="field-label">Poznámka k umístění</span>
+                                    <span class="field-value">@(item.Location.AdditionalNote ?? "-----")</span>
+                                    @if (isPendingUpdate && item.Location.AdditionalNote != original!.Location.AdditionalNote)
+                                    {
+                                        <span class="field-original">Původně: @(original!.Location.AdditionalNote ?? "-----")</span>
+                                    }
+                                </li>
+                            }
+                            <li class="@GetFieldClass(isPendingUpdate && item.Description != original!.Description)">
+                                <span class="field-label">Popis</span>
+                                <span class="field-value">@(!string.IsNullOrWhiteSpace(item.Description) ? item.Description : "------")</span>
+                                @if (isPendingUpdate && item.Description != original!.Description)
+                                {
+                                    <span class="field-original">Původně: @(original!.Description ?? "------")</span>
+                                }
+                            </li>
+                            <li class="@GetFieldClass(isPendingUpdate && item.DocumentNumber != original!.DocumentNumber)">
+                                <span class="field-label">Číslo dokladu</span>
+                                <span class="field-value">@(!string.IsNullOrWhiteSpace(item.DocumentNumber) ? item.DocumentNumber : "-----")</span>
+                                @if (isPendingUpdate && item.DocumentNumber != original!.DocumentNumber)
+                                {
+                                    <span class="field-original">Původně: @(original!.DocumentNumber ?? "-----")</span>
+                                }
+                            </li>
+                            <li class="item-field">
+                                <span class="field-label">Přidáno</span>
+                                <span class="field-value">@item.CreatedAt.ToUserTimeString()</span>
+                            </li>
+                            <li class="item-field">
+                                <span class="field-label">Upraveno</span>
+                                <span class="field-value">@(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</span>
+                            </li>
+                        </ul>
+                    }
+
+                    <div class="item-card-actions">
+                        @if (isEditing)
+                        {
+                            <button class="btn-secondary" type="button" @onclick="async () => await UpdateItem(item)" @onclick:stopPropagation="true">Uložit úpravy</button>
+                        }
+                        <button class="btn-secondary" type="button" @onclick="() => EditItem(item)" @onclick:stopPropagation="true" disabled="@(DeletedItemIds.Contains(item.Id))">
+                            @(isEditing ? "Zrušit úpravy" : "Upravit")
+                        </button>
+                        @if (!isEditing && UpdatedItemDtos.ContainsKey(item.Id))
+                        {
+                            <button class="btn-secondary" type="button" @onclick="() => UpdatedItemDtos.Remove(item.Id)" @onclick:stopPropagation="true">Vrátit změny</button>
+                        }
+                        <button class="btn-destructive" type="button" @onclick="() => DeleteItem(item)" @onclick:stopPropagation="true" disabled="@isEditing">
+                            @(DeletedItemIds.Contains(item.Id) ? "Zrušit smazání" : "Smazat")
+                        </button>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="items-pagination">
+            <button class="btn-secondary" type="button" @onclick="() => LoadItems(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+            <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalItemsCount / Limit))</span>
+            <button class="btn-secondary" type="button" @onclick="() => LoadItems(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
         </div>
     }
-}
-else
-{
-    <p>Žádné položky nebyly nalezeny.</p>
-}
+    else
+    {
+        <div class="items-empty-state">
+            <p>Žádné položky neodpovídají aktuálním kritériím.</p>
+        </div>
+    }
+</div>
 
+@if (ShowUpdateSuggestionModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Odeslat upravený návrh</h4>
+                <button class="btn-secondary" type="button" @onclick="() => ShowUpdateSuggestionModal = false">Zavřít</button>
+            </div>
+
+            <div class="modal-body">
+                <UpdatePropertySuggestionForm OnClose="() => ShowUpdateSuggestionModal = false"
+                                              OnSuccessfulCreation="() => OnSuggestionUpdate()"
+                                              ItemsToDelete="DeletedItems.ToList()"
+                                              ItemsToUpdate="UpdatedItems.ToList()"
+                                              Suggestion="Suggestion" />
+            </div>
+        </div>
+    </div>
+}
 
 @code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
-    [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
     [Parameter] public PropertySuggestionDto? Suggestion { get; set; }
 
@@ -382,7 +415,6 @@ else
     private IEnumerable<PropertyItemDto> UpdatedItems => UpdatedItemDtos.Values;
     private bool HasPendingChanges => DeletedItemIds.Any() || UpdatedItemDtos.Any();
 
-
     protected override async Task OnInitializedAsync()
     {
         await LoadItems(0);
@@ -393,13 +425,17 @@ else
             {
                 var item = Items.FirstOrDefault(i => i.Id == id);
 
-                if (item is not null && !DeletedItems.Contains(item)) await DeleteItem(item);
+                if (item is not null && !DeletedItems.Contains(item))
+                {
+                    await DeleteItem(item);
+                }
             }
+
             foreach (var command in Suggestion.Payload.UpdateCommands)
             {
                 var item = Items.FirstOrDefault(i => i.Id == command.Id);
 
-                if (item is not null) 
+                if (item is not null)
                 {
                     var dto = new PropertyItemDto
                     {
@@ -430,6 +466,16 @@ else
                     await UpdateItem(dto);
                 }
             }
+        }
+    }
+
+    private async Task ToggleFilters()
+    {
+        ShowFilteringOptions = !ShowFilteringOptions;
+
+        if (!ShowFilteringOptions)
+        {
+            await ClearFilters();
         }
     }
 
@@ -468,7 +514,6 @@ else
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
-
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
         }
@@ -482,8 +527,8 @@ else
         Items = content.Data;
         Limit = content.Limit;
         TotalItemsCount = content.TotalCount;
-        
-        StateHasChanged(); 
+
+        StateHasChanged();
     }
 
     private bool CanGoPrev => CurrentOffset > 0;
@@ -502,7 +547,6 @@ else
 
     private string? Room { get; set; }
     private string? Building { get; set; }
-
     private string? WithGeneratedCode { get; set; }
 
     private async Task ClearFilters()
@@ -523,12 +567,9 @@ else
     public void SelectItem(PropertyItemDto item)
     {
         if (DeletedItemIds.Contains(item.Id)) return;
-        if (EditedItems.Keys.Contains(item.Id)) return;
+        if (EditedItems.ContainsKey(item.Id)) return;
 
         if (SelectedItems.RemoveWhere(i => i.Id == item.Id) == 0) SelectedItems.Add(item);
-
-        Console.WriteLine(string.Join(", ", SelectedItems.Select(i => i.InventoryNumber)));
-        Console.WriteLine(SelectedItems);
     }
 
     public void SelectItems(IEnumerable<PropertyItemDto> items)
@@ -550,7 +591,7 @@ else
     {
         var updated = EditedItems[item.Id].Updated;
         var original = Items.FirstOrDefault(i => i.Id == updated.Id);
-        
+
         EditedItems.Remove(item.Id);
 
         if (original is not null && updated.Equals(original))
@@ -561,7 +602,7 @@ else
         {
             UpdatedItemDtos[updated.Id] = updated;
         }
-        
+
         await Task.CompletedTask;
     }
 
@@ -589,14 +630,14 @@ else
     public async Task DeleteItem(PropertyItemDto item)
     {
         if (SelectedItems.Contains(item)) SelectedItems.Remove(item);
-        
+
         UpdatedItemDtos.Remove(item.Id);
-        
+
         if (!DeletedItemIds.Remove(item.Id))
         {
             DeletedItemIds.Add(item.Id);
         }
-        
+
         await Task.CompletedTask;
     }
 
@@ -619,13 +660,18 @@ else
 
     private bool ShowUpdateSuggestionModal { get; set; }
 
-    public string GetItemColor(PropertyItemDto item)
+    private string GetItemCardClass(PropertyItemDto item)
     {
-        if (UpdatedItemDtos.ContainsKey(item.Id)) return "#BBFF99";
-        if (DeletedItemIds.Contains(item.Id)) return "#FF5B5B";
-        if (SelectedItems.Any(i => i.Id == item.Id)) return "#E0E0E0";
-        return "FFFFFF";
+        var classes = new List<string> { "item-card" };
+        if (DeletedItemIds.Contains(item.Id)) classes.Add("item-card--deleted");
+        else if (UpdatedItemDtos.ContainsKey(item.Id)) classes.Add("item-card--updated");
+        if (SelectedItems.Any(i => i.Id == item.Id)) classes.Add("item-card--selected");
+        if (EditedItems.ContainsKey(item.Id)) classes.Add("item-card--editing");
+        return string.Join(" ", classes);
     }
+
+    private static string GetFieldClass(bool changed)
+        => changed ? "item-field item-field--changed" : "item-field";
 
     private async Task OnSuggestionUpdate()
     {

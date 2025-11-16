@@ -3,20 +3,24 @@
 @using Invenire.Api.Properties.Items.ExportToJson
 @using Invenire.Common.Errors
 
-@if (!IsProcessing)
-{
-    <button @onclick="() => ExportToJson()">Export do JSON souboru</button>
-    <button @onclick="() => ExportToExcel()">Export do .xlsx (Excel) souboru</button>
-
-    @if (ErrorMessage is not null)
+<div class="modal-stack">
+    @if (IsProcessing)
     {
-        <p style="color: red;">@ErrorMessage</p>
+        <p class="modal-description">Žádost se zpracovává... Může to chvíli trvat.</p>
     }
-}
-else
-{
-    <p>Žádost se zpracovává... Může to chvíli trvat.</p>
-}
+    else
+    {
+        <div class="modal-footer">
+            <button class="btn-secondary" type="button" @onclick="ExportToJson">Export do JSON souboru</button>
+            <button type="button" @onclick="ExportToExcel">Export do XLSX (Excel) souboru</button>
+        </div>
+
+        @if (ErrorMessage is not null)
+        {
+            <div class="error-banner">@ErrorMessage</div>
+        }
+    }
+</div>
 
 @code
 {
@@ -27,6 +31,17 @@ else
 
     private bool IsProcessing { get; set; }
     private string? ErrorMessage { get; set; }
+
+    private async Task CancelExportAsync()
+    {
+        ErrorMessage = null;
+        IsProcessing = false;
+
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync(true);
+        }
+    }
 
     private async Task ExportToJson()
     {

@@ -4,43 +4,45 @@
 
 @if (Employee is not null)
 {
-    <ul>
-        <li><strong>Id:</strong> @Employee.Id</li>
-        <li><strong>Jméno:</strong> @Employee.FullName</li>
-        <li><strong>Email:</strong> @Employee.EmailAddress</li>
-        <li><strong>Vytvořen:</strong> @Employee.CreatedAt.ToUserTimeString()</li>
-        <li><strong>Naposledy upraven:</strong> @Employee.LastUpdatedAt.ToUserTimeString()</li>
-    </ul>
+    <div class="detail-list">
+        <div class="detail-item">
+            <span class="detail-label">Id</span>
+            <span class="detail-value">@Employee.Id</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Jméno</span>
+            <span class="detail-value">@Employee.FullName</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">@Employee.EmailAddress</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Vytvořen</span>
+            <span class="detail-value">@Employee.CreatedAt.ToUserTimeString()</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Naposledy upraven</span>
+            <span class="detail-value">@Employee.LastUpdatedAt.ToUserTimeString()</span>
+        </div>
+    </div>
 
-    <button @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+    <div class="detail-actions">
+        <button class="btn-secondary" @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+    </div>
 }
 @if (Employee is not null && ShowUpdateModal)
 {
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 500px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Upravit svoje informace</h4>
-                <button @onclick="() => ShowUpdateModal = false">X</button>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Upravit svoje informace</h4>
+                <button class="btn-secondary" type="button" @onclick="() => ShowUpdateModal = false">Zavřít</button>
             </div>
 
-            <UpdateEmployeeForm Employee="Employee" OnClose="() => ShowUpdateModal = false" OnSuccessfulUpdate="OnSuccessfulEmployeeUpdate" />
+            <div class="modal-body">
+                <UpdateEmployeeForm Employee="Employee" OnClose="() => ShowUpdateModal = false" OnSuccessfulUpdate="OnSuccessfulEmployeeUpdate" />
+            </div>
         </div>
     </div>
 }

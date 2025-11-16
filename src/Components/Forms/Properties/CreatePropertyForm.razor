@@ -1,35 +1,22 @@
 @using System.Net
 
-<button @onclick="() => ShowModal = true">Vytvořit</button>
+<button class="btn-secondary" type="button" @onclick="() => ShowModal = true">Vytvořit</button>
 
 @if (ShowModal)
 {
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow: auto; /* allow modal to scroll if too tall */
-        padding: 1rem;  /* optional: spacing around modal */
-    ">
-        <div style="
-            background: white;
-            border-radius: 6px;
-            max-height: 90vh;  /* don't exceed viewport height */
-            overflow-y: auto;  /* scroll inside modal */
-            padding: 1rem;
-            min-width: 300px;
-            max-width: 90%;
-        ">
-            <h4 style="margin:0;">Opravdu chcete vytvořit majetek?</h4>
-            <button @onclick="CreateProperty">Ano, vytvořit</button>
-            <button @onclick="() => ShowModal = false">Zrušit</button>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Opravdu chcete vytvořit majetek?</h4>
+                <button class="btn-secondary" type="button" @onclick="() => ShowModal = false">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Po potvrzení se vytvoří výchozí majetek pro vaši organizaci. Tuto akci lze provést pouze jednou.</p>
+                <div class="modal-footer">
+                    <button class="btn-secondary" type="button" @onclick="() => ShowModal = false">Zrušit</button>
+                    <button class="btn-success" type="button" @onclick="CreateProperty">Ano, vytvořit</button>
+                </div>
+            </div>
         </div>
     </div>
 }

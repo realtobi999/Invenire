@@ -1,9 +1,26 @@
 @using System.Net
 @using Invenire.Api.Organizations.Invitations
 
-<h4 style="margin-top: 0; margin-bottom: 10px;">Opravdu chcete smazat pozvánku?</h4>
-<button @onclick="DeleteInvitation">Ano, smazat</button>
-<button @onclick="() => OnClose.InvokeAsync(true)">Ne</button>
+<div class="modal-stack">
+    <p class="modal-description">Opravdu chcete smazat pozvánku?</p>
+    @if (Invitation?.Employee is not null)
+    {
+        <div class="detail-list">
+            <div class="detail-item">
+                <span class="detail-label">Jméno</span>
+                <span class="detail-value">@Invitation.Employee.FullName</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">@Invitation.Employee.EmailAddress</span>
+            </div>
+        </div>
+    }
+    <div class="modal-footer">
+        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zpět</button>
+        <button class="btn-destructive" type="button" @onclick="DeleteInvitation">Ano, smazat</button>
+    </div>
+</div>
 
 @code
 {

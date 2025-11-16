@@ -2,11 +2,13 @@
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.Delete
 
-<div>
-    <h4 style="margin:0;">Opravdu chcete smazat všechny položky?</h4>
-    <p>Tuto akci nelze vrátit zpět. Doporučujeme si zálohovat data.</p>
-    <button @onclick="() => DeleteItems()" style="background-color: #ffcccc;">Ano, smazat</button>
-    <button style="width:20%"@onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+<div class="modal-stack">
+    <p class="modal-description"><strong>Opravdu chcete smazat všechny položky?</strong></p>
+    <p class="modal-description warning-text">Tuto akci nelze vrátit zpět. Doporučujeme si zálohovat data.</p>
+    <div class="modal-footer">
+        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+        <button class="btn-destructive" type="button" @onclick="DeleteItems">Ano, smazat</button>
+    </div>
 </div>
 
 @code

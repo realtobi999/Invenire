@@ -2,9 +2,13 @@
 @using Invenire.Api.Organizations.Invitations
 @using Invenire.Api.Properties.Scans
 
-<h4 style="margin-top: 0; margin-bottom: 10px;">Opravdu chcete dokončit inventuru?</h4>
-<button @onclick="CompleteScan">Ano, dokončit</button>
-<button @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+<div class="modal-stack">
+    <p class="modal-description">Opravdu chcete dokončit inventuru?</p>
+    <div class="modal-footer">
+        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
+        <button class="btn-success" type="button" @onclick="CompleteScan">Ano, dokončit</button>
+    </div>
+</div>
 
 @code
 {

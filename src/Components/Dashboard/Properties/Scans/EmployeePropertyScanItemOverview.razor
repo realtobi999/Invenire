@@ -6,198 +6,218 @@
 @using Invenire.Common.Errors
 @using Invenire.Components.Forms.Properties.Items
 
-<div>
-    <input type="text" placeholder="Hledat..." @bind="SearchQuery" @bind:after="() => LoadItemsWithFilter()" style="margin-top: 10px;" />
-</div>
+<div class="scan-items-overview">
 
-<div>
-    <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadItemsWithFilter()">
-        @foreach (var option in OrderOptions)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
-    </select>
-</div>
+    <div class="items-toolbar">
+        <div class="form-control grow">
+            <label for="scan-search">Hledat</label>
+            <input id="scan-search" class="input-control" type="text" @bind="SearchQuery" @bind:after="() => LoadItemsWithFilter()" placeholder="Hledat položky..." />
+        </div>
+        <div class="form-control">
+            <label for="scan-order">Řazení</label>
+            <select id="scan-order" @bind="SelectedOrderOption" @bind:after="() => LoadItemsWithFilter()">
+                @foreach (var option in OrderOptions)
+                {
+                    <option value="@option.Value">@option.Label</option>
+                }
+            </select>
+        </div>
+        <button class="btn-secondary" type="button" @onclick="ToggleFilters">
+            @(ShowFilteringOptions ? "Zrušit filtrování" : "Filtrovat")
+        </button>
+    </div>
 
-<div>
-    <button @onclick="async () => {ShowFilteringOptions = !ShowFilteringOptions; if (!ShowFilteringOptions) await ClearFilters();}">@if (ShowFilteringOptions) @("Zrušit filtrování") else @("Filtrovat")</button>
     @if (ShowFilteringOptions)
     {
-        <div>
-            <label for="PriceMin">Cena od:</label>
-            <input id="PriceMin" type="number" @bind="PriceMin" min="0" />
-
-            <label for="PriceMax">do:</label>
-            <input id="PriceMax" type="number" @bind="PriceMax" min="0" />
-
-            <br />
-
-            <label for="DateOfPurchaseFrom">Datum nákupu od:</label>
-            <input id="DateOfPurchaseFrom" type="date" @bind="DateOfPurchaseFrom" />
-
-            <label for="DateOfPurchaseTo">do:</label>
-            <input id="DateOfPurchaseTo" type="date" @bind="DateOfPurchaseTo" />
-
-            <br />
-
-            <label for="CreatedAtFrom">Datum přidání od:</label>
-            <input id="CreatedAtFrom" type="date" @bind="CreatedAtFrom" />
-
-            <label for="CreatedAtTo">do:</label>
-            <input id="CreatedAtTo" type="date" @bind="CreatedAtTo" />
-
-            <br />
-
-            <label for="Building">V budově:</label>
-            <input id="Building" type="text" @bind="Building" />
-
-            <label for="Room">V místnosti:</label>
-            <input id="Room" type="text" @bind="Room" />
-
-            <br />
-
-            <label for="WithGeneratedCode">Vygenerovaný kód:</label>
-            <select id="WithGeneratedCode" @bind="WithGeneratedCode" >
-                <option value="">Nezáleží</option>
-                <option value="true">S kódem</option>
-                <option value="false">Bez kódu</option>
-            </select>
-
-            <br />
-
-            <button @onclick="() => LoadItemsWithFilter()" disabled="@(FilteringEmployeeErrorMessage is not null)" >Použít</button>
-            <button @onclick="() => ClearFilters()">Vymazat</button>
-        </div>
+        <section class="filter-panel">
+            <div class="filter-grid">
+                <div class="form-control">
+                    <label>Cena od</label>
+                    <input class="input-control" type="number" min="0" @bind="PriceMin" />
+                </div>
+                <div class="form-control">
+                    <label>Cena do</label>
+                    <input class="input-control" type="number" min="0" @bind="PriceMax" />
+                </div>
+                <div class="form-control">
+                    <label>Datum nákupu od</label>
+                    <input class="input-control" type="date" @bind="DateOfPurchaseFrom" />
+                </div>
+                <div class="form-control">
+                    <label>Datum nákupu do</label>
+                    <input class="input-control" type="date" @bind="DateOfPurchaseTo" />
+                </div>
+                <div class="form-control">
+                    <label>Datum přidání od</label>
+                    <input class="input-control" type="date" @bind="CreatedAtFrom" />
+                </div>
+                <div class="form-control">
+                    <label>Datum přidání do</label>
+                    <input class="input-control" type="date" @bind="CreatedAtTo" />
+                </div>
+                <div class="form-control">
+                    <label>Budova</label>
+                    <input class="input-control" type="text" @bind="Building" />
+                </div>
+                <div class="form-control">
+                    <label>Místnost</label>
+                    <input class="input-control" type="text" @bind="Room" />
+                </div>
+                <div class="form-control">
+                    <label>Vygenerovaný kód</label>
+                    <select @bind="WithGeneratedCode">
+                        <option value="">Nezáleží</option>
+                        <option value="true">S kódem</option>
+                        <option value="false">Bez kódu</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label>Email správce položky</label>
+                    <input class="input-control" type="email" @bind="FilteringEmployeeEmailAddress" placeholder="např. jan.novak@firma.cz" />
+                    <div class="chip-actions">
+                        <button class="btn-secondary" type="button" @onclick="GetEmployeeForFiltering" disabled="@string.IsNullOrWhiteSpace(FilteringEmployeeEmailAddress)">Najít</button>
+                        <button class="btn-secondary" type="button" @onclick="ClearEmployeeFilter" disabled="@(FilteringEmployeeId is null && string.IsNullOrWhiteSpace(FilteringEmployeeEmailAddress))">Vymazat</button>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(FilteringEmployeeErrorMessage))
+                    {
+                        <p class="error-text">@FilteringEmployeeErrorMessage</p>
+                    }
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn-secondary" type="button" @onclick="async () => await LoadItemsWithFilter()">Použít</button>
+                <button class="btn-secondary" type="button" @onclick="async () => await ClearFilters()">Vymazat</button>
+            </div>
+        </section>
     }
-</div>
 
-<br />
+    <div class="action-row">
+        <button class="btn-secondary" type="button" @onclick="() => ShowScanItemModal = true">Naskenovat položky</button>
+    </div>
 
-<div>
-    <button @onclick="() => ShowScanItemModal = true">Skenovat položky</button>
-</div>
-
-<div style="display: flex; gap: 1rem;">
-    <div style="flex: 1; border-right: 2px solid #000; padding-right: 0.5rem;">
-        <h4>Naskenované Položky (@TotalScannedCount)</h4>
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+<div class="scan-groups">
+        <section class="items-group">
+            <div class="group-header">
+                <div>
+                    <p class="muted-text">Zpracováno</p>
+                    <h4>Naskenované položky</h4>
+                </div>
+                <span class="group-count">@TotalScannedCount</span>
+            </div>
             @if (ScannedItems.Count == 0)
             {
-                <p>Položky již nebyly nalezeny.</p>
+                <div class="items-empty-state">Žádné položky nebyly nalezeny.</div>
             }
             else
             {
-                @foreach (var item in ScannedItems)
-                {
-                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:@(item.LastCodeGeneratedAt is not null ? "#BBFF99" : "#EEEE77"); flex: 1 1 calc(22% - 0.5rem);">
-                        <ul style="list-style-type:none;padding:0;margin:0;">
-                            <li><strong>ID:</strong> @item.Id</li>
-                            <li><strong>Název:</strong> @item.Name</li>
-                            <li><strong>Cena:</strong> @item.Price Kč</li>
-                            <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
-                            <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
-                            <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
-                            <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
-                            <li><strong>Datum prodeje:</strong> @(item.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----")</li>
-                            <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
-                            <li><strong>Poznámka k umístění:</strong> @(item.Location.AdditionalNote ?? "-----")</li>
-                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
-                            <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
-                            <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
-                            <li><strong>Naskenováno:</strong> @(item.LastScannedAt.ToUserTimeString() ?? "-----")</li>
-                        </ul>
-                    </div>
-                }
-            }
-        </div>
-    </div>
+                <div class="items-grid">
+                    @foreach (var item in ScannedItems)
+                    {
+                        var scannedCardClass = item.LastCodeGeneratedAt is null
+                            ? "scan-item-card scan-item-card--scanned-no-code"
+                            : "scan-item-card scan-item-card--scanned";
 
-    <div style="flex: 1; padding-left: 0.5rem;">
-        <h4>Zbytek (@TotalNotScannedCount)</h4>
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <article class="@scannedCardClass">
+                            <div class="item-card-header">
+                                <div>
+                                    <p class="muted-text item-id">ID: @item.Id</p>
+                                    <h5>@item.Name</h5>
+                                </div>
+                                <span class="item-price"><span>@item.Price</span><span>Kč</span></span>
+                            </div>
+                            <ul class="item-field-list">
+                                <li class="item-field"><span class="field-label">Inventární číslo</span><span class="field-value">@item.InventoryNumber</span></li>
+                                <li class="item-field"><span class="field-label">Registrační číslo</span><span class="field-value">@item.RegistrationNumber</span></li>
+                                <li class="item-field"><span class="field-label">Sériové číslo</span><span class="field-value">@(item.SerialNumber ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Datum nákupu</span><span class="field-value">@item.DateOfPurchase.ToUserTimeString()</span></li>
+                                <li class="item-field"><span class="field-label">Datum prodeje</span><span class="field-value">@(item.DateOfSale?.ToUserTimeString() ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Umístění</span><span class="field-value">Budova @item.Location.Building, Místnost @item.Location.Room</span></li>
+                                <li class="item-field"><span class="field-label">Spravuje</span><span class="field-value">@(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Popis</span><span class="field-value">@(item.Description ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Přidáno</span><span class="field-value">@item.CreatedAt.ToUserTimeString()</span></li>
+                                <li class="item-field"><span class="field-label">Upraveno</span><span class="field-value">@(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Kód generován</span><span class="field-value">@(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Naskenováno</span><span class="field-value">@(item.LastScannedAt.ToUserTimeString() ?? "-----")</span></li>
+                            </ul>
+                        </article>
+                    }
+                </div>
+            }
+            <div class="scan-pagination">
+                <button class="btn-secondary" type="button" @onclick="() => LoadScannedItems(ScannedCurrentOffset - ScannedLimit)" disabled="@(!CanGoPrevScanned)">◀</button>
+                <span>@(ScannedCurrentOffset / ScannedLimit + 1) / @ScannedTotalPages</span>
+                <button class="btn-secondary" type="button" @onclick="() => LoadScannedItems(ScannedCurrentOffset + ScannedLimit)" disabled="@(!CanGoNextScanned)">▶</button>
+            </div>
+        </section>
+
+        <section class="items-group">
+            <div class="group-header">
+                <div>
+                    <p class="muted-text">Zbývá</p>
+                    <h4>Nenaskenované položky</h4>
+                </div>
+                <span class="group-count">@TotalNotScannedCount</span>
+            </div>
             @if (NotScannedItems.Count == 0)
             {
-                <p>Položky již nebyly nalezeny.</p>
+                <div class="items-empty-state">Žádné položky nebyly nalezeny.</div>
             }
             else
             {
-                @foreach (var item in NotScannedItems)
-                {
-                    <div style="border:1px solid #ccc;padding:0.25rem;border-radius:6px;font-size:0.85rem; background-color:#FF5B5B; flex: 1 1 calc(22% - 0.5rem);">
-                        <ul style="list-style-type:none;padding:0;margin:0;">
-                            <li><strong>ID:</strong> @item.Id</li>
-                            <li><strong>Název:</strong> @item.Name</li>
-                            <li><strong>Cena:</strong> @item.Price Kč</li>
-                            <li><strong>Inventární číslo:</strong> @item.InventoryNumber</li>
-                            <li><strong>Registrační číslo:</strong> @item.RegistrationNumber</li>
-                            <li><strong>Sériové číslo:</strong> @(item.SerialNumber ?? "-----")</li>
-                            <li><strong>Datum nákupu:</strong> @item.DateOfPurchase.ToString("dd.MM.yyyy")</li>
-                            <li><strong>Datum prodeje:</strong> @(item.DateOfSale?.ToString("dd.MM.yyyy") ?? "-----")</li>
-                            <li><strong>Umístění:</strong> Budova @item.Location.Building, Místnost @item.Location.Room</li>
-                            <li><strong>Poznámka k umístění:</strong> @(item.Location.AdditionalNote ?? "-----")</li>
-                            <li><strong>Spravuje:</strong> @(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</li>
-                            <li><strong>Popis:</strong> @(item.Description ?? "------")</li>
-                            <li><strong>Číslo dokladu:</strong> @(item.DocumentNumber ?? "-----")</li>
-                            <li><strong>Přidáno:</strong> @item.CreatedAt.ToUserTimeString()</li>
-                            <li><strong>Upraveno:</strong> @(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
-                            <li><strong>Datum generace kódu:</strong> @(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</li>
-                        </ul>
-                        @if (Scan!.CompletedAt is null && item.LastCodeGeneratedAt is null)
-                        {
-                            <button @onclick="() => ScanItem(item)">Naskenovat</button>
-                        }
-                    </div>
-                }
+                <div class="items-grid">
+                    @foreach (var item in NotScannedItems)
+                    {
+                        <article class="scan-item-card scan-item-card--pending">
+                            <div class="item-card-header">
+                                <div>
+                                    <p class="muted-text item-id">ID: @item.Id</p>
+                                    <h5>@item.Name</h5>
+                                </div>
+                                <span class="item-price"><span>@item.Price</span><span>Kč</span></span>
+                            </div>
+                            <ul class="item-field-list">
+                                <li class="item-field"><span class="field-label">Inventární číslo</span><span class="field-value">@item.InventoryNumber</span></li>
+                                <li class="item-field"><span class="field-label">Registrační číslo</span><span class="field-value">@item.RegistrationNumber</span></li>
+                                <li class="item-field"><span class="field-label">Sériové číslo</span><span class="field-value">@(item.SerialNumber ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Datum nákupu</span><span class="field-value">@item.DateOfPurchase.ToUserTimeString()</span></li>
+                                <li class="item-field"><span class="field-label">Datum prodeje</span><span class="field-value">@(item.DateOfSale?.ToUserTimeString() ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Umístění</span><span class="field-value">Budova @item.Location.Building, Místnost @item.Location.Room</span></li>
+                                <li class="item-field"><span class="field-label">Spravuje</span><span class="field-value">@(!string.IsNullOrEmpty(item.Employee.EmailAddress) ? item.Employee.EmailAddress : "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Popis</span><span class="field-value">@(item.Description ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Přidáno</span><span class="field-value">@item.CreatedAt.ToUserTimeString()</span></li>
+                                <li class="item-field"><span class="field-label">Kód generován</span><span class="field-value">@(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</span></li>
+                            </ul>
+                            @if (Scan!.CompletedAt is null)
+                            {
+                                <div class="item-card-actions">
+                                    <button class="btn-secondary" type="button" @onclick="async (args) => await ScanItem(item)" @onclick:stopPropagation="true">Naskenovat</button>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
             }
-        </div>
-    </div>
-</div>
-
-<div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
-    <div style="text-align: center; flex: 1;">
-        <button @onclick="() => LoadScannedItems(ScannedCurrentOffset - ScannedLimit)" disabled="@(!CanGoPrevScanned)">◀</button>
-        <span style="margin: 0 10px;">@(ScannedCurrentOffset / ScannedLimit + 1) / @ScannedTotalPages</span>
-        <button @onclick="() => LoadScannedItems(ScannedCurrentOffset + ScannedLimit)" disabled="@(!CanGoNextScanned)">▶</button>
-    </div>
-
-    <div style="text-align: center; flex: 1;">
-        <button @onclick="() => LoadNotScannedItems(NotScannedCurrentOffset - NotScannedLimit)" disabled="@(!CanGoPrevNotScanned)">◀</button>
-        <span style="margin: 0 10px;">@(NotScannedCurrentOffset / NotScannedLimit + 1) / @NotScannedTotalPages</span>
-        <button @onclick="() => LoadNotScannedItems(NotScannedCurrentOffset + NotScannedLimit)" disabled="@(!CanGoNextNotScanned)">▶</button>
+            <div class="scan-pagination">
+                <button class="btn-secondary" type="button" @onclick="() => LoadNotScannedItems(NotScannedCurrentOffset - NotScannedLimit)" disabled="@(!CanGoPrevNotScanned)">◀</button>
+                <span>@(NotScannedCurrentOffset / NotScannedLimit + 1) / @NotScannedTotalPages</span>
+                <button class="btn-secondary" type="button" @onclick="() => LoadNotScannedItems(NotScannedCurrentOffset + NotScannedLimit)" disabled="@(!CanGoNextNotScanned)">▶</button>
+            </div>
+        </section>
     </div>
 </div>
 
 @if (ShowScanItemModal)
 {
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;">
-        <div style="
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin:0;">Naskenovat položky</h4>
-                <button @onclick="() => ShowScanItemModal = false">X</button>
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Naskenovat položky</h4>
+                <button class="btn-secondary" type="button" @onclick="() => ShowScanItemModal = false">Zavřít</button>
             </div>
 
-            <ScanPropertyItemForm OnSuccessfulScan="async () => {await LoadItemsWithFilter(); await OnChange.InvokeAsync(true);}"/>
+            <div class="modal-body">
+                <ScanPropertyItemForm OnSuccessfulScan="async () => { await LoadItemsWithFilter(); await OnChange.InvokeAsync(true); }"/>
+            </div>
         </div>
     </div>
 }
@@ -252,12 +272,21 @@
     private string? Building { get; set; }
     private string? WithGeneratedCode { get; set; }
     private Guid? FilteringEmployeeId { get; set; }
-    private string? FilteringEmployeeErrorMessage { get; set; }
     private string? FilteringEmployeeEmailAddress { get; set; }
+    private string? FilteringEmployeeErrorMessage { get; set; }
     private string? SearchQuery { get; set; }
+    private bool ShowScanItemModal { get; set; }
 
-    protected override void OnParametersSet() => StateHasChanged();
     protected override async Task OnInitializedAsync() => await LoadItemsWithFilter();
+
+    private async Task ToggleFilters()
+    {
+        ShowFilteringOptions = !ShowFilteringOptions;
+        if (!ShowFilteringOptions)
+        {
+            await ClearFilters();
+        }
+    }
 
     private async Task LoadItemsWithFilter()
     {
@@ -381,9 +410,12 @@
     private async Task GetEmployeeForFiltering()
     {
         FilteringEmployeeErrorMessage = null;
+        FilteringEmployeeId = null;
 
-        if (string.IsNullOrEmpty(FilteringEmployeeEmailAddress))
+        if (string.IsNullOrWhiteSpace(FilteringEmployeeEmailAddress))
+        {
             return;
+        }
 
         var response = await Client.GetAsync($"/api/organizations/employees/{FilteringEmployeeEmailAddress}");
 
@@ -402,8 +434,14 @@
         }
 
         var content = await response.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
-
         FilteringEmployeeId = content.Id;
+    }
+
+    private void ClearEmployeeFilter()
+    {
+        FilteringEmployeeEmailAddress = null;
+        FilteringEmployeeErrorMessage = null;
+        FilteringEmployeeId = null;
     }
 
     private async Task ClearFilters()
@@ -416,9 +454,9 @@
         DateOfPurchaseTo = null;
         Room = null;
         Building = null;
-        FilteringEmployeeId = null;
-        FilteringEmployeeErrorMessage = null;
         FilteringEmployeeEmailAddress = null;
+        FilteringEmployeeErrorMessage = null;
+        FilteringEmployeeId = null;
         WithGeneratedCode = null;
 
         await LoadItemsWithFilter();
@@ -435,6 +473,4 @@
 
         await OnChange.InvokeAsync(true);
     }
-
-    private bool ShowScanItemModal { get; set; }
 }

@@ -14,7 +14,7 @@ public class OrganizationInvitationDto
     public OrganizationDto? OrganizationDto { get; set; }
 
     [JsonPropertyName("description")]
-    public required string? Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("created_at")]
     public required DateTimeOffset CreatedAt { get; set; }

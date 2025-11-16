@@ -6,29 +6,30 @@
 
 @page "/verify-email"
 
-<h1>Emailová verifikace</h1>
-
-@if (IsLoading)
-{
-    <p>Probíhá načítání...</p>
-}
-else
-{
-    <p class="mb-6">
-        Vše proběhlo vpořádku, nyní se můžete přihlásit.
-    </p>
-
-    <NavLink href="/login">Přihlásit se</NavLink>
-}
+<div class="auth-layout verification-page">
+    <section class="surface-card verification-hero">
+        <div class="success-banner">
+            <div>
+                <h2>Vítejte zpět!</h2>
+                <p>Váš účet je aktivní a připravený k použití.</p>
+            </div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#2dd4bf" stroke-width="2" />
+                <path d="M8 12.5l2.5 2.5L16 9" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </div>
+        <button class="btn-secondary" @onclick="() => NavigateToLogin()">Přihlásit se</button>
+    </section>
+</div>
 
 @code 
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    private bool IsLoading { get; set; }
     private string? Token { get; set; }
     private JwtRole? Role { get; set; }
+    private bool IsLoading { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,5 +53,10 @@ else
         var response = await Client.SendAsync(request);
 
         IsLoading = false;
+    }
+
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/login");
     }
 }

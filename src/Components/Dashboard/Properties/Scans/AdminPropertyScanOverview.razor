@@ -2,68 +2,99 @@
 @using Invenire.Api.Properties.Scans
 @using Invenire.Api.Properties.Scans.IndexByAdmin
 
-<div>
-    <label for="OrderSelect">Řazení: </label>
-    <select id="OrderSelect" @bind="SelectedOrderOption" @bind:after="() => LoadScan(0)">
-        @foreach (var option in OrderOptions)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
-    </select>
+<div class="scan-overview">
+    <div class="modal-toolbar">
+        <div class="modal-toolbar-header">
+            <h3>Historie inventur</h3>
+            <div class="scan-toolbar-actions">
+                <div class="form-control">
+                    <label for="scan-order">Řazení</label>
+                    <select id="scan-order" @bind="SelectedOrderOption" @bind:after="() => LoadScan(0)">
+                        @foreach (var option in OrderOptions)
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        <p class="muted-text">Procházejte dokončené inventury, sledujte průběh a otevřete detail položek v jednom kroku.</p>
+    </div>
+
+    @if (Scan is not null)
+    {
+        <section class="section-card">
+            <div class="section-heading">
+                <h4>Základní informace</h4>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <span class="detail-label">Id</span>
+                    <span class="detail-value">@Scan.Id</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Název</span>
+                    <span class="detail-value">@Scan.Name</span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Scan.Description))
+                {
+                    <div class="detail-item">
+                        <span class="detail-label">Popis</span>
+                        <span class="detail-value">@Scan.Description</span>
+                    </div>
+                }
+                <div class="detail-item">
+                    <span class="detail-label">Vytvořeno</span>
+                    <span class="detail-value">@Scan.CreatedAt.ToUserTimeString()</span>
+                </div>
+                @if (Scan.LastUpdatedAt is not null)
+                {
+                    <div class="detail-item">
+                        <span class="detail-label">Naposledy upraveno</span>
+                        <span class="detail-value">@Scan.LastUpdatedAt.ToUserTimeString()</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h4>Informace o průběhu</h4>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Celkový počet položek</span>
+                    <span class="stat-value">@FormatCount(Scan.ScannedItemsSummary?.TotalItemsToScan)</span>
+                </div>
+                <div class="stat-card stat-card--success">
+                    <span class="stat-label">Naskenováno</span>
+                    <span class="stat-value">@FormatCount(Scan.ScannedItemsSummary?.TotalScannedItems)</span>
+                </div>
+                <div class="stat-card stat-card--warning">
+                    <span class="stat-label">Nenaskenováno</span>
+                    <span class="stat-value">@FormatCount(GetPendingItems())</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card">
+            <div class="section-heading">
+                <h4>Položky inventury</h4>
+            </div>
+            <AdminPropertyScanItemOverview Scan="Scan" @key="Scan.Id" />
+        </section>
+
+        <div class="scan-pagination">
+            <button class="btn-secondary" type="button" @onclick="() => LoadScan(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
+            <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalScansCount / Limit))</span>
+            <button class="btn-secondary" type="button" @onclick="() => LoadScan(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
+        </div>
+    }
+    else
+    {
+        <div class="items-empty-state">Žádné inventury nebyly nalezeny.</div>
+    }
 </div>
-
-@if (Scan is not null)
-{
-    <h4>Základní informace</h4>
-    <ul>
-        <li><strong>Id:</strong> @Scan.Id</li>
-        <li><strong>Název:</strong> @Scan.Name</li>
-        @if (!string.IsNullOrEmpty(Scan.Description))
-        {
-            <li><strong>Text: </strong> @Scan.Description</li>
-        }
-        <li><strong>Vytvořeno:</strong> @Scan.CreatedAt.ToUserTimeString()</li>
-        @if (Scan.LastUpdatedAt is not null)
-        {
-            <li><strong>Naposledy upraveno:</strong> @Scan.LastUpdatedAt.ToUserTimeString()</li>
-        }
-    </ul>
-
-    <hr />
-
-    <h4>Informace o průběhu</h4>
-    <ul>
-        <li><strong>Celkový počet položek:</strong> @Scan.ScannedItemsSummary?.TotalItemsToScan</li>
-        <li><strong>Celkový počet naskenovaných položek:</strong> @Scan.ScannedItemsSummary?.TotalScannedItems</li>
-        <li><strong>Celkový počet nenaskenovaných položek:</strong> @(Scan.ScannedItemsSummary?.TotalItemsToScan - @Scan.ScannedItemsSummary?.TotalScannedItems)</li>
-    </ul>
-
-    <hr />
-
-    <div style="margin-bottom:2%;">
-        <h4>Položky inventury</h4>
-        <p>Některé informace o položkách již mohou být aktualizovány nebo některé položky mohou být odstraněny.</p>
-        <AdminPropertyScanItemOverview Scan="Scan" @key="Scan.Id"/>
-    </div>
-
-    <div style="
-        position: sticky;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 10px 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.5);">
-
-        <button @onclick="() => LoadScan(CurrentOffset - Limit)" disabled="@(!CanGoPrev)">◀</button>
-        <span>@(CurrentOffset / Limit + 1) / @((int)Math.Ceiling((double)TotalScansCount / Limit))</span>
-        <button @onclick="() => LoadScan(CurrentOffset + Limit)" disabled="@(!CanGoNext)">▶</button>
-    </div>
-}
 
 @code
 {
@@ -84,7 +115,7 @@
         ("name_asc", "Název (A-Z)"),
         ("name_desc", "Název (Z-A)"),
         ("createdat_asc", "Datum přidání (nejstarší první)"),
-        ("createdat_desc", "Datum přidání (nejnovější první)"),
+        ("createdat_desc", "Datum přidání (nejnovější první)")
     };
 
     protected override async Task OnInitializedAsync() => await LoadScan(0);
@@ -94,24 +125,25 @@
         CurrentOffset = Math.Max(0, offset);
         var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
 
-        var response = await Client.GetAsync($"/api/properties/scans?limit={Limit}&offset={offset}&active=false&order={sort}&desc={descending}");
+        var response = await Client.GetAsync($"/api/properties/scans?limit={Limit}&offset={CurrentOffset}&active=false&order={sort}&desc={descending}");
 
         if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the scan.");
 
         var content = await response.Content.ReadFromJsonAsync<IndexByAdminPropertyScanResponse>() ?? throw new NullReferenceException();
 
-        if (content.Data is not null && content.Data.Any())
-        {
-            Scan = content.Data.First();
-        }
-        else
-        {
-            Scan = null;
-        }
-
+        Scan = content.Data?.FirstOrDefault();
         Limit = content.Limit;
         TotalScansCount = content.TotalCount;
 
         StateHasChanged();
+    }
+
+    private string FormatCount(int? value) => (value ?? 0).ToString("N0");
+
+    private int GetPendingItems()
+    {
+        var total = Scan?.ScannedItemsSummary?.TotalItemsToScan ?? 0;
+        var scanned = Scan?.ScannedItemsSummary?.TotalScannedItems ?? 0;
+        return Math.Max(0, total - scanned);
     }
 }

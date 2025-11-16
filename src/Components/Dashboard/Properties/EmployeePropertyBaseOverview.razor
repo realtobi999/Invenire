@@ -2,11 +2,20 @@
 
 @if (Property is not null)
 {
-    <ul>
-        <li><strong>Id:</strong> @Property.Id</li>
-        <li><strong>Vytvořeno:</strong> @Property.CreatedAt.ToUserTimeString()</li>
-        <li><strong>Naposledy upraveno:</strong> @(Property.LastUpdatedAt.ToUserTimeString() ?? "-----")</li>
-    </ul>
+    <div class="detail-list">
+        <div class="detail-item">
+            <span class="detail-label">Id</span>
+            <span class="detail-value">@Property.Id</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Vytvořeno</span>
+            <span class="detail-value">@Property.CreatedAt.ToUserTimeString()</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Naposledy upraveno</span>
+            <span class="detail-value">@(Property.LastUpdatedAt?.ToUserTimeString() ?? "-----")</span>
+        </div>
+    </div>
 }
 
 @code
