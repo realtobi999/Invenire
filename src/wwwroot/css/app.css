@@ -62,7 +62,7 @@ main {
 }
 
 .content-shell {
-    max-width: 1200px;
+    max-width: 900px;
     width: min(100%, 1200px);
     margin: 0 auto;
 }
@@ -151,8 +151,6 @@ button.btn-secondary {
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: none;
 }
-
-b
 
 button.btn-destructive {
     background: linear-gradient(135deg, #ff6b81, #ff9a9e);
@@ -296,6 +294,12 @@ label {
     border: 1px solid var(--color-border);
     padding: 1.5rem;
     box-shadow: var(--shadow-soft);
+}
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .pill {
