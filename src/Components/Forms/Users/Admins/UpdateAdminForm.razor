@@ -5,7 +5,7 @@
 
 @if (Admin is not null)
 {
-    <EditForm class="modal-form" Model="Body" OnSubmit="HandleUpdate" @ref="Form">
+    <EditForm class="modal-form" Model="Body" OnSubmit="UpdateAdmin" @ref="Form">
         <div class="form-group">
             <label>Křestní jméno:</label>
             <InputText @bind-Value="Body.FirstName" />
@@ -19,16 +19,16 @@
         </div>
 
         <div class="form-actions">
-            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+            <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zrušit</button>
             <button type="submit">Uložit</button>
         </div>
     </EditForm>
 }
 
-@if (ErrorGeneralMessage is not null)
+@if (Error is not null)
 {
     <div class="error-banner">
-        @ErrorGeneralMessage
+        @Error
     </div>
 }
 @code
@@ -38,17 +38,16 @@
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulUpdate { get; set; }
 
-    private string? ErrorGeneralMessage;
-    private ValidationMessageStore ErrorValidationMessages = null!;
-
-    private EditForm Form = null!;
-    private UpdateAdminRequestBody Body = new();
+    private string? Error { get; set; }
+    private ValidationMessageStore ValidationMessages { get; set; } = null!;
+    private EditForm Form { get; set; } = null!;
+    private UpdateAdminRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool rendered)
     {
         if (Form is not null && rendered)
         {
-            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+            ValidationMessages = new ValidationMessageStore(Form.EditContext!);
         }
     }
 
@@ -61,10 +60,10 @@
         }
     }
 
-    private async Task HandleUpdate()
+    private async Task UpdateAdmin()
     {
-        ErrorGeneralMessage = null;
-        ErrorValidationMessages.Clear();
+        Error = null;
+        ValidationMessages.Clear();
 
         var response = await Client.PutAsJsonAsync("/api/admins", Body);
 
@@ -87,14 +86,14 @@
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, UpdateAdminResponse.ErrorTranslations));
+                    ValidationMessages.Add(field, ErrorTranslator.Translate(error, UpdateAdminResponse.ErrorTranslations));
                 }
 
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, UpdateAdminResponse.ErrorTranslations);
+                Error = ErrorTranslator.Translate(content.Detail, UpdateAdminResponse.ErrorTranslations);
             }
         }
     }

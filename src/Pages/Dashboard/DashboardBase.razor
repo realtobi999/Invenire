@@ -20,7 +20,7 @@
                     <span class="status-dot"></span>
                     @(Role == JwtRole.Admin ? "Správa organizace" : "Zaměstnanec")
                 </span>
-                <button class="btn-secondary btn-logout" @onclick="() => Logout()">Odhlásit se</button>
+                <button class="btn-secondary btn-logout" @onclick="async () => { await Logout(); }">Odhlásit se</button>
             </div>
             <h1>@(Role == JwtRole.Admin ? "Dashboard - Admin" : "Dashboard - Zaměstnanec")</h1>
         </div>
@@ -28,12 +28,12 @@
 
     @if (Role == JwtRole.Admin)
     {
-        @if (IsOrganizationNull is true)
+        @if (MissingOrganization is true)
         {
             <section class="surface-card stack">
                 <h2>Vytvoření organizace</h2>
                 <p>Nejdříve založte svou organizaci. Získáte tím přístup k zaměstnancům, majetku i inventurám.</p>
-                <CreateOrganizationForm OnSuccessfulCreation="OnSuccessfulCreation" />
+                <CreateOrganizationForm OnSuccessfulCreation="() => { MissingOrganization = false; StateHasChanged(); }" />
             </section>
         }
         else
@@ -56,11 +56,11 @@
     }
     else if (Role == JwtRole.Employee)
     {
-        @if (IsOrganizationNull is true)
+        @if (MissingOrganization is true)
         {
             <section class="surface-card stack">
                 <h2>Připojte se k organizaci</h2>
-                <EmployeeOrganizationInvitationOverview OnSuccessfulJoin="OnSuccessfulJoin" />
+                <EmployeeOrganizationInvitationOverview OnSuccessfulJoin="() => { MissingOrganization = false; StateHasChanged(); }" />
             </section>
         }
         else
@@ -90,7 +90,7 @@
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private ILocalStorageService Storage { get; set; } = default!;
 
-    private bool? IsOrganizationNull { get; set; }
+    private bool? MissingOrganization { get; set; }
     private JwtRole? Role { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -116,7 +116,7 @@
 
             if (admin.OrganizationId is null)
             {
-                IsOrganizationNull = true;
+                MissingOrganization = true;
             }
         }
         else if (Role == JwtRole.Employee)
@@ -127,21 +127,9 @@
 
             if (employee.OrganizationId is null)
             {
-                IsOrganizationNull = true;
+                MissingOrganization = true;
             }
         }
-    }
-
-    private void OnSuccessfulCreation()
-    {
-        IsOrganizationNull = false;
-        StateHasChanged();
-    }
-
-    private void OnSuccessfulJoin()
-    {
-        IsOrganizationNull = false;
-        StateHasChanged();
     }
 
     private async Task Logout()

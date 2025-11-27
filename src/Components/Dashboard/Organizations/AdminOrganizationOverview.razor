@@ -9,32 +9,35 @@
     <div class="stack">
         <section class="section-card">
             <h3>Základní informace</h3>
-            <AdminOrganizationBaseOverview Organization="Organization" OnSuccessfulUpdate="ReloadOrganization" />
+            <AdminOrganizationBaseOverview Organization="Organization" OnSuccessfulUpdate="Reload" />
         </section>
 
         <section class="section-card">
             <h3>Zaměstnanci</h3>
-            <AdminOrganizationEmployeesOverview Organization="Organization" OnSuccessfulDeletion="ReloadOrganization"/>
+            <AdminOrganizationEmployeesOverview Organization="Organization" OnSuccessfulDeletion="Reload" />
         </section>
 
         <section class="section-card">
             <h3>Pozvánky</h3>
-            <AdminOrganizationInvitationOverview Organization="Organization" OnChange="ReloadOrganization"/>
+            <AdminOrganizationInvitationOverview Organization="Organization" OnChange="Reload" />
         </section>
     </div>
 }
 
 
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private ILocalStorageService Storage { get; set; } = default!;
 
     private OrganizationDto? Organization { get; set; }
 
-    protected override async Task OnInitializedAsync() => await SetOrganization();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrganization();
+    }
 
-    private async Task SetOrganization()
+    private async Task LoadOrganization()
     {
         var response = await Client.GetAsync("/api/organizations");
 
@@ -45,12 +48,14 @@
         await PersistEmployees(Organization!.Employees ?? []);
     }
 
-    private async Task ReloadOrganization()
+    private async Task Reload()
     {
-        await SetOrganization();
+        await LoadOrganization();
         StateHasChanged();
     }
 
     private async Task PersistEmployees(IEnumerable<EmployeeDto> employees)
-        => await Storage.SetItemAsync("Employees", employees);
+    {
+        await Storage.SetItemAsync("Employees", employees);
+    }
 }

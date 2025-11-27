@@ -2,7 +2,7 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Users.Employees.Login
 
-<EditForm class="form-card" Model="Body" OnSubmit="HandleRegistration" @ref="Form">
+<EditForm class="form-card" Model="Body" OnSubmit="Login" @ref="Form">
     <div class="form-group">
         <label>Emailová adresa:</label>
         <InputText @bind-Value="Body.EmailAddress" type="email" />
@@ -15,10 +15,10 @@
         <ValidationMessage For="@(() => Body.Password)" />
     </div>
 
-    @if (ErrorGeneralMessage is not null)
+    @if (Error is not null)
     {
         <div class="error-banner">
-            @ErrorGeneralMessage
+            @Error
         </div>
     }
 
@@ -33,24 +33,23 @@
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    private string? ErrorGeneralMessage;
-    private ValidationMessageStore ErrorValidationMessages = null!;
-
-    private EditForm Form = null!;
-    private LoginEmployeeRequestBody Body = new();
+    private string? Error { get; set; }
+    private ValidationMessageStore ValidationMessages { get; set; } = null!;
+    private EditForm Form { get; set; } = null!;
+    private LoginEmployeeRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool rendered)
     {
         if (rendered && Form is not null)
         {
-            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+            ValidationMessages = new ValidationMessageStore(Form.EditContext!);
         }
     }
 
-    private async Task HandleRegistration()
+    private async Task Login()
     {
-        ErrorGeneralMessage = null;
-        ErrorValidationMessages.Clear();
+        Error = null;
+        ValidationMessages.Clear();
 
         var response = await Client.PostAsJsonAsync("/api/employees/login", Body);
 
@@ -73,14 +72,14 @@
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, LoginEmployeeResponse.ErrorTranslations));
+                    ValidationMessages.Add(field, ErrorTranslator.Translate(error, LoginEmployeeResponse.ErrorTranslations));
                 }
 
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, LoginEmployeeResponse.ErrorTranslations);
+                Error = ErrorTranslator.Translate(content.Detail, LoginEmployeeResponse.ErrorTranslations);
             }
         }
     }

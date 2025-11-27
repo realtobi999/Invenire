@@ -3,15 +3,15 @@
 
 @if (Employees.Any())
 {
-    var filteredEmployees = FilteredEmployees.ToList();
+    var filtered = Filtered.ToList();
 
     <div class="employee-dropdown">
         <div class="filter-panel employee-dropdown-filter">
             <div class="filter-grid">
                 <div class="form-control">
                     <label for="dropdown-order">Řazení</label>
-                    <select id="dropdown-order" @bind="SelectedOrderOption">
-                        @foreach (var option in OrderOptions)
+                    <select id="dropdown-order" @bind="Order">
+                        @foreach (var option in Orders)
                         {
                             <option value="@option.Value">@option.Label</option>
                         }
@@ -19,19 +19,19 @@
                 </div>
                 <div class="form-control grow">
                     <label for="dropdown-search">Hledat</label>
-                    <input id="dropdown-search" type="text" placeholder="Hledat zaměstnance..." @bind="SearchTerm" />
+                    <input id="dropdown-search" type="text" placeholder="Hledat zaměstnance..." @bind="Search" />
                 </div>
             </div>
             <p class="muted-text">Vyberte zaměstnance a modal se automaticky zavře.</p>
         </div>
 
-        @if (filteredEmployees.Any())
+        @if (filtered.Any())
         {
             <div class="employee-dropdown-list">
-                @foreach (var employee in filteredEmployees)
+                @foreach (var employee in filtered)
                 {
-                    <button type="button" class="employee-option" @onclick="() => ChooseEmployee(employee)">
-                        <span class="employee-avatar">@GetEmployeeInitials(employee)</span>
+                    <button type="button" class="employee-option" @onclick="async () => { await ChooseEmployee(employee); }">
+                        <span class="employee-avatar">@Initials(employee)</span>
                         <div class="employee-option-body">
                             <span class="employee-name">@employee.FullName</span>
                             <span class="employee-email">@employee.EmailAddress</span>
@@ -58,16 +58,17 @@ else
     </div>
 }
 
-@code {
+@code
+{
     [Inject] private ILocalStorageService Storage { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<EmployeeDto> OnEmployeeSelected { get; set; }
 
     private List<EmployeeDto> Employees { get; set; } = new();
-    private string SearchTerm { get; set; } = "";
-    private string SelectedOrderOption { get; set; } = "name_asc";
+    private string Search { get; set; } = "";
+    private string Order { get; set; } = "name_asc";
 
-    private readonly List<(string Value, string Label)> OrderOptions = new()
+    private readonly List<(string Value, string Label)> Orders = new()
     {
         ("name_asc", "Jméno (A-Z)"),
         ("name_desc", "Jméno (Z-A)"),
@@ -75,19 +76,19 @@ else
         ("email_desc", "Email (Z-A)")
     };
 
-    private IEnumerable<EmployeeDto> FilteredEmployees
+    private IEnumerable<EmployeeDto> Filtered
     {
         get
         {
             var filtered = Employees.Where(e =>
-                string.IsNullOrWhiteSpace(SearchTerm) ||
-                e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                (e.FirstName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (e.LastName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (e.EmailAddress?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+                string.IsNullOrWhiteSpace(Search) ||
+                e.FullName.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                (e.FirstName?.Contains(Search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (e.LastName?.Contains(Search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (e.EmailAddress?.Contains(Search, StringComparison.OrdinalIgnoreCase) ?? false)
             );
 
-            var (field, asc) = SelectedOrderOption.Split('_') switch { var p => (p[0], p[1] == "asc") };
+            var (field, asc) = Order.Split('_') switch { var p => (p[0], p[1] == "asc") };
 
             return field switch
             {
@@ -98,10 +99,15 @@ else
         }
     }
 
-    protected override async Task OnInitializedAsync() => await LoadPersistentEmployees();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployees();
+    }
 
-    private async Task LoadPersistentEmployees()
-        => Employees = await Storage.GetItemAsync<List<EmployeeDto>>("Employees") ?? new();
+    private async Task LoadEmployees()
+    {
+        Employees = await Storage.GetItemAsync<List<EmployeeDto>>("Employees") ?? new();
+    }
 
     private async Task ChooseEmployee(EmployeeDto employee)
     {
@@ -109,30 +115,19 @@ else
         await OnEmployeeSelected.InvokeAsync(employee);
     }
 
-    private void ClearSearchTerm() => SearchTerm = string.Empty;
-
-    private static string FormatResultLabel(int count) => count switch
-    {
-        1 => "výsledek",
-        >= 2 and <= 4 => "výsledky",
-        _ => "výsledků"
-    };
-
-    private string GetOrderLabel(string value)
-    {
-        var option = OrderOptions.FirstOrDefault(o => o.Value == value);
-        return string.IsNullOrWhiteSpace(option.Label) ? value : option.Label;
-    }
-
-    private string GetEmployeeInitials(EmployeeDto employee)
+    private string Initials(EmployeeDto employee)
     {
         var initials = new List<char>();
 
         if (!string.IsNullOrWhiteSpace(employee.FirstName))
+        {
             initials.Add(char.ToUpperInvariant(employee.FirstName!.Trim()[0]));
+        }
 
         if (!string.IsNullOrWhiteSpace(employee.LastName))
+        {
             initials.Add(char.ToUpperInvariant(employee.LastName!.Trim()[0]));
+        }
 
         if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.FullName))
         {
@@ -145,7 +140,9 @@ else
         }
 
         if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.EmailAddress))
+        {
             initials.Add(char.ToUpperInvariant(employee.EmailAddress![0]));
+        }
 
         return initials.Count == 0 ? "??" : new string(initials.Take(2).ToArray());
     }

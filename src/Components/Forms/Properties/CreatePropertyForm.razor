@@ -1,20 +1,20 @@
 @using System.Net
 
-<button class="btn-secondary" type="button" @onclick="() => ShowModal = true">Vytvořit</button>
+<button class="btn-secondary" type="button" @onclick="() => { Open = true; }">Vytvořit</button>
 
-@if (ShowModal)
+@if (Open)
 {
     <div class="modal-overlay">
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Opravdu chcete vytvořit majetek?</h4>
-                <button class="btn-secondary" type="button" @onclick="() => ShowModal = false">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => { Open = false; }">Zavřít</button>
             </div>
             <div class="modal-body">
                 <p class="modal-description">Po potvrzení se vytvoří výchozí majetek pro vaši organizaci. Tuto akci lze provést pouze jednou.</p>
                 <div class="modal-footer">
-                    <button class="btn-secondary" type="button" @onclick="() => ShowModal = false">Zrušit</button>
-                    <button class="btn-success" type="button" @onclick="CreateProperty">Ano, vytvořit</button>
+                    <button class="btn-secondary" type="button" @onclick="() => { Open = false; }">Zrušit</button>
+                    <button class="btn-success" type="button" @onclick="async () => { await CreateProperty(); }">Ano, vytvořit</button>
                 </div>
             </div>
         </div>
@@ -26,15 +26,15 @@
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
 
-    private bool ShowModal { get; set; }
+    private bool Open { get; set; }
 
     private async Task CreateProperty()
     {
-        var response = await Client.PostAsJsonAsync("/api/properties", new object{});
+        var response = await Client.PostAsJsonAsync("/api/properties", new object { });
 
-        if (response.StatusCode != HttpStatusCode.Created ) throw new Exception("Something went wrong during the request to create the property.");
+        if (response.StatusCode != HttpStatusCode.Created) throw new Exception("Something went wrong during the request to create the property.");
 
-        ShowModal = false;
+        Open = false;
         await OnSuccessfulCreation.InvokeAsync(true);
     }
 }

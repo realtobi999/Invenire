@@ -9,24 +9,24 @@
             <span class="status-dot"></span>
             Nový účet
         </span>
-        <h1>@HeaderText</h1>
+        <h1>@Header</h1>
         <p>Zvolte typ uživatele a dokončete registraci v několika jednoduchých krocích.</p>
     </div>
 
     <div class="surface-card">
         <label>Vyberte typ registrace</label>
-        <select @bind="SelectedRole">
+        <select @bind="Role">
             <option value="Employee">Zaměstnanec</option>
             <option value="Admin">Admin</option>
         </select>
     </div>
 
     <div class="form-stack">
-        @if (SelectedRole == "Employee")
+        @if (Role == "Employee")
         {
             <RegisterEmployeeForm />
         }
-        else if (SelectedRole == "Admin")
+        else if (Role == "Admin")
         {
             <RegisterAdminForm />
         }
@@ -37,13 +37,19 @@
     </div>
 </div>
 
-@code 
+@code
 {
-    private string SelectedRole { get; set; } = "Employee";
-    private string HeaderText => SelectedRole switch
+    private string Role { get; set; } = "Employee";
+    private string Header
     {
-        "Admin" => "Zaregistrujte se jako admin",
-        "Employee" => "Zaregistrujte se jako zaměstnanec",
-        _ => throw new Exception()
-    };
+        get
+        {
+            return Role switch
+            {
+                "Admin" => "Zaregistrujte se jako admin",
+                "Employee" => "Zaregistrujte se jako zaměstnanec",
+                _ => throw new Exception()
+            };
+        }
+    }
 }

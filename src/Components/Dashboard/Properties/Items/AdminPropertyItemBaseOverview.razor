@@ -30,10 +30,10 @@
     </div>
 
     <div class="action-row">
-        <button class="btn-secondary" @onclick="OpenAllItemsModal">Spravovat položky</button>
-        <button class="btn-secondary" @onclick="OpenImportItemsModal">Importovat</button>
-        <button class="btn-secondary" @onclick="OpenExportItemsModal">Exportovat</button>
-        <button class="btn-destructive" @onclick="OpenDeletionItemsModal" disabled="@(summary.TotalItems == 0)">Smazat všechny položky</button>
+        <button class="btn-secondary" @onclick="() => { ItemsOpen = true; }">Spravovat položky</button>
+        <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat</button>
+        <button class="btn-secondary" @onclick="() => { ExportOpen = true; }">Exportovat</button>
+        <button class="btn-destructive" @onclick="() => { DeleteOpen = true; }" disabled="@(summary.TotalItems == 0)">Smazat všechny položky</button>
     </div>
 }
 else
@@ -41,63 +41,63 @@ else
     <div class="empty-state">
         <p>Zatím nebyly přidány žádné položky.</p>
         <div class="action-row">
-            <button class="btn-secondary" @onclick="OpenImportItemsModal">Importovat položky</button>
+            <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat položky</button>
         </div>
     </div>
 }
 
-@if (ShowAllItemsModal)
+@if (ItemsOpen)
 {
     <div class="modal-overlay">
         <div class="modal-panel modal-panel--wide">
-            <AdminPropertyItemOverview OnClose="CloseAllItemsModal" OnChange="HandleItemsChanged" />
+            <AdminPropertyItemOverview OnClose="() => { ItemsOpen = false; }" OnChange="async () => { await OnChange.InvokeAsync(true); }" />
         </div>
     </div>
 }
 
-@if (ShowImportItemsModal)
+@if (ImportOpen)
 {
     <div class="modal-overlay">
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Import položek</h4>
-                <button class="btn-secondary" type="button" @onclick="CloseImportItemsModal">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => { ImportOpen = false; }">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <ImportPropertyItemsForm OnSuccessfulCreation="HandleImportSuccess" OnClose="CloseImportItemsModal" />
+                <ImportPropertyItemsForm OnSuccessfulCreation="async () => { ImportOpen = false; await OnChange.InvokeAsync(true); }" OnClose="() => { ImportOpen = false; }" />
             </div>
         </div>
     </div>
 }
 
-@if (ShowExportItemsModal)
+@if (ExportOpen)
 {
     <div class="modal-overlay">
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Export položek</h4>
-                <button class="btn-secondary" type="button" @onclick="CloseExportItemsModal">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => { ExportOpen = false; }">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <ExportPropertyItemsForm OnClose="CloseExportItemsModal" OnSuccessfulExport="HandleExportSuccess" />
+                <ExportPropertyItemsForm OnClose="() => { ExportOpen = false; }" OnSuccessfulExport="async () => { ExportOpen = false; await OnChange.InvokeAsync(true); }" />
             </div>
         </div>
     </div>
 }
 
-@if (ShowDeletionItemsModal)
+@if (DeleteOpen)
 {
     <div class="modal-overlay">
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Smazat všechny položky</h4>
-                <button class="btn-secondary" type="button" @onclick="CloseDeletionItemsModal">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => { DeleteOpen = false; }">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <DeleteAllPropertyItemsForm OnSuccessfulDeletion="HandleDeletionSuccess" OnClose="CloseDeletionItemsModal" />
+                <DeleteAllPropertyItemsForm OnSuccessfulDeletion="async () => { DeleteOpen = false; await OnChange.InvokeAsync(true); }" OnClose="() => { DeleteOpen = false; }" />
             </div>
         </div>
     </div>
@@ -109,43 +109,18 @@ else
     [Parameter] public PropertyDto? Property { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
-    private bool ShowAllItemsModal { get; set; }
-    private bool ShowImportItemsModal { get; set; }
-    private bool ShowExportItemsModal { get; set; }
-    private bool ShowDeletionItemsModal { get; set; }
+    private bool ItemsOpen { get; set; }
+    private bool ImportOpen { get; set; }
+    private bool ExportOpen { get; set; }
+    private bool DeleteOpen { get; set; }
 
     private static string GetAverageAge(PropertyDtoItemsSummary summary)
-        => summary.AverageAge is null ? "—" : $"{summary.AverageAge.Value:0.##} let";
+    {
+        return summary.AverageAge is null ? "—" : $"{summary.AverageAge.Value:0.##} let";
+    }
 
     private static string FormatCurrency(double? value)
-        => value is null ? "—" : $"{value.Value:0.##} Kč";
-
-    private void OpenAllItemsModal() => ShowAllItemsModal = true;
-    private void CloseAllItemsModal() => ShowAllItemsModal = false;
-    private void OpenImportItemsModal() => ShowImportItemsModal = true;
-    private void CloseImportItemsModal() => ShowImportItemsModal = false;
-    private void OpenExportItemsModal() => ShowExportItemsModal = true;
-    private void CloseExportItemsModal() => ShowExportItemsModal = false;
-    private void OpenDeletionItemsModal() => ShowDeletionItemsModal = true;
-    private void CloseDeletionItemsModal() => ShowDeletionItemsModal = false;
-
-    private async Task HandleItemsChanged() => await OnChange.InvokeAsync(true);
-
-    private async Task HandleImportSuccess()
     {
-        ShowImportItemsModal = false;
-        await OnChange.InvokeAsync(true);
-    }
-
-    private async Task HandleExportSuccess()
-    {
-        ShowExportItemsModal = false;
-        await OnChange.InvokeAsync(true);
-    }
-
-    private async Task HandleDeletionSuccess()
-    {
-        ShowDeletionItemsModal = false;
-        await OnChange.InvokeAsync(true);
+        return value is null ? "—" : $"{value.Value:0.##} Kč";
     }
 }

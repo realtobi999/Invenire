@@ -6,18 +6,18 @@
     <p class="modal-description"><strong>Opravdu chcete smazat všechny položky?</strong></p>
     <p class="modal-description warning-text">Tuto akci nelze vrátit zpět. Doporučujeme si zálohovat data.</p>
     <div class="modal-footer">
-        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
-        <button class="btn-destructive" type="button" @onclick="DeleteItems">Ano, smazat</button>
+        <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Ne, zrušit</button>
+        <button class="btn-destructive" type="button" @onclick="async () => { await Delete(); }">Ano, smazat</button>
     </div>
 </div>
 
 @code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
-    [Parameter] public EventCallback<bool> OnClose { get; set;}
-    [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set;}
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+    [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set; }
 
-    private async Task DeleteItems()
+    private async Task Delete()
     {
         var response = await Client.DeleteAsync("/api/properties/items?wipe=true");
 

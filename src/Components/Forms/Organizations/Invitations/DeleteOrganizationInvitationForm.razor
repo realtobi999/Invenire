@@ -17,8 +17,8 @@
         </div>
     }
     <div class="modal-footer">
-        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zpět</button>
-        <button class="btn-destructive" type="button" @onclick="DeleteInvitation">Ano, smazat</button>
+        <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zpět</button>
+        <button class="btn-destructive" type="button" @onclick="async () => { await Delete(); }">Ano, smazat</button>
     </div>
 </div>
 
@@ -29,11 +29,14 @@
     [Parameter] public EventCallback<bool> OnSuccessfulDeletion { get; set; }
     [Parameter] public OrganizationInvitationDto? Invitation { get; set; }
 
-    public async Task DeleteInvitation()
+    private async Task Delete()
     {
         var response = await Client.DeleteAsync($"/api/organizations/invitations/{Invitation!.Id}");
 
-        if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to delete the invitation.");
+        if (response.StatusCode != HttpStatusCode.NoContent)
+        {
+            throw new Exception("Something went wrong during the request to delete the invitation.");
+        }
 
         await OnClose.InvokeAsync(true);
         await OnSuccessfulDeletion.InvokeAsync(true);

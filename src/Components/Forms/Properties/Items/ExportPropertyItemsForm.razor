@@ -4,20 +4,20 @@
 @using Invenire.Common.Errors
 
 <div class="modal-stack">
-    @if (IsProcessing)
+    @if (Processing)
     {
         <p class="modal-description">Žádost se zpracovává... Může to chvíli trvat.</p>
     }
     else
     {
         <div class="modal-footer">
-            <button class="btn-secondary" type="button" @onclick="ExportToJson">Export do JSON souboru</button>
-            <button type="button" @onclick="ExportToExcel">Export do XLSX (Excel) souboru</button>
+            <button class="btn-secondary" type="button" @onclick="async () => { await ExportJson(); }">Export do JSON souboru</button>
+            <button type="button" @onclick="async () => { await ExportExcel(); }">Export do XLSX (Excel) souboru</button>
         </div>
 
-        @if (ErrorMessage is not null)
+        @if (Error is not null)
         {
-            <div class="error-banner">@ErrorMessage</div>
+            <div class="error-banner">@Error</div>
         }
     }
 </div>
@@ -29,24 +29,13 @@
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulExport { get; set; }
 
-    private bool IsProcessing { get; set; }
-    private string? ErrorMessage { get; set; }
+    private bool Processing { get; set; }
+    private string? Error { get; set; }
 
-    private async Task CancelExportAsync()
+    private async Task ExportJson()
     {
-        ErrorMessage = null;
-        IsProcessing = false;
-
-        if (OnClose.HasDelegate)
-        {
-            await OnClose.InvokeAsync(true);
-        }
-    }
-
-    private async Task ExportToJson()
-    {
-        ErrorMessage = null;
-        IsProcessing = true;
+        Error = null;
+        Processing = true;
 
         try
         {
@@ -55,31 +44,31 @@
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 var error = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-                ErrorMessage = ErrorTranslator.Translate(error.Detail, ExportToJsonPropertyItemResponse.ErrorTranslations);
+                Error = ErrorTranslator.Translate(error.Detail, ExportToJsonPropertyItemResponse.ErrorTranslations);
                 return;
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
             await JS.InvokeVoidAsync("download_file", $"export-{DateTime.Now:yyyyMMdd}.json", "application/zip", bytes);
 
-            IsProcessing = false;
+            Processing = false;
             await OnClose.InvokeAsync(true);
             await OnSuccessfulExport.InvokeAsync(true);
         }
         catch
         {
-            ErrorMessage = "Objevila se nečekaná chyba. Zkuste to prosím později.";
+            Error = "Objevila se nečekaná chyba. Zkuste to prosím později.";
         }
         finally
         {
-            IsProcessing = false;
+            Processing = false;
         }
     }
 
-    private async Task ExportToExcel()
+    private async Task ExportExcel()
     {
-        ErrorMessage = null;
-        IsProcessing = true;
+        Error = null;
+        Processing = true;
 
         try
         {
@@ -88,24 +77,24 @@
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 var error = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-                ErrorMessage = ErrorTranslator.Translate(error.Detail, ExportToExcelPropertyItemResponse.ErrorTranslations);
+                Error = ErrorTranslator.Translate(error.Detail, ExportToExcelPropertyItemResponse.ErrorTranslations);
                 return;
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync();
             await JS.InvokeVoidAsync("download_file", $"export-{DateTime.Now:yyyyMMdd}.xlsx", "application/zip", bytes);
 
-            IsProcessing = false;
+            Processing = false;
             await OnClose.InvokeAsync(true);
             await OnSuccessfulExport.InvokeAsync(true);
         }
         catch
         {
-            ErrorMessage = "Objevila se nečekaná chyba. Zkuste to prosím později.";
+            Error = "Objevila se nečekaná chyba. Zkuste to prosím později.";
         }
         finally
         {
-            IsProcessing = false;
+            Processing = false;
         }
     }
 }

@@ -5,8 +5,8 @@
 <div class="modal-stack">
     <p class="modal-description">Opravdu chcete dokončit inventuru?</p>
     <div class="modal-footer">
-        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
-        <button class="btn-success" type="button" @onclick="CompleteScan">Ano, dokončit</button>
+        <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Ne, zrušit</button>
+        <button class="btn-success" type="button" @onclick="async () => { await CompleteScan(); }">Ano, dokončit</button>
     </div>
 </div>
 
@@ -16,7 +16,7 @@
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulCompletion { get; set; }
 
-    public async Task CompleteScan()
+    private async Task CompleteScan()
     {
         var response = await Client.PutAsync($"/api/properties/scans/complete", null);
 

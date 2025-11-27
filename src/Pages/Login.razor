@@ -9,24 +9,24 @@
             <span class="status-dot success"></span>
             Přístup
         </span>
-        <h1>@HeaderText</h1>
+        <h1>@Header</h1>
         <p>Vyberte roli, kterou zastáváte. Přihlášení je zabezpečeno tokeny a uloženými relacemi.</p>
     </div>
 
     <div class="surface-card">
         <label>Vyberte typ přihlášení</label>
-        <select @bind="SelectedRole">
+        <select @bind="Role">
             <option value="Employee">Zaměstnanec</option>
             <option value="Admin">Admin</option>
         </select>
     </div>
 
     <div class="form-stack">
-        @if (SelectedRole == "Employee")
+        @if (Role == "Employee")
         {
             <LoginEmployeeForm />
         }
-        else if (SelectedRole == "Admin")
+        else if (Role == "Admin")
         {
             <LoginAdminForm />
         }
@@ -38,13 +38,19 @@
     </div>
 </div>
 
-@code 
+@code
 {
-    private string SelectedRole { get; set; } = "Employee";
-    private string HeaderText => SelectedRole switch
+    private string Role { get; set; } = "Employee";
+    private string Header
     {
-        "Admin" => "Přihlaste se jako admin",
-        "Employee" => "Přihlaste se jako zaměstnanec",
-        _ => throw new Exception()
-    };
+        get
+        {
+            return Role switch
+            {
+                "Admin" => "Přihlaste se jako admin",
+                "Employee" => "Přihlaste se jako zaměstnanec",
+                _ => throw new Exception()
+            };
+        }
+    }
 }

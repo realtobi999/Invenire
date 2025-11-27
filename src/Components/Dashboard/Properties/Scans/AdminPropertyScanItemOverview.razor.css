@@ -4,19 +4,6 @@
     gap: 1.5rem;
 }
 
-.modal-toolbar {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.modal-toolbar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
 .group-count {
     padding: 0.2rem 0.8rem;
     border-radius: 999px;

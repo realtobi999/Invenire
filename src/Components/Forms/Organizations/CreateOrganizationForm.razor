@@ -2,7 +2,7 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Organizations.Create
 
-<EditForm class="form-card" Model="Body" OnSubmit="HandleCreation" @ref="Form">
+<EditForm class="form-card" Model="Body" OnSubmit="CreateOrganization" @ref="Form">
     <div class="form-group">
         <label>Název:</label>
         <InputText @bind-Value="Body.Name" />
@@ -14,36 +14,36 @@
     </div>
 </EditForm>
 
-@if (ErrorGeneralMessage is not null)
+@if (Error is not null)
 {
     <div class="error-banner">
-        @ErrorGeneralMessage
+        @Error
     </div>
 }
 
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
 
-    private string? ErrorGeneralMessage;
-    private ValidationMessageStore ErrorValidationMessages = null!;
-
-    private EditForm Form = null!;
-    private CreateOrganizationRequestBody Body = new();
+    private string? Error { get; set; }
+    private ValidationMessageStore ValidationMessages { get; set; } = null!;
+    
+    private EditForm Form { get; set; } = null!;
+    private CreateOrganizationRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool first)
     {
         if (Form is not null && first)
         {
-            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+            ValidationMessages = new ValidationMessageStore(Form.EditContext!);
         }
     }
 
-    private async Task HandleCreation()
+    private async Task CreateOrganization()
     {
-        ErrorGeneralMessage = null;
-        ErrorValidationMessages.Clear();
+        Error = null;
+        ValidationMessages.Clear();
 
         var response = await Client.PostAsJsonAsync("/api/organizations", Body);
 
@@ -65,14 +65,14 @@
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, CreateOrganizationResponse.ErrorTranslations));
+                    ValidationMessages.Add(field, ErrorTranslator.Translate(error, CreateOrganizationResponse.ErrorTranslations));
                 }
 
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, CreateOrganizationResponse.ErrorTranslations);
+                Error = ErrorTranslator.Translate(content.Detail, CreateOrganizationResponse.ErrorTranslations);
             }
         }
     }

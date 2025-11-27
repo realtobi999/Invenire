@@ -4,13 +4,13 @@
 @using Invenire.Api.Properties.Items.GenerateCodes
 
 <div class="modal-stack">
-    @if (!IsProcessing)
+    @if (!Processing)
     {
         <p class="modal-description">Opravdu chcete stáhnout QR kódy vybraných položek?</p>
 
         <div class="modal-footer">
-            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Ne, zrušit</button>
-            <button class="btn-success" type="button" @onclick="() => DownloadCodes()">Ano, stáhnout</button>
+            <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Ne, zrušit</button>
+            <button class="btn-success" type="button" @onclick="async () => { await Download(); }">Ano, stáhnout</button>
         </div>
     }
     else
@@ -27,11 +27,11 @@
     [Parameter] public EventCallback<bool> OnSuccessfulGeneration { get; set; }
     [Parameter] public List<PropertyItemDto> Items { get; set; } = [];
 
-    private bool IsProcessing { get; set; }
+    private bool Processing { get; set; }
 
-    private async Task DownloadCodes()
+    private async Task Download()
     {
-        IsProcessing = true;
+        Processing = true;
 
         var command = new GenerateCodesPropertyItemsRequest
         {
@@ -45,7 +45,7 @@
         var bytes = await response.Content.ReadAsByteArrayAsync();
         await JS.InvokeVoidAsync("download_file", "qrkody.zip", "application/zip", bytes);
 
-        IsProcessing = false;
+        Processing = false;
         await OnClose.InvokeAsync(true);
         await OnSuccessfulGeneration.InvokeAsync(true);
     }

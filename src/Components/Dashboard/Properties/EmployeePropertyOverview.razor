@@ -20,14 +20,14 @@
             <div class="section-heading">
                 <h3>Položky</h3>
             </div>
-            <EmployeePropertyItemBaseOverview Property="Property" OnChange="() => LoadProperty()" />
+            <EmployeePropertyItemBaseOverview Property="Property" OnChange="async () => { await LoadProperty(); }" />
         </section>
 
         <section class="section-card">
             <div class="section-heading">
                 <h3>Návrhy</h3>
             </div>
-            <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="() => LoadProperty()" />
+            <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="async () => { await LoadProperty(); }" />
         </section>
 
         <section class="section-card">
@@ -54,7 +54,10 @@ else
 
     private PropertyDto? Property { get; set; }
 
-    protected override async Task OnInitializedAsync() => await LoadProperty();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProperty();
+    }
 
     private async Task LoadProperty()
     {

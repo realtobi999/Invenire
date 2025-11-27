@@ -32,7 +32,7 @@
     </section>
 
     <section class="surface-card verification-card stack">
-        @if (IsLoading)
+        @if (Loading)
         {
             <div class="loading-state">
                 <div class="pulse-bar"></div>
@@ -44,7 +44,7 @@
             <div class="message-block">
                 <h2>Ověřovací odkaz byl odeslán</h2>
                 <p>
-                    Zkontrolujte schránku na adrese <strong>@EmailAddress</strong> a klikněte na odkaz pro dokončení registrace.
+                    Zkontrolujte schránku na adrese <strong>@Email</strong> a klikněte na odkaz pro dokončení registrace.
                 </p>
             </div>
 
@@ -55,7 +55,7 @@
                 </div>
                 <div class="info-action">
                     <span class="label">Potřebujete znovu?</span>
-                    <button class="btn-secondary" type="button" @onclick="SendEmailAsync">Poslat znovu</button>
+                    <button class="btn-secondary" type="button" @onclick="async () => { await SendEmailAsync(); }">Poslat znovu</button>
                 </div>
             </div>
         }
@@ -67,46 +67,51 @@
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
-    private bool IsLoading { get; set; }
-    private string? EmailAddress { get; set; }
+    private bool Loading { get; set; }
+    private string? Email { get; set; }
     private JwtRole? Role { get; set; }
 
-    protected override async Task OnInitializedAsync() => await SendEmailAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await SendEmailAsync();
+    }
 
     private async Task SendEmailAsync()
     {
-        IsLoading = true;
+        Loading = true;
 
         if (Role is null)
+        {
             Role = (await (await Client.GetAsync("/api/server/auth/role")).Content.ReadAsStringAsync()).ToEnum<JwtRole>();
+        }
 
         if (Role == JwtRole.Admin)
         {
-            if (EmailAddress is null)
+            if (Email is null)
             {
                 var admin = await (await Client.GetAsync("/api/admins/profile")).Content.ReadFromJsonAsync<AdminDto>();
 
                 if (admin is null) throw new NullReferenceException();
 
-                EmailAddress = admin.EmailAddress;
+                Email = admin.EmailAddress;
             }
 
             await Client.PostAsync("/api/admins/email-verification/send", null);
         }
         else if (Role == JwtRole.Employee)
         {
-            if (EmailAddress is null)
+            if (Email is null)
             {
                 var employee = await (await Client.GetAsync("/api/employees/profile")).Content.ReadFromJsonAsync<EmployeeDto>();
 
                 if (employee is null) throw new NullReferenceException();
 
-                EmailAddress = employee.EmailAddress;
+                Email = employee.EmailAddress;
             }
 
             await Client.PostAsync("/api/employees/email-verification/send", null);
         }
 
-        IsLoading = false;
+        Loading = false;
     }
 }

@@ -18,25 +18,27 @@
                 <path d="M8 12.5l2.5 2.5L16 9" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
         </div>
-        <button class="btn-secondary" @onclick="() => NavigateToLogin()">Přihlásit se</button>
+        <button class="btn-secondary" @onclick="() => { NavigateToLogin(); }">Přihlásit se</button>
     </section>
 </div>
 
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
+    private bool Loading { get; set; }
     private string? Token { get; set; }
     private JwtRole? Role { get; set; }
-    private bool IsLoading { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        IsLoading = true;
+        Loading = true;
 
         if (Role is null)
+        {
             Role = (await (await Client.GetAsync("/api/server/auth/role")).Content.ReadAsStringAsync()).ToEnum<JwtRole>();
+        }
 
         if (Token is null)
         {
@@ -52,7 +54,7 @@
         request.Headers.Add("Authorization", $"Bearer {Token}");
         var response = await Client.SendAsync(request);
 
-        IsLoading = false;
+        Loading = false;
     }
 
     private void NavigateToLogin()

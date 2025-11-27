@@ -16,15 +16,15 @@
     </div>
 
     <div class="form-actions">
-        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+        <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zrušit</button>
         <button type="submit">Vytvořit</button>
     </div>
 </EditForm>
 
-@if (ErrorGeneralMessage is not null)
+@if (ErrorMessage is not null)
 {
     <div class="error-banner">
-        @ErrorGeneralMessage
+        @ErrorMessage
     </div>
 }
 
@@ -34,24 +34,23 @@
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
 
-    private string? ErrorGeneralMessage;
-    private ValidationMessageStore ErrorValidationMessages = null!;
-
-    private EditForm Form = null!;
-    private CreatePropertyScanRequestBody Body = new();
+    private string? ErrorMessage { get; set; }
+    private ValidationMessageStore ValidationMessages { get; set; } = null!;
+    private EditForm Form { get; set; } = null!;
+    private CreatePropertyScanRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool first)
     {
         if (Form is not null && first)
         {
-            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+            ValidationMessages = new ValidationMessageStore(Form.EditContext!);
         }
     }
 
     private async Task HandleCreation()
     {
-        ErrorGeneralMessage = null;
-        ErrorValidationMessages.Clear();
+        ErrorMessage = null;
+        ValidationMessages.Clear();
 
         var response = await Client.PostAsJsonAsync("/api/properties/scans", Body);
 
@@ -75,14 +74,14 @@
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, CreatePropertyScanResponse.ErrorTranslations));
+                    ValidationMessages.Add(field, ErrorTranslator.Translate(error, CreatePropertyScanResponse.ErrorTranslations));
                 }
 
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, CreatePropertyScanResponse.ErrorTranslations);
+                ErrorMessage = ErrorTranslator.Translate(content.Detail, CreatePropertyScanResponse.ErrorTranslations);
             }
         }
     }

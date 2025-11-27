@@ -6,7 +6,7 @@
 <div class="modal-stack">
     <p class="modal-description">Opravdu chcete odmítnout návrh?</p>
 
-    <EditForm class="modal-form" Model="Body" OnSubmit="DeclineSuggestion" @ref="Form">
+    <EditForm class="modal-form" Model="Body" OnSubmit="Decline" @ref="Form">
         <div class="form-group">
             <label>Feedback:</label>
             <InputTextArea @bind-Value="Body.Feedback" />
@@ -14,44 +14,43 @@
         </div>
 
         <div class="form-actions">
-            <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+            <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zrušit</button>
             <button class="btn-destructive" type="submit">Ano, odmítnout</button>
         </div>
 
-        @if (ErrorGeneralMessage is not null)
+        @if (Error is not null)
         {
             <div class="error-banner">
-                <p>@ErrorGeneralMessage</p>
+                <p>@Error</p>
             </div>
         }
     </EditForm>
 </div>
 
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
     [Parameter] public required PropertySuggestionDto Suggestion { get; set; } 
 
-    private string? ErrorGeneralMessage;
-    private ValidationMessageStore ErrorValidationMessages = null!;
-
-    private EditForm Form = null!;
-    private DeclinePropertySuggestionRequestBody Body = new();
+    private string? Error { get; set; }
+    private ValidationMessageStore ValidationMessages { get; set; } = null!;
+    private EditForm Form { get; set; } = null!;
+    private DeclinePropertySuggestionRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool initial)
     {
         if (Form is not null && initial)
         {
-            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+            ValidationMessages = new ValidationMessageStore(Form.EditContext!);
         }
     }
 
-    private async Task DeclineSuggestion()
+    private async Task Decline()
     {
-        ErrorGeneralMessage = null;
-        ErrorValidationMessages.Clear();
+        Error = null;
+        ValidationMessages.Clear();
 
         var response = await Client.PutAsJsonAsync($"/api/properties/suggestions/{Suggestion.Id}/decline", Body);
 
@@ -74,14 +73,14 @@
                         _ => throw new Exception($"Unknown error field: {error}")
                     };
 
-                    ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, DeclinePropertySuggestionResponse.ErrorTranslations));
+                    ValidationMessages.Add(field, ErrorTranslator.Translate(error, DeclinePropertySuggestionResponse.ErrorTranslations));
                 }
 
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else
             {
-                ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, DeclinePropertySuggestionResponse.ErrorTranslations);
+                Error = ErrorTranslator.Translate(content.Detail, DeclinePropertySuggestionResponse.ErrorTranslations);
             }
         }
 

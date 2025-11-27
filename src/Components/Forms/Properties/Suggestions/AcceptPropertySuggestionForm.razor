@@ -6,31 +6,31 @@
 <div class="modal-stack">
     <p class="modal-description">Opravdu chcete schválit návrh?</p>
     <div class="modal-footer">
-        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
-        <button class="btn-success" type="button" @onclick="() => AcceptSuggestion()">Ano, schválit</button>
+        <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zrušit</button>
+        <button class="btn-success" type="button" @onclick="async () => { await Accept(); }">Ano, schválit</button>
     </div>
 
-    @if (ErrorGeneralMessage is not null)
+    @if (Error is not null)
     {
         <div class="error-banner">
-            <p>@ErrorGeneralMessage</p>
+            <p>@Error</p>
         </div>
     }
 </div>
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
     [Parameter] public required PropertySuggestionDto Suggestion { get; set; } 
 
-    private string? ErrorGeneralMessage;
+    private string? Error { get; set; }
 
-    private async Task AcceptSuggestion()
+    private async Task Accept()
     {
-        ErrorGeneralMessage = null;
+        Error = null;
 
-        var response = await Client.PutAsJsonAsync($"/api/properties/suggestions/{Suggestion.Id}/accept", new object{});
+        var response = await Client.PutAsJsonAsync($"/api/properties/suggestions/{Suggestion.Id}/accept", new object { });
 
         if (response.StatusCode == HttpStatusCode.NoContent)
         {
@@ -41,7 +41,7 @@
         {
             var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
 
-            ErrorGeneralMessage = ErrorTranslator.Translate(content.Detail, DeclinePropertySuggestionResponse.ErrorTranslations);
+            Error = ErrorTranslator.Translate(content.Detail, DeclinePropertySuggestionResponse.ErrorTranslations);
         }
     }
 }

@@ -164,24 +164,6 @@ button.btn-success {
     box-shadow: 0 12px 26px rgba(45, 212, 191, 0.35);
 }
 
-.btn-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.65rem 1.3rem;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
-    color: #080511;
-    border: 1px solid transparent;
-    transition: transform 120ms ease, box-shadow 200ms ease;
-}
-
-.btn-link:hover {
-    text-decoration: none;
-    transform: translateY(-1px);
-    box-shadow: 0 16px 28px rgba(122, 90, 248, 0.45);
-}
-
 input,
 select,
 textarea {
@@ -358,25 +340,6 @@ label {
 .filter-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.data-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.data-list li {
-    padding: 0.85rem 1rem;
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    justify-content: space-between;
     gap: 1rem;
 }
 
@@ -577,9 +540,6 @@ label {
     width: min(1600px, 100%);
 }
 
-.modal-panel--narrow {
-    width: min(420px, 100%);
-}
 
 .detail-list {
     display: flex;
@@ -619,12 +579,6 @@ label {
     justify-content: flex-end;
 }
 
-.chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
 .chip {
     padding: 0.25rem 0.85rem;
     border-radius: 999px;
@@ -635,12 +589,6 @@ label {
     letter-spacing: 0.05em;
 }
 
-.metric-card {
-    padding: 1rem 1.4rem;
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1
-}
 
 .blazor-error-ui {
     background: var(--color-danger);
@@ -707,16 +655,6 @@ label {
     animation: fade 2s ease-in-out infinite;
 }
 
-@keyframes spin {
-    0% { stroke-dashoffset: 283; }
-    100% { stroke-dashoffset: 0; }
-}
-
-@keyframes fade {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-}
-
 .validation-message {
     color: #fecdd3;
     font-weight: 600;
@@ -726,4 +664,14 @@ label {
     border: 1px solid rgba(248, 113, 113, 0.35);
     margin-top: 0.25rem;
     display: inline-block;
+}
+
+@keyframes spin {
+    0% { stroke-dashoffset: 283; }
+    100% { stroke-dashoffset: 0; }
+}
+
+@keyframes fade {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
 }

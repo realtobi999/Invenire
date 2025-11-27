@@ -4,40 +4,10 @@
     gap: 1.5rem;
 }
 
-.active-scan-card {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-}
-
-.active-scan-heading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1.25rem;
-}
-
 .active-scan-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
-}
-
-.active-scan-id {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--color-muted);
-}
-
-.active-scan-description {
-    margin: 0;
-    padding: 0.85rem 1rem;
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    color: var(--color-muted);
-    line-height: 1.6;
 }
 
 .active-scan-progress {
@@ -100,30 +70,6 @@
     min-height: 120px;
 }
 
-
-.active-scan-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.85rem;
-}
-
-.active-scan-details .detail-item {
-    height: 100%;
-}
-
-.active-scan-details .detail-value {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.4rem;
-}
-
-.active-scan-details .pill {
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
 
 .muted-text {
     color: var(--color-muted);

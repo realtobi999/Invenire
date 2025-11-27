@@ -7,7 +7,7 @@
 @using Invenire.Common.Errors
 @using Invenire.Api.Properties.Scans.Create;
 
-<EditForm class="modal-form" Model="Body" OnSubmit="HandleUpdate" @ref="Form">
+<EditForm class="modal-form" Model="Body" OnSubmit="UpdateSuggestion" @ref="Form">
     <div class="form-group">
         <label>Text:</label>
         <InputTextArea @bind-Value="Body.Description" rows="4" />
@@ -15,7 +15,7 @@
     </div>
 
     <div class="form-actions">
-        <button class="btn-secondary" type="button" @onclick="() => OnClose.InvokeAsync(true)">Zrušit</button>
+        <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zrušit</button>
         <button type="submit">Upravit</button>
     </div>
 </EditForm>
@@ -24,7 +24,7 @@
 {
     <div class="error-banner">
         <ul>
-            @foreach(var error in Errors)
+            @foreach (var error in Errors)
             {
                 <li>@error</li>
             }
@@ -41,17 +41,16 @@
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
     [Parameter] public PropertySuggestionDto? Suggestion { get; set; }
 
-    private List<string> Errors = [];
-    private ValidationMessageStore ErrorValidationMessages = null!;
-
-    private EditForm Form = null!;
-    private UpdatePropertySuggestionRequestBody Body = new();
+    private List<string> Errors { get; set; } = [];
+    private ValidationMessageStore ValidationMessages { get; set; } = null!;
+    private EditForm Form { get; set; } = null!;
+    private UpdatePropertySuggestionRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool first)
     {
         if (Form is not null && first)
         {
-            ErrorValidationMessages = new ValidationMessageStore(Form?.EditContext!);
+            ValidationMessages = new ValidationMessageStore(Form.EditContext!);
         }
     }
 
@@ -63,10 +62,10 @@
         }
     }
 
-    private async Task HandleUpdate()
+    private async Task UpdateSuggestion()
     {
         Errors.Clear();
-        ErrorValidationMessages.Clear();
+        ValidationMessages.Clear();
 
         Body.Payload = new PropertySuggestionPayloadDto
         {
@@ -112,7 +111,7 @@
                     if (error.Contains("description"))
                     {
                         var field = Form.EditContext!.Field(nameof(Body.Description));
-                        ErrorValidationMessages.Add(field, ErrorTranslator.Translate(error, UpdatePropertySuggestionResponse.ErrorTranslations));
+                        ValidationMessages.Add(field, ErrorTranslator.Translate(error, UpdatePropertySuggestionResponse.ErrorTranslations));
                     }
                     else
                     {
