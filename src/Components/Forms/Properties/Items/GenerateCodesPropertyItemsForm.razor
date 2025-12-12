@@ -2,16 +2,39 @@
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.GenerateCodes
+@using Invenire.Common.Errors
 
 <div class="modal-stack">
     @if (!Processing)
     {
         <p class="modal-description">Opravdu chcete stáhnout QR kódy vybraných položek?</p>
 
+        <div>
+            <label>Velikost (pixely):</label>
+            <InputNumber @bind-Value="Size"/>
+        </div>
+
+        @if (SizeValidationErrors.Any())
+        {
+            <div class="validation-message">
+                @foreach (var err in SizeValidationErrors)
+                {
+                    <div>@err</div>
+                }
+            </div>
+        }
+
         <div class="modal-footer">
             <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Ne, zrušit</button>
             <button class="btn-success" type="button" @onclick="async () => { await Download(); }">Ano, stáhnout</button>
         </div>
+
+        @if (Error is not null)
+        {
+            <div class="error-banner">
+                @Error
+            </div>
+        }
     }
     else
     {
@@ -27,26 +50,52 @@
     [Parameter] public EventCallback<bool> OnSuccessfulGeneration { get; set; }
     [Parameter] public List<PropertyItemDto> Items { get; set; } = [];
 
+    private int Size { get; set; } = 150;
     private bool Processing { get; set; }
+
+    private string? Error { get; set; }
+    private List<string> SizeValidationErrors { get; set; } = [];
 
     private async Task Download()
     {
         Processing = true;
+
+        Error = null;
+        SizeValidationErrors.Clear();
 
         var command = new GenerateCodesPropertyItemsRequest
         {
             Ids = Items.Select(i => i.Id).ToList()
         };
 
-        var response = await Client.PostAsJsonAsync("/api/properties/items/generate-codes", command);
+        var response = await Client.PostAsJsonAsync($"/api/properties/items/generate-codes?size={Size}", command);
 
-        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to download the codes for items.");
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            Processing = false;
+            var content = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
 
-        var bytes = await response.Content.ReadAsByteArrayAsync();
-        await JS.InvokeVoidAsync("download_file", "qrkody.zip", "application/zip", bytes);
+            if (content.Type == "ValidationException")
+            {
+                foreach (var error in content.Errors!)
+                {
+                    if (!error.Contains("size")) throw new Exception($"Unknown error field: {error}");
+                    SizeValidationErrors.Add(ErrorTranslator.Translate(error, GenerateCodesPropertyItemsResponse.ErrorTranslations));
+                }
+            }
+            else
+            {
+                Error = ErrorTranslator.Translate(content.Detail, GenerateCodesPropertyItemsResponse.ErrorTranslations);
+            }
+        }
+        else
+        {
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            await JS.InvokeVoidAsync("download_file", "qrkody.zip", "application/zip", bytes);
 
-        Processing = false;
-        await OnClose.InvokeAsync(true);
-        await OnSuccessfulGeneration.InvokeAsync(true);
+            Processing = false;
+            await OnClose.InvokeAsync(true);
+            await OnSuccessfulGeneration.InvokeAsync(true);
+        }
     }
 }
