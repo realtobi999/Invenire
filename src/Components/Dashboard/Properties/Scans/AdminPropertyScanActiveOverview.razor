@@ -7,42 +7,38 @@
 <div class="active-scan-overview">
     @if (ActiveScan is not null && ActiveScan.ScannedItemsSummary is not null)
     {
-        var summary = ActiveScan.ScannedItemsSummary;
-        var totalItems = summary.TotalItemsToScan;
-        var scannedItems = summary.TotalScannedItems;
-        var pendingItems = GetPendingItems(totalItems, scannedItems);
-        var completionPercentage = GetCompletionPercentage(totalItems, scannedItems);
-        var completionPercentageValue = FormatPercentageValue(completionPercentage);
-        var completionWidth = $"{completionPercentageValue}%";
-        var completionLabel = FormatPercentageLabel(completionPercentage);
-        var statusDisplay = GetStatusDisplay(ActiveScan.Status);
+        var total = ActiveScan.ScannedItemsSummary.TotalItemsToScan;
+        var scanned = ActiveScan.ScannedItemsSummary.TotalScannedItems;
+        var pending = GetPendingItems(total, scanned);
+        var percentage = GetCompletionPercentage(total, scanned);
+        var display = GetStatusDisplay(ActiveScan.Status);
 
         <div class="active-scan-progress">
             <div class="progress-meta">
-                <span class="progress-label">@completionLabel dokončeno</span>
-                <span class="progress-total">@FormatCount(scannedItems) / @FormatCount(totalItems) položek</span>
+                <span class="progress-label">@FormatPercentageLabel(percentage) dokončeno</span>
+                <span class="progress-total">@FormatCount(scanned) / @FormatCount(total) položek</span>
             </div>
-            <div class="progress-bar" role="progressbar" aria-valuenow="@completionPercentageValue" aria-valuemin="0" aria-valuemax="100">
-                <span class="progress-value" style="width: @completionWidth"></span>
+            <div class="progress-bar" role="progressbar" aria-valuenow="@FormatPercentageValue(percentage)" aria-valuemin="0" aria-valuemax="100">
+                <span class="progress-value" style="width: @($"{FormatPercentageValue(percentage)}%")"></span>
             </div>
             <div class="progress-stats">
-                <span><strong>@FormatCount(scannedItems)</strong> naskenováno</span>
-                <span><strong>@FormatCount(pendingItems)</strong> zbývá</span>
+                <span><strong>@FormatCount(scanned)</strong> naskenováno</span>
+                <span><strong>@FormatCount(pending)</strong> zbývá</span>
             </div>
         </div>
 
         <div class="stat-grid active-scan-stats">
             <div class="stat-card">
                 <span class="stat-label">Celkový počet položek</span>
-                <span class="stat-value">@FormatCount(totalItems)</span>
+                <span class="stat-value">@FormatCount(total)</span>
             </div>
             <div class="stat-card stat-card--success">
                 <span class="stat-label">Naskenováno</span>
-                <span class="stat-value">@FormatCount(scannedItems)</span>
+                <span class="stat-value">@FormatCount(scanned)</span>
             </div>
             <div class="stat-card stat-card--warning">
                 <span class="stat-label">Zbývá naskenovat</span>
-                <span class="stat-value">@FormatCount(pendingItems)</span>
+                <span class="stat-value">@FormatCount(pending)</span>
             </div>
         </div>
 
@@ -59,8 +55,8 @@
                 <span class="detail-label">Stav</span>
                 <span class="detail-value">
                     <span class="pill">
-                        <span class="status-dot @statusDisplay.DotClass"></span>
-                        @statusDisplay.Label
+                        <span class="status-dot @display.DotClass"></span>
+                        @display.Label
                     </span>
                 </span>
             </div>
@@ -82,11 +78,11 @@
         </div>
 
         <div class="active-scan-actions">
-            <button class="btn-secondary" type="button" @onclick="() => ShowActiveScansItemsModal = true">Zobrazit položky</button>
-            <button class="btn-secondary" type="button" @onclick="() => ShowUpdateActiveScanModal = true">Upravit informace</button>
+            <button class="btn-secondary" type="button" @onclick="() => ShowActiveScansItemsModal = true">Spravovat</button>
+            <button class="btn-secondary" type="button" @onclick="() => ShowUpdateActiveScanModal = true">Upravit</button>
         </div>
 
-       @if (ShowActiveScansItemsModal)
+        @if (ShowActiveScansItemsModal)
         {
             <div class="modal-overlay">
                 <div class="modal-panel modal-panel--wide">
@@ -95,7 +91,7 @@
                         <button class="btn-secondary" type="button" @onclick="CloseActiveScansItemsModal">Zavřít</button>
                     </div>
 
-                    <AdminPropertyScanItemOverview Scan="ActiveScan" OnChange="() => LoadActiveScan()" />
+                    <AdminPropertyScanItemOverview Scan="ActiveScan" OnChange="LoadActiveScan" />
                 </div>
             </div>
         }
@@ -109,7 +105,7 @@
                         <button class="btn-secondary" type="button" @onclick="CloseUpdateActiveScanModal">Zavřít</button>
                     </div>
                     <div class="modal-body">
-                        <UpdatePropertyScanForm Scan="ActiveScan" OnClose="CloseUpdateActiveScanModal" OnSuccessfulUpdate="() => LoadActiveScan()" />
+                        <UpdatePropertyScanForm Scan="ActiveScan" OnClose="CloseUpdateActiveScanModal" OnSuccessfulUpdate="LoadActiveScan" />
                     </div>
                 </div>
             </div>
@@ -124,7 +120,7 @@
     }
 </div>
 
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
 
@@ -152,12 +148,7 @@
     private static int GetPendingItems(int total, int scanned) => Math.Max(0, total - scanned);
 
     private static double GetCompletionPercentage(int total, int scanned)
-    {
-        if (total <= 0) return 0;
-
-        var percentage = (double)scanned / total * 100d;
-        return Math.Clamp(percentage, 0, 100);
-    }
+        => total <= 0 ? 0 : Math.Clamp((double)scanned / total * 100d, 0, 100);
 
     private static string FormatCount(int value) => value.ToString("N0");
 

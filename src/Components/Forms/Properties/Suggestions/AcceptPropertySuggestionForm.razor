@@ -1,6 +1,6 @@
 @using System.Net
 @using Invenire.Common.Errors
-@using Api.Properties.Suggestions.Decline
+@using Invenire.Api.Properties.Suggestions.Decline
 @using Invenire.Api.Properties.Suggestions
 
 <div class="modal-stack">
@@ -22,7 +22,7 @@
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnClose { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
-    [Parameter] public required PropertySuggestionDto Suggestion { get; set; } 
+    [Parameter] public required PropertySuggestionDto Suggestion { get; set; }
 
     private string? Error { get; set; }
 

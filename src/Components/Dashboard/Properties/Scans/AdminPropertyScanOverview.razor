@@ -141,9 +141,5 @@
     private string FormatCount(int? value) => (value ?? 0).ToString("N0");
 
     private int GetPendingItems()
-    {
-        var total = Scan?.ScannedItemsSummary?.TotalItemsToScan ?? 0;
-        var scanned = Scan?.ScannedItemsSummary?.TotalScannedItems ?? 0;
-        return Math.Max(0, total - scanned);
-    }
+        => Math.Max(0, (Scan?.ScannedItemsSummary?.TotalItemsToScan ?? 0) - (Scan?.ScannedItemsSummary?.TotalScannedItems ?? 0));
 }

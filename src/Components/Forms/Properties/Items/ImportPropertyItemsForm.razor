@@ -1,9 +1,7 @@
 @using System.Net
-@using System.Text
 @using System.Text.Json
 @using Invenire.Common.Errors
 @using System.Net.Http.Headers
-@using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.CreateFromExcelFile
 @using Invenire.Api.Properties.Items.CreateFromJsonFile
 
@@ -14,6 +12,43 @@
     }
     else if (!Picker)
     {
+        <div class="modal-stack import-help">
+            <div class="form-group">
+                <label>Jak vytvořit JSON soubor</label>
+                <ul class="modal-description import-help-list">
+                    <li>Kořen JSON musí obsahovat klíč <code>items</code> s polem položek.</li>
+                    <li>Každá položka musí obsahovat <code>inventory_number</code>, <code>registration_number</code>, <code>name</code>, <code>price</code>, <code>date_of_purchase</code> a <code>location</code> (<code>room</code>, <code>building</code>).</li>
+                    <li>Volitelně lze použít např. <code>serial_number</code>, <code>date_of_sale</code>, <code>description</code>, <code>document_number</code>, <code>employee_id</code>.</li>
+                </ul>
+                <textarea class="import-example" readonly rows="17">
+{
+    "items": [
+        {
+            "inventory_number": "INV-001",
+            "registration_number": "REG-001",
+            "name": "Notebook",
+            "price": 24999,
+            "date_of_purchase": "2025-01-10T00:00:00+00:00",
+            "location": {
+                "room": "A101",
+                "building": "Hlavní budova"
+            }
+        }
+    ]
+}
+                </textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Jak vytvořit XLSX soubor</label>
+                <ul class="modal-description import-help-list">
+                    <li>První řádek musí být hlavička.</li>
+                    <li>Povinné sloupce: <code>InventoryNumber</code>, <code>RegistrationNumber</code>, <code>Name</code>, <code>Price</code>, <code>DateOfPurchase</code>, <code>LocationRoom</code>, <code>LocationBuilding</code>.</li>
+                    <li>Po načtení souboru přiřaďte sloupce ve formuláři mapování.</li>
+                </ul>
+            </div>
+        </div>
+
         <div class="modal-footer">
             <button class="btn-secondary" type="button" @onclick="async () => { await OpenJson(); }">Načíst ze JSON souboru</button>
             <button type="button" @onclick="() => { StartExcel(); }">Načíst ze XLSX (Excel) souboru</button>
@@ -29,7 +64,7 @@
         else
         {
             <h4>Vyberte sloupce pro mapování dat</h4>
-            
+
             <p class="modal-description">Přiřaďte odpovídající záhlaví ke každé položce označené hvězdičkou.</p>
 
             @foreach (var property in Columns.Keys.ToList())
@@ -49,8 +84,7 @@
 
         <div class="modal-footer">
             <button class="btn-secondary" type="button" @onclick="() => { BackToOptions(); }">Zpět</button>
-            <button class="btn-secondary" type="button" @onclick="async () => { await CancelImport(); }">Zrušit</button>
-            <button type="button" @onclick="async () => { await UploadExcel(); }" disabled="@(Headers.Count == 0)">Nahrát XLSX</button>
+            <button type="button" @onclick="async () => { await UploadExcel(); }" disabled="@(Headers.Count == 0)">Pokračovat</button>
         </div>
     }
 </div>
@@ -75,7 +109,6 @@
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulCreation { get; set; }
-    [Parameter] public EventCallback<bool> OnClose { get; set; }
 
     private bool Processing { get; set; }
     private List<string> Errors { get; set; } = [];
@@ -145,14 +178,6 @@
         ExcelBytes = null;
     }
 
-    private async Task CancelImport()
-    {
-        BackToOptions();
-        Processing = false;
-
-        await OnClose.InvokeAsync(true);
-    }
-
     private async Task OpenJson()
     {
         await JS.InvokeVoidAsync("eval", "document.getElementById('HiddenJsonFileInput').click()");
@@ -166,15 +191,13 @@
     private async Task HandleJson(InputFileChangeEventArgs e)
     {
         Errors.Clear();
+
         if (e.File == null)
         {
             return;
         }
 
-        if (e.File.Size > 1024 * 1024)
-        {
-            Processing = true;
-        }
+        Processing = true;
 
         using var stream = new MemoryStream();
         await e.File.OpenReadStream(1024 * 1024 * 100).CopyToAsync(stream);
@@ -200,7 +223,7 @@
             {
                 foreach (var error in content.Errors!)
                 {
-                    Errors.Add(ErrorTranslator.Translate(content.Detail, CreateFromJsonFilePropertyItemsResponse.ErrorTranslations));
+                    Errors.Add(ErrorTranslator.Translate(error, CreateFromJsonFilePropertyItemsResponse.ErrorTranslations));
                 }
             }
             else

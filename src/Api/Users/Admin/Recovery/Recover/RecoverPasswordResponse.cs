@@ -28,7 +28,7 @@ public record RecoverPasswordResponse
             Pattern = new Regex(@"The length of 'new_password' must be (\d+) characters or fewer\. You entered (\d+) characters\."),
             Translate = m => $"Heslo musí mít maximálně {m.Groups[1].Value} {PluralizeChar(int.Parse(m.Groups[1].Value))}. Zadali jste {m.Groups[2].Value} {PluralizeChar(int.Parse(m.Groups[2].Value))}."
         },
-        
+
         // Password Confirm
         new ErrorTranslation
         {

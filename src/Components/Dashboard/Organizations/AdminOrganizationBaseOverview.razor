@@ -25,18 +25,18 @@
         }
     </div>
 
-    <button class="btn-secondary" @onclick="() => { Open = true; }">Upravit informace</button>
+    <button class="btn-secondary" @onclick="() => Open = true">Upravit</button>
 
     @if (Open)
     {
         <div class="modal-overlay">
             <div class="modal-panel">
                 <div class="modal-header">
-                    <h4>Upravit informace organizace</h4>
-                    <button class="btn-secondary" type="button" @onclick="() => { Open = false; }">Zavřít</button>
+                    <h4>Upravit organizace</h4>
+                    <button class="btn-secondary" type="button" @onclick="() => Open = false">Zavřít</button>
                 </div>
                 <div class="modal-body">
-                    <UpdateOrganizationForm Organization="Organization" OnClose="() => { Open = false; }" OnSuccessfulUpdate="async () => { Open = false; await OnSuccessfulUpdate.InvokeAsync(true); }" />
+                    <UpdateOrganizationForm Organization="Organization" OnClose="() => Open = false" OnSuccessfulUpdate="async () => { Open = false; await OnSuccessfulUpdate.InvokeAsync(true); }" />
                 </div>
             </div>
         </div>

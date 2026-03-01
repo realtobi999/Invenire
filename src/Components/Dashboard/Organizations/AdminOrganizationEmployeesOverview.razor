@@ -136,8 +136,8 @@ else
         get
         {
             var employees = Organization?.Employees ?? Enumerable.Empty<EmployeeDto>();
-            var filtered = employees.Where(e => 
-                e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) || 
+            var filtered = employees.Where(e =>
+                e.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
                 e.EmailAddress.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
 
             var (field, ascending) = SelectedOrderOption.Split('_') switch { var parts => (parts[0], parts[1] == "asc") };
@@ -155,16 +155,7 @@ else
     private EmployeeDto? SelectedEmployee { get; set; }
 
     private (int Start, int End) GetDisplayRange()
-    {
-        if (TotalCount == 0)
-        {
-            return (0, 0);
-        }
-
-        var start = CurrentOffset + 1;
-        var end = Math.Min(CurrentOffset + Limit, TotalCount);
-        return (start, end);
-    }
+        => TotalCount == 0 ? (0, 0) : (CurrentOffset + 1, Math.Min(CurrentOffset + Limit, TotalCount));
 
     private string GetFilterDescription()
     {
@@ -220,9 +211,5 @@ else
 
     private void SetCurrentOffset(int offset) => CurrentOffset = Math.Max(0, Math.Min(offset, TotalCount - 1));
 
-    private void CloseDeletionModal()
-    {
-        ShowDeletionModal = false;
-        SelectedEmployee = null;
-    }
+    private void CloseDeletionModal() => (ShowDeletionModal, SelectedEmployee) = (false, null);
 }

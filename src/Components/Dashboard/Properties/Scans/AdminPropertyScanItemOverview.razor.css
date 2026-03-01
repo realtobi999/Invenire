@@ -121,11 +121,11 @@
     transform: translateY(-1px);
 }
 
-.scan-item-card--scanned {
+.scan-item-card--scanned-with-code {
     border-color: rgba(45, 212, 191, 0.3);
 }
 
-.scan-item-card--scanned-no-code {
+.scan-item-card--scanned-manually {
     border-color: rgba(251, 191, 36, 0.35);
     box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25);
 }

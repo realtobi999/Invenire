@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Invenire.Api.Properties.Items.Create;
 
-public record CreatePropertyItemsCommand
+public record CreatePropertyItemsRequest
 {
     [JsonPropertyName("items")]
     public required List<CreatePropertyItemRequest> Items { get; init; }

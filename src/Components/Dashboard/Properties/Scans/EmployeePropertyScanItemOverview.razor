@@ -72,16 +72,12 @@
                     </select>
                 </div>
                 <div class="form-control">
-                    <label>Email správce položky</label>
-                    <input class="input-control" type="email" @bind="FilteringEmployeeEmailAddress" placeholder="např. jan.novak@firma.cz" />
-                    <div class="chip-actions">
-                        <button class="btn-secondary" type="button" @onclick="GetEmployeeForFiltering" disabled="@string.IsNullOrWhiteSpace(FilteringEmployeeEmailAddress)">Najít</button>
-                        <button class="btn-secondary" type="button" @onclick="ClearEmployeeFilter" disabled="@(FilteringEmployeeId is null && string.IsNullOrWhiteSpace(FilteringEmployeeEmailAddress))">Vymazat</button>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(FilteringEmployeeErrorMessage))
-                    {
-                        <p class="error-text">@FilteringEmployeeErrorMessage</p>
-                    }
+                    <label>Naskenované s kódem</label>
+                    <select @bind="ScannedWithCode">
+                        <option value="">Nezáleží</option>
+                        <option value="true">Ano</option>
+                        <option value="false">Ne</option>
+                    </select>
                 </div>
             </div>
             <div class="filter-actions">
@@ -92,7 +88,7 @@
     }
 
     <div class="action-row">
-        <button class="btn-secondary" type="button" @onclick="() => ShowScanItemModal = true">Naskenovat položky</button>
+        <button class="btn-secondary" type="button" @onclick="() => ShowScanItemModal = true">Skenovat</button>
     </div>
 
 <div class="scan-groups">
@@ -113,9 +109,9 @@
                 <div class="items-grid">
                     @foreach (var item in ScannedItems)
                     {
-                        var scannedCardClass = item.LastCodeGeneratedAt is null
-                            ? "scan-item-card scan-item-card--scanned-no-code"
-                            : "scan-item-card scan-item-card--scanned";
+                        var scannedCardClass = item.IsScannedWithCode!.Value
+                            ? "scan-item-card scan-item-card--scanned-with-code"
+                            : "scan-item-card scan-item-card--scanned-manually";
 
                         <article class="@scannedCardClass">
                             <div class="item-card-header">
@@ -138,6 +134,7 @@
                                 <li class="item-field"><span class="field-label">Upraveno</span><span class="field-value">@(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</span></li>
                                 <li class="item-field"><span class="field-label">Kód generován</span><span class="field-value">@(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</span></li>
                                 <li class="item-field"><span class="field-label">Naskenováno</span><span class="field-value">@(item.LastScannedAt.ToUserTimeString() ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Naskenováno kódem</span><span class="field-value">@(item.IsScannedWithCode!.Value ? "Ano" : "Ne")</span></li>
                             </ul>
                         </article>
                     }
@@ -211,7 +208,7 @@
     <div class="modal-overlay">
         <div class="modal-panel">
             <div class="modal-header">
-                <h4>Naskenovat položky</h4>
+                <h4>Skenování položek</h4>
                 <button class="btn-secondary" type="button" @onclick="() => ShowScanItemModal = false">Zavřít</button>
             </div>
 
@@ -271,9 +268,7 @@
     private string? Room { get; set; }
     private string? Building { get; set; }
     private string? WithGeneratedCode { get; set; }
-    private Guid? FilteringEmployeeId { get; set; }
-    private string? FilteringEmployeeEmailAddress { get; set; }
-    private string? FilteringEmployeeErrorMessage { get; set; }
+    private string? ScannedWithCode { get; set; }
     private string? SearchQuery { get; set; }
     private bool ShowScanItemModal { get; set; }
 
@@ -282,10 +277,7 @@
     private async Task ToggleFilters()
     {
         ShowFilteringOptions = !ShowFilteringOptions;
-        if (!ShowFilteringOptions)
-        {
-            await ClearFilters();
-        }
+        if (!ShowFilteringOptions) await ClearFilters();
     }
 
     private async Task LoadItemsWithFilter()
@@ -388,83 +380,33 @@
                 parameters.Add($"dateOfPurchaseFrom={new DateTimeOffset(DateOfPurchaseFrom.Value, TimeSpan.Zero).UtcDateTime:O}");
             if (DateOfPurchaseTo is not null)
                 parameters.Add($"dateOfPurchaseTo={new DateTimeOffset(DateOfPurchaseTo.Value, TimeSpan.Zero).UtcDateTime:O}");
-            if (FilteringEmployeeId is not null)
-                parameters.Add($"employeeId={FilteringEmployeeId}");
             if (!string.IsNullOrEmpty(Room))
                 parameters.Add($"room={Room}");
             if (!string.IsNullOrEmpty(Building))
                 parameters.Add($"building={Building}");
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
+            if (!string.IsNullOrEmpty(ScannedWithCode))
+                parameters.Add($"scannedWithCode={ScannedWithCode}");
         }
     }
 
     private void AddSearchParameter(List<string> parameters)
     {
-        if (!string.IsNullOrEmpty(SearchQuery))
-        {
-            parameters.Add($"searchQuery={SearchQuery}");
-        }
-    }
-
-    private async Task GetEmployeeForFiltering()
-    {
-        FilteringEmployeeErrorMessage = null;
-        FilteringEmployeeId = null;
-
-        if (string.IsNullOrWhiteSpace(FilteringEmployeeEmailAddress))
-        {
-            return;
-        }
-
-        var response = await Client.GetAsync($"/api/organizations/employees/{FilteringEmployeeEmailAddress}");
-
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
-
-            if (exception.Type == "NotFound404Exception" && exception.Detail == "The employee was not found in the system.")
-                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nebyl nalezen.";
-            else if (exception.Type == "Unauthorized401Exception" && exception.Detail == "The employee is not from the admin's organization.")
-                FilteringEmployeeErrorMessage = "Zaměstnanec s touto adresou nepatří k vaší organizaci.";
-            else
-                throw new Exception("Something went wrong during the request to get the employee.");
-
-            return;
-        }
-
-        var content = await response.Content.ReadFromJsonAsync<EmployeeDto>() ?? throw new NullReferenceException();
-        FilteringEmployeeId = content.Id;
-    }
-
-    private void ClearEmployeeFilter()
-    {
-        FilteringEmployeeEmailAddress = null;
-        FilteringEmployeeErrorMessage = null;
-        FilteringEmployeeId = null;
+        if (!string.IsNullOrEmpty(SearchQuery)) parameters.Add($"searchQuery={SearchQuery}");
     }
 
     private async Task ClearFilters()
     {
-        PriceMin = null;
-        PriceMax = null;
-        CreatedAtFrom = null;
-        CreatedAtTo = null;
-        DateOfPurchaseFrom = null;
-        DateOfPurchaseTo = null;
-        Room = null;
-        Building = null;
-        FilteringEmployeeEmailAddress = null;
-        FilteringEmployeeErrorMessage = null;
-        FilteringEmployeeId = null;
-        WithGeneratedCode = null;
+        (PriceMin, PriceMax, CreatedAtFrom, CreatedAtTo, DateOfPurchaseFrom, DateOfPurchaseTo, Room, Building, WithGeneratedCode, ScannedWithCode)
+            = (null, null, null, null, null, null, null, null, null, null);
 
         await LoadItemsWithFilter();
     }
 
     private async Task ScanItem(PropertyItemDto item)
     {
-        var response = await Client.PutAsync($"/api/properties/items/{item.Id}/scan", null);
+        var response = await Client.PutAsync($"/api/properties/items/{item.Id}/scan?scannedWithCode=false", null);
 
         if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to scan the item.");
 

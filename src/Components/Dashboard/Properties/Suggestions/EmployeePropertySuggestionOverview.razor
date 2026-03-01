@@ -1,12 +1,6 @@
 @using System.Net
-@using System.Drawing
-@using System.Reflection.Metadata
-@using Invenire.Api.Properties.Items
-@using System.Runtime.InteropServices
 @using Invenire.Api.Properties.Suggestions
-@using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Suggestions.IndexByAdmin
-@using Invenire.Components.Dashboard.Properties.Items
 @using Invenire.Components.Forms.Properties.Suggestions
 
 <div class="suggestions-overview">
@@ -108,23 +102,18 @@
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
     private List<PropertySuggestionDto> Suggestions { get; set; } = [];
-    private Dictionary<Guid, PropertyItemDto> DeletedItems { get; set; } = [];
-    private Dictionary<UpdatePropertyItemRequestBody, PropertyItemDto> UpdatedItems { get; set; } = [];
 
     private int Limit { get; set; } = 1;
     private int CurrentOffset { get; set; }
     private int TotalItemsCount { get; set; }
 
-    private bool CanGoPrev => CurrentOffset > 0; 
+    private bool CanGoPrev => CurrentOffset > 0;
     private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
 
     protected override async Task OnInitializedAsync() => await LoadSuggestions(0);
 
     private async Task LoadSuggestions(int offset)
     {
-        UpdatedItems.Clear();
-        DeletedItems.Clear();
-
         CurrentOffset = Math.Max(0, offset);
 
         var (sort, descending) = SelectedOrderOption.Split("_") switch { var parts => (parts[0], parts[1] == "desc") };
@@ -164,12 +153,10 @@
     };
 
     private (string Text, string Color) GetCzechStatus(PropertySuggestionDtoStatus status)
-    {
-        return status switch
+        => status switch
         {
             PropertySuggestionDtoStatus.PENDING => ("Nevyřízený", "goldenrod"),
             PropertySuggestionDtoStatus.DECLINED => ("Odmítnutý", "red"),
             _ => ("Neznámý", "gray")
         };
-    }
 }

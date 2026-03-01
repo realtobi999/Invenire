@@ -33,9 +33,9 @@
     }
 
     <div class="action-row">
-        <button class="btn-secondary" @onclick="OpenScansModal" disabled="@(summary.TotalScans.GetValueOrDefault() - summary.TotalActiveScans.GetValueOrDefault() == 0)">Historie inventur</button>
-        <button class="btn-secondary" @onclick="OpenCreationModal" disabled="@(summary.TotalActiveScans.GetValueOrDefault() == 1)">Spustit novou inventuru</button>
-        <button class="btn-secondary" @onclick="OpenCompletionModal" disabled="@(summary.TotalActiveScans.GetValueOrDefault() != 1)">Dokončit inventuru</button>
+        <button class="btn-secondary" @onclick="OpenScansModal" disabled="@(summary.TotalScans.GetValueOrDefault() - summary.TotalActiveScans.GetValueOrDefault() == 0)">Historie</button>
+        <button class="btn-secondary" @onclick="OpenCreationModal" disabled="@(summary.TotalActiveScans.GetValueOrDefault() == 1)">Spustit</button>
+        <button class="btn-secondary" @onclick="OpenCompletionModal" disabled="@(summary.TotalActiveScans.GetValueOrDefault() != 1)">Dokončit</button>
     </div>
 }
 else
@@ -79,7 +79,7 @@ else
                 <h4>Dokončit inventuru</h4>
                 <button class="btn-secondary" type="button" @onclick="CloseCompletionModal">Zavřít</button>
             </div>
-            
+
             <div class="modal-body">
                 <CompletePropertyScanForm OnSuccessfulCompletion="HandleScanCompleted" OnClose="CloseCompletionModal" />
             </div>
@@ -103,13 +103,12 @@ else
 
 @code
 {
-    [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public PropertyDto? Property { get; set; }
     [Parameter] public EventCallback<bool> OnChange { get; set; }
-    
-    private bool ShowCreationModal { get; set;}
-    private bool ShowAllScansModal { get; set;}
-    private bool ShowCompletionModal { get; set;}
+
+    private bool ShowCreationModal { get; set; }
+    private bool ShowAllScansModal { get; set; }
+    private bool ShowCompletionModal { get; set; }
 
     private static string GetLastCompletion(PropertyDtoScansSummary summary)
         => summary.LastActiveScan?.ToString("dd.MM.yyyy HH:mm") ?? "—";

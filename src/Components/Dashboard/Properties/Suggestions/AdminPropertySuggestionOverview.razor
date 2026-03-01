@@ -1,13 +1,9 @@
 @using System.Net
-@using System.Drawing
-@using System.Reflection.Metadata
-@using System.Linq
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.Create
 @using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Suggestions
 @using Invenire.Api.Properties.Suggestions.IndexByAdmin
-@using System.Runtime.InteropServices
 @using Invenire.Components.Forms.Properties.Suggestions
 
 <div class="suggestions-overview">
@@ -450,7 +446,7 @@
     private int CurrentOffset { get; set; }
     private int TotalItemsCount { get; set; }
 
-    private bool CanGoPrev => CurrentOffset > 0; 
+    private bool CanGoPrev => CurrentOffset > 0;
     private bool CanGoNext => CurrentOffset + Limit < TotalItemsCount;
 
     protected override async Task OnInitializedAsync() => await LoadSuggestions(0);
@@ -539,55 +535,28 @@
         CloseDeclineSuggestionModal();
     }
 
-    private void OpenAcceptSuggestion(PropertySuggestionDto suggestion)
-    {
-        SelectedSuggestion = suggestion;
-        ShowAcceptSuggestionModal = true;
-    }
-
-    private void CloseAcceptSuggestionModal()
-    {
-        ShowAcceptSuggestionModal = false;
-        SelectedSuggestion = null;
-    }
-
-    private void OpenDeclineSuggestion(PropertySuggestionDto suggestion)
-    {
-        SelectedSuggestion = suggestion;
-        ShowDeclineSuggestionModal = true;
-    }
-
-    private void CloseDeclineSuggestionModal()
-    {
-        ShowDeclineSuggestionModal = false;
-        SelectedSuggestion = null;
-    }
+    private void OpenAcceptSuggestion(PropertySuggestionDto suggestion) => (SelectedSuggestion, ShowAcceptSuggestionModal) = (suggestion, true);
+    private void CloseAcceptSuggestionModal() => (ShowAcceptSuggestionModal, SelectedSuggestion) = (false, null);
+    private void OpenDeclineSuggestion(PropertySuggestionDto suggestion) => (SelectedSuggestion, ShowDeclineSuggestionModal) = (suggestion, true);
+    private void CloseDeclineSuggestionModal() => (ShowDeclineSuggestionModal, SelectedSuggestion) = (false, null);
 
     private IEnumerable<KeyValuePair<UpdatePropertyItemRequestBody, PropertyItemDto>> GetUpdatedEntries(PropertySuggestionDto suggestion)
-    {
-        if (suggestion.Payload is null) return Enumerable.Empty<KeyValuePair<UpdatePropertyItemRequestBody, PropertyItemDto>>();
-
-        return UpdatedItems.Where(kv => suggestion.Payload.UpdateCommands.Any(cmd => cmd.Id == kv.Key.Id));
-    }
+        => suggestion.Payload is null
+            ? Enumerable.Empty<KeyValuePair<UpdatePropertyItemRequestBody, PropertyItemDto>>()
+            : UpdatedItems.Where(kv => suggestion.Payload.UpdateCommands.Any(cmd => cmd.Id == kv.Key.Id));
 
     private IEnumerable<PropertyItemDto> GetDeletedEntries(PropertySuggestionDto suggestion)
-    {
-        if (suggestion.Payload is null) return Enumerable.Empty<PropertyItemDto>();
-
-        return DeletedItems
-            .Where(kv => suggestion.Payload.DeleteCommands.Contains(kv.Key))
-            .Select(kv => kv.Value);
-    }
+        => suggestion.Payload is null
+            ? Enumerable.Empty<PropertyItemDto>()
+            : DeletedItems.Where(kv => suggestion.Payload.DeleteCommands.Contains(kv.Key)).Select(kv => kv.Value);
 
     private (string Text, string Color) GetCzechStatus(PropertySuggestionDtoStatus status)
-    {
-        return status switch
+        => status switch
         {
             PropertySuggestionDtoStatus.PENDING => ("Nevyřízený", "goldenrod"),
             PropertySuggestionDtoStatus.DECLINED => ("Odmítnutý", "red"),
             _ => ("Neznámý", "gray")
         };
-    }
 
     private static string GetPayloadFieldClass(bool changed)
         => changed ? "item-field item-field--changed" : "item-field";

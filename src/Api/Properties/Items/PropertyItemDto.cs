@@ -47,6 +47,9 @@ public record PropertyItemDto
     [JsonPropertyName("document_number")]
     public string? DocumentNumber { get; set; }
 
+    [JsonPropertyName("is_scanned_with_code")]
+    public bool? IsScannedWithCode { get; set; }
+
     [JsonPropertyName("created_at")]
     public required DateTimeOffset CreatedAt { get; init; }
 
@@ -95,22 +98,22 @@ public record PropertyItemDto
         if (ReferenceEquals(this, other)) return true;
 
         return Id == other.Id &&
-               PropertyId == other.PropertyId &&
-               EmployeeId == other.EmployeeId &&
-               Nullable.Equals(Employee, other.Employee) &&
-               Name == other.Name &&
-               Price.Equals(other.Price) &&
-               InventoryNumber == other.InventoryNumber &&
-               RegistrationNumber == other.RegistrationNumber &&
-               SerialNumber == other.SerialNumber &&
-               DateOfPurchase.Equals(other.DateOfPurchase) &&
-               Nullable.Equals(DateOfSale, other.DateOfSale) &&
-               Location == other.Location &&
-               Description == other.Description &&
-               DocumentNumber == other.DocumentNumber &&
-               CreatedAt.Equals(other.CreatedAt) &&
-               Nullable.Equals(LastUpdatedAt, other.LastUpdatedAt) &&
-               Nullable.Equals(LastScannedAt, other.LastScannedAt);
+                PropertyId == other.PropertyId &&
+                EmployeeId == other.EmployeeId &&
+                Nullable.Equals(Employee, other.Employee) &&
+                Name == other.Name &&
+                Price.Equals(other.Price) &&
+                InventoryNumber == other.InventoryNumber &&
+                RegistrationNumber == other.RegistrationNumber &&
+                SerialNumber == other.SerialNumber &&
+                DateOfPurchase.Equals(other.DateOfPurchase) &&
+                Nullable.Equals(DateOfSale, other.DateOfSale) &&
+                Location == other.Location &&
+                Description == other.Description &&
+                DocumentNumber == other.DocumentNumber &&
+                CreatedAt.Equals(other.CreatedAt) &&
+                Nullable.Equals(LastUpdatedAt, other.LastUpdatedAt) &&
+                Nullable.Equals(LastScannedAt, other.LastScannedAt);
     }
 
     public override int GetHashCode()
@@ -139,8 +142,8 @@ public record PropertyItemLocationDto
         if (ReferenceEquals(this, other)) return true;
 
         return Room == other.Room &&
-               Building == other.Building &&
-               AdditionalNote == other.AdditionalNote;
+                Building == other.Building &&
+                AdditionalNote == other.AdditionalNote;
     }
 
     public override int GetHashCode()

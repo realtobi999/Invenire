@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Invenire.Api.Properties.Scans.Update;
 
-public record UdpatePropertyScanRequestBody
+public record UpdatePropertyScanRequestBody
 {
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;

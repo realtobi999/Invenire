@@ -3,3 +3,7 @@
     flex-direction: column;
     gap: 1.25rem;
 }
+
+.auth-link-row {
+    margin: 0.5rem 0;
+}

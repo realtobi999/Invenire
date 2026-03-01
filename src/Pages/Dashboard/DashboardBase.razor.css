@@ -32,16 +32,16 @@
 }
 
 .btn-logout {
-  padding: 0.45rem 1.2rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+    padding: 0.45rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 999px;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 

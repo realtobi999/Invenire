@@ -20,21 +20,21 @@
             <div class="section-heading">
                 <h3>Položky</h3>
             </div>
-            <AdminPropertyItemBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+            <AdminPropertyItemBaseOverview Property="Property" OnChange="ReloadProperty" />
         </section>
 
         <section class="section-card">
             <div class="section-heading">
                 <h3>Návrhy</h3>
             </div>
-            <AdminPropertySuggestionBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+            <AdminPropertySuggestionBaseOverview Property="Property" OnChange="ReloadProperty" />
         </section>
 
         <section class="section-card">
             <div class="section-heading">
                 <h3>Inventury</h3>
             </div>
-            <AdminPropertyScanBaseOverview Property="Property" OnChange="() => ReloadProperty()" />
+            <AdminPropertyScanBaseOverview Property="Property" OnChange="ReloadProperty" />
         </section>
     </div>
 }
@@ -55,13 +55,9 @@ else
 {
     [Inject] private HttpClient Client { get; set; } = default!;
 
-
     private PropertyDto? Property { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await SetProperty();
-    }
+    protected override Task OnInitializedAsync() => SetProperty();
 
     private async Task SetProperty()
     {
@@ -75,10 +71,8 @@ else
             {
                 return;
             }
-            else
-            {
-                throw new Exception("Something went wrong during the request to get the property.");
-            }
+
+            throw new Exception("Something went wrong during the request to get the property.");
         }
 
         Property = await response.Content.ReadFromJsonAsync<PropertyDto>();

@@ -2,8 +2,6 @@
 @using Invenire.Api.Properties.Scans
 @using Invenire.Api.Properties.Scans.Update
 @using Invenire.Common.Errors
-@using Invenire.Api.Organizations
-@using Invenire.Api.Organizations.Update
 
 @if (Scan is not null)
 {
@@ -44,7 +42,7 @@
     private string? ErrorMessage { get; set; }
     private ValidationMessageStore ValidationMessages { get; set; } = null!;
     private EditForm Form { get; set; } = null!;
-    private UdpatePropertyScanRequestBody Body { get; set; } = new();
+    private UpdatePropertyScanRequestBody Body { get; set; } = new();
 
     protected override void OnAfterRender(bool rendered)
     {

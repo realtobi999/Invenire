@@ -1,6 +1,110 @@
+.scan-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.scan-form-card {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.scan-form-header h5 {
+    margin: 0;
+}
+
+.scan-form-header .modal-description {
+    margin: 0.35rem 0 0;
+}
+
 .scanner-container {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
+    padding: 0.85rem;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(5, 7, 15, 0.75);
+}
+
+.scanner-container ::deep video {
+    width: min(100%, 440px);
+    border-radius: calc(var(--radius-md) - 3px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #04060f;
+    display: block;
+    object-fit: cover;
+}
+
+.scanner-container ::deep label {
+    margin: 0.75rem 0 0.35rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+
+.scanner-container ::deep select {
+    margin-top: 0;
+}
+
+.scan-status {
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.9rem;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.scan-status strong {
+    font-size: 0.92rem;
+}
+
+.scan-status span {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+.scan-status--success {
+    border-color: rgba(45, 212, 191, 0.35);
+    background: rgba(45, 212, 191, 0.12);
+}
+
+.scan-status--success strong {
+    color: var(--color-success);
+}
+
+.scan-status--warning {
+    border-color: rgba(251, 191, 36, 0.42);
+    background: rgba(251, 191, 36, 0.14);
+}
+
+.scan-status--warning strong {
+    color: #fcd34d;
+}
+
+.scan-status--error {
+    border-color: rgba(248, 113, 113, 0.4);
+    background: rgba(248, 113, 113, 0.14);
+}
+
+.scan-status--error strong {
+    color: #fda4af;
+}
+
+@media (max-width: 640px) {
+    .scan-form-card {
+        padding: 1rem;
+    }
+
+    .scanner-container {
+        padding: 0.65rem;
+    }
 }

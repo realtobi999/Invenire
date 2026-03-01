@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Invenire.Api.Properties.Items.Update;
 
-public record UpdatePropertyItemsRequestBody
+public record UpdatePropertyItemsRequest
 {
     [JsonPropertyName("items")]
     public required List<UpdatePropertyItemRequestBody> Items { get; init; }

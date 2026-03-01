@@ -2,7 +2,6 @@
 @using Invenire.Api.Organizations.Invitations
 @using Invenire.Components.Forms.Organizations.Invitations
 
-
 @if (HasInvitations)
 {
     var pagedInvitations = PagedInvitations.ToList();
@@ -99,53 +98,67 @@ else
 }
 
 <button class="btn-secondary" @onclick="ShowCreationModal">Vytvořit pozvánku</button>
+<button class="btn-secondary" @onclick="ShowImportModal">Import pozvánek</button>
 
 @if (ShowCreationFormModal)
-    {
-        <div class="modal-overlay">
-            <div class="modal-panel">
-                <div class="modal-header">
-                    <h4>Vytvořit novou pozvánku</h4>
-                    <button class="btn-secondary" type="button" @onclick="CloseCreationModal">Zavřít</button>
-                </div>
-                <div class="modal-body">
-                    <CreateOrganizationInvitationForm OnSuccessfulCreation="HandleCreationSuccess" OnClose="CloseCreationModal" />
-                </div>
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Vytvořit novou pozvánku</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseCreationModal">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <CreateOrganizationInvitationForm OnSuccessfulCreation="HandleCreationSuccess" OnClose="CloseCreationModal" />
             </div>
         </div>
-    }
+    </div>
+}
+
+@if (ShowImportFormModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Import pozvánek</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseImportModal">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <ImportOrganizationInvitationForm OnSuccessfulCreation="HandleImportSuccess" />
+            </div>
+        </div>
+    </div>
+}
 
 @if (ShowUpdateFormModal && SelectedInvitation is not null)
-    {
-        <div class="modal-overlay">
-            <div class="modal-panel">
-                <div class="modal-header">
-                    <h4>Upravit pozvánku</h4>
-                    <button class="btn-secondary" type="button" @onclick="CloseUpdateModal">Zavřít</button>
-                </div>
-                <div class="modal-body">
-                    <UpdateOrganizationInvitationForm Invitation="SelectedInvitation" OnSuccessfulUpdate="HandleUpdateSuccess" OnClose="CloseUpdateModal" />
-                </div>
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Upravit pozvánku</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseUpdateModal">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <UpdateOrganizationInvitationForm Invitation="SelectedInvitation" OnSuccessfulUpdate="HandleUpdateSuccess" OnClose="CloseUpdateModal" />
             </div>
         </div>
-    }
+    </div>
+}
 
 @if (ShowDeletionFormModal && SelectedInvitation is not null)
-    {
-        <div class="modal-overlay">
-            <div class="modal-panel">
-                <div class="modal-header">
-                    <h4>Smazat pozvánku</h4>
-                    <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Zavřít</button>
-                </div>
-                <div class="modal-body">
-                    <DeleteOrganizationInvitationForm Invitation="SelectedInvitation" OnSuccessfulDeletion="HandleDeletionSuccess" OnClose="CloseDeletionModal" />
-                </div>
+{
+    <div class="modal-overlay">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h4>Smazat pozvánku</h4>
+                <button class="btn-secondary" type="button" @onclick="CloseDeletionModal">Zavřít</button>
+            </div>
+            <div class="modal-body">
+                <DeleteOrganizationInvitationForm Invitation="SelectedInvitation" OnSuccessfulDeletion="HandleDeletionSuccess" OnClose="CloseDeletionModal" />
             </div>
         </div>
-    }
-
-
+    </div>
+}
 
 @code
 {
@@ -153,9 +166,11 @@ else
     [Parameter] public EventCallback<bool> OnChange { get; set; }
 
     private OrganizationInvitationDto? SelectedInvitation { get; set; }
+
     private bool ShowUpdateFormModal { get; set; }
     private bool ShowCreationFormModal { get; set; }
     private bool ShowDeletionFormModal { get; set; }
+    private bool ShowImportFormModal { get; set; }
 
     private int Limit { get; set; } = 2;
     private int CurrentOffset { get; set; }
@@ -219,32 +234,20 @@ else
     private void GoToPreviousPage() => SetCurrentOffset(CurrentOffset - Limit);
     private void GoToNextPage() => SetCurrentOffset(CurrentOffset + Limit);
 
-    private void ShowCreationModal()
-    {
-        ShowCreationFormModal = true;
-    }
+    private void ShowCreationModal() => ShowCreationFormModal = true;
+    private void CloseCreationModal() => ShowCreationFormModal = false;
+    private Task HandleCreationSuccess() => OnChange.InvokeAsync(true);
+    private void ShowImportModal() => ShowImportFormModal = true;
+    private void CloseImportModal() => ShowImportFormModal = false;
 
-    private void CloseCreationModal()
-    {
-        ShowCreationFormModal = false;
-    }
-
-    private async Task HandleCreationSuccess()
+    private async Task HandleImportSuccess()
     {
         await OnChange.InvokeAsync(true);
+        CloseImportModal();
     }
 
-    private void OpenUpdateModal(OrganizationInvitationDto invitation)
-    {
-        SelectedInvitation = invitation;
-        ShowUpdateFormModal = true;
-    }
-
-    private void CloseUpdateModal()
-    {
-        ShowUpdateFormModal = false;
-        SelectedInvitation = null;
-    }
+    private void OpenUpdateModal(OrganizationInvitationDto invitation) => (SelectedInvitation, ShowUpdateFormModal) = (invitation, true);
+    private void CloseUpdateModal() => (ShowUpdateFormModal, SelectedInvitation) = (false, null);
 
     private async Task HandleUpdateSuccess()
     {
@@ -252,17 +255,8 @@ else
         CloseUpdateModal();
     }
 
-    private void OpenDeletionModal(OrganizationInvitationDto invitation)
-    {
-        SelectedInvitation = invitation;
-        ShowDeletionFormModal = true;
-    }
-
-    private void CloseDeletionModal()
-    {
-        ShowDeletionFormModal = false;
-        SelectedInvitation = null;
-    }
+    private void OpenDeletionModal(OrganizationInvitationDto invitation) => (SelectedInvitation, ShowDeletionFormModal) = (invitation, true);
+    private void CloseDeletionModal() => (ShowDeletionFormModal, SelectedInvitation) = (false, null);
 
     private async Task HandleDeletionSuccess()
     {
@@ -270,29 +264,6 @@ else
         CloseDeletionModal();
     }
 
-    private string GetFilterDescription(int start, int end)
-    {
-        if (TotalInvitationCount == 0)
-        {
-            return string.IsNullOrWhiteSpace(SearchTerm)
-                ? "Žádné pozvánky nejsou k dispozici."
-                : $"Žádné pozvánky neodpovídají filtru \"{SearchTerm}\".";
-        }
-
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            return $"Filtrované podle \"{SearchTerm}\" – zobrazuji {start}-{end} z {TotalInvitationCount}.";
-        }
-
-        var selectedOrder = OrderOptions.FirstOrDefault(o => o.Value == SelectedOrderOption);
-        var label = string.IsNullOrWhiteSpace(selectedOrder.Label) ? SelectedOrderOption : selectedOrder.Label;
-
-        return $"Zobrazuji {start}-{end} z {TotalInvitationCount}. Řazení: {label}.";
-    }
-
     private static string GetRecipient(OrganizationInvitationDto invitation)
-    {
-        if (invitation.Employee is null) return "Není přiřazeno";
-        return $"{invitation.Employee.FullName} ({invitation.Employee.EmailAddress})";
-    }
+        => invitation.Employee is null ? "Není přiřazeno" : $"{invitation.Employee.FullName} ({invitation.Employee.EmailAddress})";
 }

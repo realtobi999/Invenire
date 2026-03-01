@@ -5,7 +5,6 @@
 @using Invenire.Api.Properties
 @using Invenire.Api.Users.Employees
 @using Invenire.Api.Properties.Items
-@using Invenire.Api.Organizations.Create
 @using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Items.Delete
 @using Invenire.Api.Properties.Items.IndexByAdmin
@@ -25,11 +24,11 @@
         <div class="form-control grow">
             <label for="search-input">Hledat</label>
             <input id="search-input"
-                   class="input-control"
-                   type="text"
-                   @bind="SearchTerm"
-                   @bind:after="() => LoadItems(0)"
-                   placeholder="Hledat položky..." />
+                    class="input-control"
+                    type="text"
+                    @bind="SearchTerm"
+                    @bind:after="() => LoadItems(0)"
+                    placeholder="Hledat položky..." />
         </div>
         <div class="form-control">
             <label for="order-select">Řazení</label>
@@ -127,15 +126,15 @@
     <div class="limit-row">
         <span class="limit-meta">Na stránce @Items.Count z @TotalItemsCount položek</span>
         <div>
-            <label for="limit_slider">Limit položek</label>
+            <label for="limit_slider">Limit položek: @Limit</label>
             <input id="limit_slider"
-                   class="range-control"
-                   type="range"
-                   min="28"
-                   max="200"
-                   step="4"
-                   @bind="Limit"
-                   @bind:after="() => LoadItems(CurrentOffset)" />
+                    class="range-control"
+                    type="range"
+                    min="28"
+                    max="200"
+                    step="4"
+                    @bind="Limit"
+                    @bind:after="() => LoadItems(CurrentOffset)" />
         </div>
     </div>
 
@@ -495,32 +494,21 @@
     private async Task ToggleFilters()
     {
         ShowFilteringOptions = !ShowFilteringOptions;
-        if (!ShowFilteringOptions)
-        {
-            await ClearFilters();
-        }
+        if (!ShowFilteringOptions) await ClearFilters();
     }
 
     private async Task LoadPersistentState()
     {
-        DeletedItemIds = await Storage.GetItemAsync<HashSet<Guid>>(DeletedItemsKey) ?? new HashSet<Guid>();
+        DeletedItemIds = await Storage.GetItemAsync<HashSet<Guid>>(DeletedItemsKey) ?? [];
 
         var updatedItemsStringKeys = await Storage.GetItemAsync<Dictionary<string, PropertyItemDto>>(UpdatedItemsKey);
-
-        UpdatedItemDtos = updatedItemsStringKeys?.ToDictionary(
-            kvp => Guid.Parse(kvp.Key),
-            kvp => kvp.Value
-        ) ?? new Dictionary<Guid, PropertyItemDto>();
+        UpdatedItemDtos = updatedItemsStringKeys?.ToDictionary(kvp => Guid.Parse(kvp.Key), kvp => kvp.Value) ?? [];
     }
 
     private async Task SavePersistentState()
     {
         await Storage.SetItemAsync(DeletedItemsKey, DeletedItemIds);
-
-        var updatedItemsStringKeys = UpdatedItemDtos.ToDictionary(
-            kvp => kvp.Key.ToString(),
-            kvp => kvp.Value
-        );
+        var updatedItemsStringKeys = UpdatedItemDtos.ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value);
         await Storage.SetItemAsync(UpdatedItemsKey, updatedItemsStringKeys);
     }
 
@@ -594,23 +582,15 @@
 
     private string? Room { get; set; }
     private string? Building { get; set; }
-    
+
     private string? WithGeneratedCode { get; set; }
 
     private EmployeeDto? FilteringEmployee { get; set; }
 
     private async Task ClearFilters()
     {
-        PriceMin = null;
-        PriceMax = null;
-        CreatedAtFrom = null;
-        CreatedAtTo = null;
-        DateOfPurchaseFrom = null;
-        DateOfPurchaseTo = null;
-        Room = null;
-        Building = null;
-        FilteringEmployee = null;
-        WithGeneratedCode = null;
+        (PriceMin, PriceMax, CreatedAtFrom, CreatedAtTo, DateOfPurchaseFrom, DateOfPurchaseTo, Room, Building, FilteringEmployee, WithGeneratedCode)
+            = (null, null, null, null, null, null, null, null, null, null);
 
         await LoadItems(0);
     }
@@ -618,7 +598,7 @@
     public void SelectItem(PropertyItemDto item)
     {
         if (DeletedItemIds.Contains(item.Id)) return;
-        if (EditedItems.Keys.Contains(item.Id)) return;
+        if (EditedItems.ContainsKey(item.Id)) return;
 
         if (SelectedItems.RemoveWhere(i => i.Id == item.Id) == 0) SelectedItems.Add(item);
 
@@ -636,27 +616,18 @@
         }
     }
 
-    public void ClearSelectedItems()
-    {
-        SelectedItems.Clear();
-    }
+    public void ClearSelectedItems() => SelectedItems.Clear();
 
     private async Task UpdateItem(PropertyItemDto item)
     {
         var updated = EditedItems[item.Id].Updated;
         var original = Items.FirstOrDefault(i => i.Id == updated.Id);
-        
+
         EditedItems.Remove(item.Id);
 
-        if (original is not null && updated.Equals(original))
-        {
-            UpdatedItemDtos.Remove(updated.Id);
-        }
-        else
-        {
-            UpdatedItemDtos[updated.Id] = updated;
-        }
-        
+        if (original is not null && updated.Equals(original)) UpdatedItemDtos.Remove(updated.Id);
+        else UpdatedItemDtos[updated.Id] = updated;
+
         await SavePersistentState();
     }
 
@@ -686,14 +657,11 @@
     public async Task DeleteItem(PropertyItemDto item)
     {
         if (SelectedItems.Contains(item)) SelectedItems.Remove(item);
-        
+
         UpdatedItemDtos.Remove(item.Id);
-        
-        if (!DeletedItemIds.Remove(item.Id))
-        {
-            DeletedItemIds.Add(item.Id);
-        }
-        
+
+        if (!DeletedItemIds.Remove(item.Id)) DeletedItemIds.Add(item.Id);
+
         await SavePersistentState();
     }
 
@@ -713,8 +681,6 @@
         DeletedItemIds.Clear();
         await SavePersistentState();
     }
-
-    /* Others */
 
     private List<string> SavingErrorMessages { get; set; } = [];
 
@@ -779,14 +745,14 @@
             });
         }
 
-        var body = new UpdatePropertyItemsRequestBody
+        var body = new UpdatePropertyItemsRequest
         {
             Items = items
         };
 
         var response = await Client.PutAsJsonAsync("/api/properties/items", body);
 
-        if (response.StatusCode != HttpStatusCode.NoContent) 
+        if (response.StatusCode != HttpStatusCode.NoContent)
         {
             var exception = await response.Content.ReadFromJsonAsync<ErrorResponse>() ?? throw new NullReferenceException();
 
@@ -807,8 +773,6 @@
 
         await ClearUpdatedItems();
     }
-
-    /** Downloading QR's. **/
 
     private bool ShowDownloadCodesModal { get; set; }
 

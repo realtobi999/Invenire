@@ -1,0 +1,27 @@
+.import-help {
+    max-height: 20rem;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+}
+
+.import-help-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.import-example {
+    margin-top: 0.2rem;
+    min-height: 5.5rem;
+    resize: vertical;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    white-space: pre;
+}
+
+.modal-footer {
+    justify-content: center;
+}

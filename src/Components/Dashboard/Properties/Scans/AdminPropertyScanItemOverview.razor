@@ -72,6 +72,14 @@
                     </select>
                 </div>
                 <div class="form-control">
+                    <label>Naskenované s kódem</label>
+                    <select @bind="ScannedWithCode">
+                        <option value="">Nezáleží</option>
+                        <option value="true">Ano</option>
+                        <option value="false">Ne</option>
+                    </select>
+                </div>
+                <div class="form-control">
                     <label>Spravuje</label>
                     <div class="employee-chip">
                         <span>@(FilteringEmployee is not null ? FilteringEmployee.EmailAddress : "-----")</span>
@@ -107,9 +115,9 @@
                 <div class="items-grid">
                     @foreach (var item in ScannedItems)
                     {
-                        var scannedCardClass = item.LastCodeGeneratedAt is null
-                            ? "scan-item-card scan-item-card--scanned-no-code"
-                            : "scan-item-card scan-item-card--scanned";
+                        var scannedCardClass = item.IsScannedWithCode!.Value
+                            ? "scan-item-card scan-item-card--scanned-with-code"
+                            : "scan-item-card scan-item-card--scanned-manually";
 
                         <article class="@scannedCardClass">
                             <div class="item-card-header">
@@ -132,6 +140,7 @@
                                 <li class="item-field"><span class="field-label">Upraveno</span><span class="field-value">@(item.LastUpdatedAt.ToUserTimeString() ?? "-----")</span></li>
                                 <li class="item-field"><span class="field-label">Kód generován</span><span class="field-value">@(item.LastCodeGeneratedAt.ToUserTimeString() ?? "-----")</span></li>
                                 <li class="item-field"><span class="field-label">Naskenováno</span><span class="field-value">@(item.LastScannedAt.ToUserTimeString() ?? "-----")</span></li>
+                                <li class="item-field"><span class="field-label">Naskenováno kódem</span><span class="field-value">@(item.IsScannedWithCode!.Value ? "Ano" : "Ne")</span></li>
                             </ul>
                         </article>
                     }
@@ -265,6 +274,7 @@
     private string? Room { get; set; }
     private string? Building { get; set; }
     private string? WithGeneratedCode { get; set; }
+    private string? ScannedWithCode { get; set; }
     private EmployeeDto? FilteringEmployee { get; set; }
     private string? SearchQuery { get; set; }
 
@@ -273,10 +283,7 @@
     private async Task ToggleFilters()
     {
         ShowFilteringOptions = !ShowFilteringOptions;
-        if (!ShowFilteringOptions)
-        {
-            await ClearFilters();
-        }
+        if (!ShowFilteringOptions) await ClearFilters();
     }
 
     private async Task LoadItemsWithFilter()
@@ -387,36 +394,27 @@
                 parameters.Add($"building={Building}");
             if (!string.IsNullOrEmpty(WithGeneratedCode))
                 parameters.Add($"withGeneratedCode={WithGeneratedCode}");
+            if (!string.IsNullOrEmpty(ScannedWithCode))
+                parameters.Add($"scannedWithCode={ScannedWithCode}");
         }
     }
 
     private void AddSearchParameter(List<string> parameters)
     {
-        if (!string.IsNullOrEmpty(SearchQuery))
-        {
-            parameters.Add($"searchQuery={SearchQuery}");
-        }
+        if (!string.IsNullOrEmpty(SearchQuery)) parameters.Add($"searchQuery={SearchQuery}");
     }
 
     private async Task ClearFilters()
     {
-        PriceMin = null;
-        PriceMax = null;
-        CreatedAtFrom = null;
-        CreatedAtTo = null;
-        DateOfPurchaseFrom = null;
-        DateOfPurchaseTo = null;
-        Room = null;
-        Building = null;
-        FilteringEmployee = null;
-        WithGeneratedCode = null;
+        (PriceMin, PriceMax, CreatedAtFrom, CreatedAtTo, DateOfPurchaseFrom, DateOfPurchaseTo, Room, Building, FilteringEmployee, WithGeneratedCode, ScannedWithCode)
+            = (null, null, null, null, null, null, null, null, null, null, null);
 
         await LoadItemsWithFilter();
     }
 
     private async Task ScanItem(PropertyItemDto item)
     {
-        var response = await Client.PutAsync($"/api/properties/items/{item.Id}/scan", null);
+        var response = await Client.PutAsync($"/api/properties/items/{item.Id}/scan?scannedWithCode=false", null);
 
         if (response.StatusCode != HttpStatusCode.NoContent) throw new Exception("Something went wrong during the request to scan the item.");
 

@@ -30,7 +30,7 @@
             <div class="employee-dropdown-list">
                 @foreach (var employee in filtered)
                 {
-                    <button type="button" class="employee-option" @onclick="async () => { await ChooseEmployee(employee); }">
+                    <button type="button" class="employee-option" @onclick="() => ChooseEmployee(employee)">
                         <span class="employee-avatar">@Initials(employee)</span>
                         <div class="employee-option-body">
                             <span class="employee-name">@employee.FullName</span>
@@ -98,15 +98,9 @@ else
         }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadEmployees();
-    }
+    protected override Task OnInitializedAsync() => LoadEmployees();
 
-    private async Task LoadEmployees()
-    {
-        Employees = await Storage.GetItemAsync<List<EmployeeDto>>("Employees") ?? new();
-    }
+    private async Task LoadEmployees() => Employees = await Storage.GetItemAsync<List<EmployeeDto>>("Employees") ?? new();
 
     private async Task ChooseEmployee(EmployeeDto employee)
     {
@@ -119,14 +113,10 @@ else
         var initials = new List<char>();
 
         if (!string.IsNullOrWhiteSpace(employee.FirstName))
-        {
             initials.Add(char.ToUpperInvariant(employee.FirstName!.Trim()[0]));
-        }
 
         if (!string.IsNullOrWhiteSpace(employee.LastName))
-        {
             initials.Add(char.ToUpperInvariant(employee.LastName!.Trim()[0]));
-        }
 
         if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.FullName))
         {
@@ -139,9 +129,7 @@ else
         }
 
         if (initials.Count == 0 && !string.IsNullOrWhiteSpace(employee.EmailAddress))
-        {
             initials.Add(char.ToUpperInvariant(employee.EmailAddress![0]));
-        }
 
         return initials.Count == 0 ? "??" : new string(initials.Take(2).ToArray());
     }

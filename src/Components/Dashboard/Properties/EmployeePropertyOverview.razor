@@ -20,14 +20,14 @@
             <div class="section-heading">
                 <h3>Položky</h3>
             </div>
-            <EmployeePropertyItemBaseOverview Property="Property" OnChange="async () => { await LoadProperty(); }" />
+            <EmployeePropertyItemBaseOverview Property="Property" OnChange="LoadProperty" />
         </section>
 
         <section class="section-card">
             <div class="section-heading">
                 <h3>Návrhy</h3>
             </div>
-            <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="async () => { await LoadProperty(); }" />
+            <EmployeePropertySuggestionBaseOverview Property="Property" OnChange="LoadProperty" />
         </section>
 
         <section class="section-card">
@@ -54,12 +54,9 @@ else
 
     private PropertyDto? Property { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await SetProperty();
-    }
+    protected override Task OnInitializedAsync() => LoadProperty();
 
-    private async Task SetProperty()
+    private async Task LoadProperty()
     {
         var response = await Client.GetAsync("/api/properties");
 
@@ -71,10 +68,8 @@ else
             {
                 return;
             }
-            else
-            {
-                throw new Exception("Something went wrong during the request to get the property.");
-            }
+
+            throw new Exception("Something went wrong during the request to get the property.");
         }
 
         Property = await response.Content.ReadFromJsonAsync<PropertyDto>();

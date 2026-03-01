@@ -28,7 +28,7 @@
     </div>
 
     <div class="detail-actions">
-        <button class="btn-secondary" @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+        <button class="btn-secondary" @onclick="() => ShowUpdateModal = true">Upravit</button>
     </div>
 }
 @if (Employee is not null && ShowUpdateModal)
@@ -37,45 +37,39 @@
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Upravit svoje informace</h4>
-                <button class="btn-secondary" type="button" @onclick="() => ShowUpdateModal = false">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="CloseUpdateModal">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <UpdateEmployeeForm Employee="Employee" OnClose="() => ShowUpdateModal = false" OnSuccessfulUpdate="OnSuccessfulEmployeeUpdate" />
+                <UpdateEmployeeForm Employee="Employee" OnClose="CloseUpdateModal" OnSuccessfulUpdate="OnSuccessfulEmployeeUpdate" />
             </div>
         </div>
     </div>
 }
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
 
     private bool ShowUpdateModal { get; set; }
     private EmployeeDto? Employee { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadEmployee();
-    }
+    protected override Task OnInitializedAsync() => LoadEmployee();
 
     private async Task LoadEmployee()
     {
         var response = await Client.GetAsync("/api/employees/profile");
 
-        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the employee."); 
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the employee.");
 
         Employee = await response.Content.ReadFromJsonAsync<EmployeeDto>();
     }
 
-    private async Task ReloadEmployee()
+    private async Task OnSuccessfulEmployeeUpdate()
     {
+        CloseUpdateModal();
         await LoadEmployee();
         StateHasChanged();
     }
 
-    private async Task OnSuccessfulEmployeeUpdate()
-    {
-        ShowUpdateModal = false;
-        await ReloadEmployee();
-    }
+    private void CloseUpdateModal() => ShowUpdateModal = false;
 }

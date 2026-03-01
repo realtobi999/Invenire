@@ -1,43 +1,139 @@
 @using BlazorBarcodeScanner.ZXing.JS
-@using System.Threading.Tasks
 @using System.Net
 @using System.Text.RegularExpressions
 
-<div class="scanner-container">
-    <BarcodeReader
-        OnBarcodeReceived="Scan" 
-        StartCameraAutomatically="true"
-        ShowStart="false"
-        ShowReset="false"
-        ShowResult="false"
-        ShowStop="false"
-        ShowToggleTorch="false"
-        ShowVideoDeviceList="true"
-        Title=""
-        LabelVideoDeviceListText="Změnit kameru: "
-        TextWithoutDevices="Probíhá načítání kamery..."
-    />
+<div class="scan-form">
+    <div class="scan-form-card">
+        <div class="scan-form-header">
+            <h5>Naskenovat položku</h5>
+            <p class="modal-description">
+                Namiřte kameru na QR kód položky. Po úspěšném skenu se položka ihned propíše do inventury.
+            </p>
+        </div>
+
+        <div class="scanner-container">
+            <BarcodeReader
+                OnBarcodeReceived="Scan"
+                StartCameraAutomatically="true"
+                ShowStart="false"
+                ShowReset="false"
+                ShowResult="false"
+                ShowStop="false"
+                ShowToggleTorch="false"
+                ShowVideoDeviceList="true"
+                Title=""
+                LabelVideoDeviceListText="Změnit kameru: "
+                TextWithoutDevices="Probíhá načítání kamery..."
+            />
+        </div>
+
+        @if (Status != ScanStatus.None)
+        {
+            <div class="scan-status @GetStatusClass()"
+                role="@(Status == ScanStatus.Error ? "alert" : "status")"
+                aria-live="polite">
+                <strong>@StatusTitle</strong>
+                <span>@StatusMessage</span>
+            </div>
+        }
+    </div>
 </div>
 
 @code
 {
+    private enum ScanStatus
+    {
+        None,
+        Success,
+        Warning,
+        Error
+    }
+
     [Inject] private HttpClient Client { get; set; } = default!;
     [Parameter] public EventCallback<bool> OnSuccessfulScan { get; set; }
 
+    private bool IsOnCooldown { get; set; }
+
+    private ScanStatus Status { get; set; } = ScanStatus.None;
+    private string? StatusTitle { get; set; }
+    private string? StatusMessage { get; set; }
+
+    private static readonly Regex ScanCodeRegex = new(@"api/properties/items/[0-9A-Fa-f\-]{36}/scan\?scannedWithCode=true", RegexOptions.Compiled);
+
     private async Task Scan(BarcodeReceivedEventArgs args)
     {
-        if (!Regex.IsMatch(args.BarcodeText, @"api/properties/items/[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/scan"))
-        {
+        if (IsOnCooldown)
             return;
-        }
 
-        var response = await Client.PutAsync(args.BarcodeText, null);
+        IsOnCooldown = true;
 
-        if (response.StatusCode != HttpStatusCode.NoContent)
+        try
         {
-            throw new Exception("Something went wrong during the request to scan the item.");
-        }
+            if (!ScanCodeRegex.IsMatch(args.BarcodeText))
+            {
+                ShowStatusAsync(
+                    ScanStatus.Warning,
+                    "Skenování vyžaduje QR kód položky.",
+                    "Nejspíše skenujete nesprávný QR kód.");
+                return;
+            }
 
-        await OnSuccessfulScan.InvokeAsync(true);
+            var response = await Client.PutAsync(args.BarcodeText, null);
+
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                await OnSuccessfulScan.InvokeAsync(true);
+
+                ShowStatusAsync(
+                    ScanStatus.Success,
+                    "Skenování proběhlo v pořádku.",
+                    "Položka byla označena jako naskenovaná.");
+
+                return;
+            }
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                ShowStatusAsync(
+                    ScanStatus.Warning,
+                    "Položka už byla naskenována.",
+                    "Tuto položku není potřeba skenovat znovu.");
+
+                return;
+            }
+
+            ShowStatusAsync(
+                ScanStatus.Error,
+                "Skenování se nepovedlo.",
+                "Zkuste to později.");
+        }
+        finally
+        {
+            await Task.Delay(4*1000);
+            ResetStatus();
+            IsOnCooldown = false;
+        }
     }
+
+    private void ShowStatusAsync(ScanStatus status, string title, string message)
+    {
+        Status = status;
+        StatusTitle = title;
+        StatusMessage = message;
+    }
+
+    private void ResetStatus()
+    {
+        Status = ScanStatus.None;
+        StatusTitle = null;
+        StatusMessage = null;
+    }
+
+    private string GetStatusClass() => Status switch
+    {
+        ScanStatus.Success => "scan-status--success",
+        ScanStatus.Warning => "scan-status--warning",
+        ScanStatus.Error => "scan-status--error",
+        _ => string.Empty
+    };
 }

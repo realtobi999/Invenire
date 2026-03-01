@@ -1,9 +1,6 @@
-@using System.Net
 @using Invenire.Api.Properties
-@using Invenire.Api.Properties.Items
-@using Invenire.Api.Properties.Items.IndexByAdmin
-@using Invenire.Components.Forms.Properties.Items
 @using System.Globalization
+@using Invenire.Components.Forms.Properties.Items
 
 <div class="section-heading">
     <h4>Přehled položek</h4>
@@ -31,10 +28,10 @@
     </div>
 
     <div class="action-row">
-        <button class="btn-secondary" @onclick="() => { ItemsOpen = true; }">Spravovat</button>
-        <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat</button>
-        <button class="btn-secondary" @onclick="() => { ExportOpen = true; }">Exportovat</button>
-        <button class="btn-destructive" @onclick="() => { DeleteOpen = true; }" disabled="@(summary.TotalItems == 0)">Smazat všechny položky</button>
+        <button class="btn-secondary" @onclick="() => ItemsOpen = true">Spravovat</button>
+        <button class="btn-secondary" @onclick="() => ImportOpen = true">Importovat</button>
+        <button class="btn-secondary" @onclick="() => ExportOpen = true">Exportovat</button>
+        <button class="btn-destructive" @onclick="() => DeleteOpen = true" disabled="@(summary.TotalItems == 0)">Smazat</button>
     </div>
 }
 else
@@ -42,7 +39,7 @@ else
     <div class="empty-state">
         <p>Zatím nebyly přidány žádné položky.</p>
         <div class="action-row">
-            <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat</button>
+            <button class="btn-secondary" @onclick="() => ImportOpen = true">Importovat</button>
         </div>
     </div>
 }
@@ -51,7 +48,7 @@ else
 {
     <div class="modal-overlay">
         <div class="modal-panel modal-panel--wide">
-            <AdminPropertyItemOverview OnClose="() => { ItemsOpen = false; }" OnChange="async () => { await OnChange.InvokeAsync(true); }" />
+            <AdminPropertyItemOverview OnClose="() => ItemsOpen = false" OnChange="() => OnChange.InvokeAsync(true)" />
         </div>
     </div>
 }
@@ -62,11 +59,11 @@ else
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Import položek</h4>
-                <button class="btn-secondary" type="button" @onclick="() => { ImportOpen = false; }">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => ImportOpen = false">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <ImportPropertyItemsForm OnSuccessfulCreation="async () => { ImportOpen = false; await OnChange.InvokeAsync(true); }" OnClose="() => { ImportOpen = false; }" />
+                <ImportPropertyItemsForm OnSuccessfulCreation="async () => { ImportOpen = false; await OnChange.InvokeAsync(true); }" />
             </div>
         </div>
     </div>
@@ -78,11 +75,11 @@ else
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Export položek</h4>
-                <button class="btn-secondary" type="button" @onclick="() => { ExportOpen = false; }">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => ExportOpen = false">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <ExportPropertyItemsForm OnClose="() => { ExportOpen = false; }" OnSuccessfulExport="async () => { ExportOpen = false; await OnChange.InvokeAsync(true); }" />
+                <ExportPropertyItemsForm OnClose="() => ExportOpen = false" OnSuccessfulExport="async () => { ExportOpen = false; await OnChange.InvokeAsync(true); }" />
             </div>
         </div>
     </div>
@@ -94,16 +91,15 @@ else
         <div class="modal-panel">
             <div class="modal-header">
                 <h4>Smazat všechny položky</h4>
-                <button class="btn-secondary" type="button" @onclick="() => { DeleteOpen = false; }">Zavřít</button>
+                <button class="btn-secondary" type="button" @onclick="() => DeleteOpen = false">Zavřít</button>
             </div>
 
             <div class="modal-body">
-                <DeleteAllPropertyItemsForm OnSuccessfulDeletion="async () => { DeleteOpen = false; await OnChange.InvokeAsync(true); }" OnClose="() => { DeleteOpen = false; }" />
+                <DeleteAllPropertyItemsForm OnSuccessfulDeletion="async () => { DeleteOpen = false; await OnChange.InvokeAsync(true); }" OnClose="() => DeleteOpen = false" />
             </div>
         </div>
     </div>
 }
-
 
 @code
 {
@@ -116,12 +112,8 @@ else
     private bool DeleteOpen { get; set; }
 
     private static string GetAverageAge(PropertyDtoItemsSummary summary)
-    {
-        return summary.AverageAge is null ? "—" : $"{summary.AverageAge.Value:0.##} let";
-    }
+        => summary.AverageAge is null ? "—" : $"{summary.AverageAge.Value:0.##} let";
 
     private static string FormatCurrency(double? value)
-    {
-    return value is null ? "—" : string.Format(CultureInfo.GetCultureInfo("cs-CZ"), "{0:N0} Kč", value);
-    }
+        => value is null ? "—" : string.Format(CultureInfo.GetCultureInfo("cs-CZ"), "{0:N0} Kč", value);
 }

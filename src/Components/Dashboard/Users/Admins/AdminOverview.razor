@@ -7,7 +7,7 @@
 {
     <section class="section-card">
         <h3>Základní informace</h3>
-        
+
         <div class="detail-list">
             <div class="detail-item">
                 <span class="detail-label">Id</span>
@@ -34,7 +34,7 @@
             }
         </div>
 
-<button class="btn-secondary" @onclick="() => ShowUpdateModal = true">Upravit informace</button>
+        <button class="btn-secondary" @onclick="() => ShowUpdateModal = true">Upravit</button>
     </section>
 }
 @if (Admin is not null && ShowUpdateModal)
@@ -52,23 +52,20 @@
     </div>
 }
 
-@code 
+@code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
 
     private bool ShowUpdateModal { get; set; }
     private AdminDto? Admin { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadAdmin();
-    }
+    protected override Task OnInitializedAsync() => LoadAdmin();
 
     private async Task LoadAdmin()
     {
         var response = await Client.GetAsync("/api/admins/profile");
 
-        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the admin."); 
+        if (response.StatusCode != HttpStatusCode.OK) throw new Exception("Something went wrong during the request to get the admin.");
 
         Admin = await response.Content.ReadFromJsonAsync<AdminDto>();
     }

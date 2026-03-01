@@ -1,7 +1,5 @@
-@using System.Net
 @using Invenire.Api.Properties
-@using Invenire.Api.Properties.Items
-@using Invenire.Api.Properties.Items.IndexByAdmin
+@using System.Globalization
 @using Invenire.Components.Forms.Properties.Items
 
 <div class="section-heading">
@@ -30,7 +28,7 @@
     </div>
 
     <div class="action-row">
-        <button class="btn-secondary" type="button" @onclick="() => { OpenModal = true; }">Zobrazit položky</button>
+        <button class="btn-secondary" type="button" @onclick="() => OpenModal = true">Zobrazit</button>
     </div>
 }
 else
@@ -45,7 +43,7 @@ else
 {
     <div class="modal-overlay">
         <div class="modal-panel modal-panel--wide">
-            <EmployeePropertyItemOverview OnClose="() => { OpenModal = false; }" OnChange="async () => { await OnChange.InvokeAsync(true); }" />
+            <EmployeePropertyItemOverview OnClose="() => OpenModal = false" OnChange="() => OnChange.InvokeAsync(true)" />
         </div>
     </div>
 }
@@ -58,12 +56,8 @@ else
     private bool OpenModal { get; set; }
 
     private static string GetAverageAge(PropertyDtoItemsSummary summary)
-    {
-        return summary.AverageAge is null ? "—" : $"{summary.AverageAge.Value:0.##} let";
-    }
+        => summary.AverageAge is null ? "—" : $"{summary.AverageAge.Value:0.##} let";
 
     private static string FormatCurrency(double? value)
-    {
-        return value is null ? "—" : $"{value.Value:0.##} Kč";
-    }
+        => value is null ? "—" : string.Format(CultureInfo.GetCultureInfo("cs-CZ"), "{0:N0} Kč", value);
 }

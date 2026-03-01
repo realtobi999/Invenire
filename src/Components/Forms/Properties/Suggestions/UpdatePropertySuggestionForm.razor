@@ -2,10 +2,8 @@
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.Update
 @using Invenire.Api.Properties.Suggestions
-@using Invenire.Api.Properties.Suggestions.Create
 @using Invenire.Api.Properties.Suggestions.Update
 @using Invenire.Common.Errors
-@using Invenire.Api.Properties.Scans.Create;
 
 <EditForm class="modal-form" Model="Body" OnSubmit="UpdateSuggestion" @ref="Form">
     <div class="form-group">
@@ -118,7 +116,7 @@
                         Errors.Add(ErrorTranslator.Translate(error, UpdatePropertySuggestionResponse.ErrorTranslations));
                     }
                 }
-                
+
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else

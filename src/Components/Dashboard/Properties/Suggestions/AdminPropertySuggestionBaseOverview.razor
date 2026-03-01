@@ -59,8 +59,5 @@ else
 
     private bool ShowAllSuggestionModal { get; set; }
 
-    private async Task HandleSuggestionsChanged()
-    {
-        await OnChange.InvokeAsync(true);
-    }
+    private Task HandleSuggestionsChanged() => OnChange.InvokeAsync(true);
 }

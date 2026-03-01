@@ -63,13 +63,13 @@ public record EmployeeDto
         if (ReferenceEquals(this, other)) return true;
 
         return Id == other.Id &&
-               OrganizationId == other.OrganizationId &&
-               FirstName == other.FirstName &&
-               LastName == other.LastName &&
-               FullName == other.FullName &&
-               EmailAddress == other.EmailAddress &&
-               CreatedAt == other.CreatedAt &&
-               LastUpdatedAt == other.LastUpdatedAt;
+                OrganizationId == other.OrganizationId &&
+                FirstName == other.FirstName &&
+                LastName == other.LastName &&
+                FullName == other.FullName &&
+                EmailAddress == other.EmailAddress &&
+                CreatedAt == other.CreatedAt &&
+                LastUpdatedAt == other.LastUpdatedAt;
     }
 
     public override int GetHashCode()

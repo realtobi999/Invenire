@@ -4,7 +4,6 @@
 @using Invenire.Api.Properties.Suggestions
 @using Invenire.Api.Properties.Suggestions.Create
 @using Invenire.Common.Errors
-@using Invenire.Api.Properties.Scans.Create;
 
 <EditForm class="modal-form" Model="Body" OnSubmit="CreateSuggestion" @ref="Form">
     <div class="form-group">
@@ -18,7 +17,7 @@
         <InputTextArea @bind-Value="Body.Description" rows="4" />
         <ValidationMessage For="@(() => Body.Description)" />
     </div>
-    
+
     <div class="form-actions">
         <button class="btn-secondary" type="button" @onclick="async () => { await OnClose.InvokeAsync(true); }">Zrušit</button>
         <button type="submit">Vytvořit</button>
@@ -119,7 +118,7 @@
                         Errors.Add(ErrorTranslator.Translate(error, CreatePropertySuggestionResponse.ErrorTranslations));
                     }
                 }
-                
+
                 Form.EditContext!.NotifyValidationStateChanged();
             }
             else

@@ -249,43 +249,18 @@ else
         StateHasChanged();
     }
 
-    private void OpenAcceptModal(OrganizationInvitationDto invitation)
-    {
-        SelectedInvitation = invitation;
-        ShowAcceptInvitationConfirmationModal = true;
-    }
-
-    private void CloseAcceptModal()
-    {
-        ShowAcceptInvitationConfirmationModal = false;
-        SelectedInvitation = null;
-    }
-
-    private void OpenDeletionModal(OrganizationInvitationDto invitation)
-    {
-        SelectedInvitation = invitation;
-        ShowDeleteInvitationConfirmationModal = true;
-    }
-
-    private void CloseDeletionModal()
-    {
-        ShowDeleteInvitationConfirmationModal = false;
-        SelectedInvitation = null;
-    }
+    private void OpenAcceptModal(OrganizationInvitationDto invitation) => (SelectedInvitation, ShowAcceptInvitationConfirmationModal) = (invitation, true);
+    private void CloseAcceptModal() => (ShowAcceptInvitationConfirmationModal, SelectedInvitation) = (false, null);
+    private void OpenDeletionModal(OrganizationInvitationDto invitation) => (SelectedInvitation, ShowDeleteInvitationConfirmationModal) = (invitation, true);
+    private void CloseDeletionModal() => (ShowDeleteInvitationConfirmationModal, SelectedInvitation) = (false, null);
 
     private async Task GoToPreviousPage()
     {
-        if (CanGoPrev)
-        {
-            await SetInvitations(CurrentOffset - Limit);
-        }
+        if (CanGoPrev) await SetInvitations(CurrentOffset - Limit);
     }
 
     private async Task GoToNextPage()
     {
-        if (CanGoNext)
-        {
-            await SetInvitations(CurrentOffset + Limit);
-        }
+        if (CanGoNext) await SetInvitations(CurrentOffset + Limit);
     }
 }

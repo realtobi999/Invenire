@@ -24,7 +24,6 @@
     </div>
 }
 
-
 @code
 {
     [Inject] private HttpClient Client { get; set; } = default!;
@@ -32,10 +31,7 @@
 
     private OrganizationDto? Organization { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadOrganization();
-    }
+    protected override Task OnInitializedAsync() => LoadOrganization();
 
     private async Task LoadOrganization()
     {
@@ -54,8 +50,5 @@
         StateHasChanged();
     }
 
-    private async Task PersistEmployees(IEnumerable<EmployeeDto> employees)
-    {
-        await Storage.SetItemAsync("Employees", employees);
-    }
+    private ValueTask PersistEmployees(IEnumerable<EmployeeDto> employees) => Storage.SetItemAsync("Employees", employees);
 }

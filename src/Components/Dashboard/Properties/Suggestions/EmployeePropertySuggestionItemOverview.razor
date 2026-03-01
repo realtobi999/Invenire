@@ -22,11 +22,11 @@
         <div class="form-control grow">
             <label for="suggestion-items-search">Hledat</label>
             <input id="suggestion-items-search"
-                   class="input-control"
-                   type="text"
-                   @bind="SearchTerm"
-                   @bind:after="() => LoadItems(0)"
-                   placeholder="Hledat položky v návrhu..." />
+                    class="input-control"
+                    type="text"
+                    @bind="SearchTerm"
+                    @bind:after="() => LoadItems(0)"
+                    placeholder="Hledat položky v návrhu..." />
         </div>
         <div class="form-control">
             <label for="suggestion-items-order">Řazení</label>
@@ -91,7 +91,7 @@
             </div>
             <div class="filter-actions">
                 <button class="btn-secondary" type="button" @onclick="() => LoadItems(0)">Použít</button>
-                <button class="btn-secondary" type="button" @onclick="async () => await ClearFilters()">Vymazat</button>
+                <button class="btn-secondary" type="button" @onclick="ClearFilters">Vymazat</button>
             </div>
         </section>
     }
@@ -99,15 +99,15 @@
     <div class="limit-row">
         <span class="limit-meta">Na stránce @Items.Count z @TotalItemsCount položek</span>
         <div>
-            <label for="limit_slider">Limit položek</label>
+            <label for="limit_slider">Limit položek: @Limit</label>
             <input id="limit_slider"
-                   class="range-control"
-                   type="range"
-                   min="28"
-                   max="200"
-                   step="4"
-                   @bind="Limit"
-                   @bind:after="() => LoadItems(CurrentOffset)" />
+                    class="range-control"
+                    type="range"
+                    min="28"
+                    max="200"
+                    step="4"
+                    @bind="Limit"
+                    @bind:after="() => LoadItems(CurrentOffset)" />
         </div>
     </div>
 
@@ -369,10 +369,10 @@
 
             <div class="modal-body">
                 <UpdatePropertySuggestionForm OnClose="() => ShowUpdateSuggestionModal = false"
-                                              OnSuccessfulCreation="() => OnSuggestionUpdate()"
-                                              ItemsToDelete="DeletedItems.ToList()"
-                                              ItemsToUpdate="UpdatedItems.ToList()"
-                                              Suggestion="Suggestion" />
+                    OnSuccessfulCreation="() => OnSuggestionUpdate()"
+                    ItemsToDelete="DeletedItems.ToList()"
+                    ItemsToUpdate="UpdatedItems.ToList()"
+                    Suggestion="Suggestion" />
             </div>
         </div>
     </div>
@@ -472,11 +472,7 @@
     private async Task ToggleFilters()
     {
         ShowFilteringOptions = !ShowFilteringOptions;
-
-        if (!ShowFilteringOptions)
-        {
-            await ClearFilters();
-        }
+        if (!ShowFilteringOptions) await ClearFilters();
     }
 
     private async Task LoadItems(int offset)
@@ -551,15 +547,8 @@
 
     private async Task ClearFilters()
     {
-        PriceMin = null;
-        PriceMax = null;
-        CreatedAtFrom = null;
-        CreatedAtTo = null;
-        DateOfPurchaseFrom = null;
-        DateOfPurchaseTo = null;
-        Room = null;
-        Building = null;
-        WithGeneratedCode = null;
+        (PriceMin, PriceMax, CreatedAtFrom, CreatedAtTo, DateOfPurchaseFrom, DateOfPurchaseTo, Room, Building, WithGeneratedCode)
+            = (null, null, null, null, null, null, null, null, null);
 
         await LoadItems(0);
     }
@@ -582,34 +571,24 @@
         }
     }
 
-    public void ClearSelectedItems()
-    {
-        SelectedItems.Clear();
-    }
+    public void ClearSelectedItems() => SelectedItems.Clear();
 
-    private async Task UpdateItem(PropertyItemDto item)
+    private Task UpdateItem(PropertyItemDto item)
     {
         var updated = EditedItems[item.Id].Updated;
         var original = Items.FirstOrDefault(i => i.Id == updated.Id);
 
         EditedItems.Remove(item.Id);
 
-        if (original is not null && updated.Equals(original))
-        {
-            UpdatedItemDtos.Remove(updated.Id);
-        }
-        else
-        {
-            UpdatedItemDtos[updated.Id] = updated;
-        }
-
-        await Task.CompletedTask;
+        if (original is not null && updated.Equals(original)) UpdatedItemDtos.Remove(updated.Id);
+        else UpdatedItemDtos[updated.Id] = updated;
+        return Task.CompletedTask;
     }
 
-    private async Task ClearUpdatedItems()
+    private Task ClearUpdatedItems()
     {
         UpdatedItemDtos.Clear();
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     public void EditItem(PropertyItemDto item)
@@ -627,21 +606,17 @@
         }
     }
 
-    public async Task DeleteItem(PropertyItemDto item)
+    public Task DeleteItem(PropertyItemDto item)
     {
         if (SelectedItems.Contains(item)) SelectedItems.Remove(item);
 
         UpdatedItemDtos.Remove(item.Id);
 
-        if (!DeletedItemIds.Remove(item.Id))
-        {
-            DeletedItemIds.Add(item.Id);
-        }
-
-        await Task.CompletedTask;
+        if (!DeletedItemIds.Remove(item.Id)) DeletedItemIds.Add(item.Id);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteSelectedItems()
+    public Task DeleteSelectedItems()
     {
         foreach (var item in SelectedItems)
         {
@@ -649,13 +624,13 @@
             DeletedItemIds.Add(item.Id);
         }
         ClearSelectedItems();
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    public async Task ClearDeletedItems()
+    public Task ClearDeletedItems()
     {
         DeletedItemIds.Clear();
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     private bool ShowUpdateSuggestionModal { get; set; }
