@@ -123,8 +123,6 @@ docker compose -f docker-compose.dev.yml up --build
 dotnet run
 ```
 
-Frontend čte adresu backendu ze souboru `src/wwwroot/appsettings.json`.
-
 3. Backend v development režimu používá **User Secrets**. Inicializujte je příkazem:
 
 ```bash
