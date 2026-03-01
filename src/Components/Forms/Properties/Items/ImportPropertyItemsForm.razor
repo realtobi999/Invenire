@@ -21,8 +21,6 @@
     }
     else
     {
-        <h4>Vyberte sloupce pro mapování dat</h4>
-
         @if (Headers.Count == 0)
         {
             <p class="modal-description">Prosím, vyberte Excel soubor, aby bylo možné načíst záhlaví tabulky.</p>
@@ -30,6 +28,8 @@
         }
         else
         {
+            <h4>Vyberte sloupce pro mapování dat</h4>
+            
             <p class="modal-description">Přiřaďte odpovídající záhlaví ke každé položce označené hvězdičkou.</p>
 
             @foreach (var property in Columns.Keys.ToList())
@@ -118,9 +118,13 @@
         { "EmployeeEmailAddress", "Emailová adresa zaměstnance" }
     };
 
-    private string Translate(string propertyKey)
+    private MarkupString Translate(string propertyKey)
     {
-        return Translations.TryGetValue(propertyKey, out var translation) ? translation : propertyKey;
+        if (!Translations.TryGetValue(propertyKey, out var text))
+            return new MarkupString(propertyKey);
+
+        var html = text.Replace("*", "<span style=\"color: var(--color-danger); font-weight: bold;\">*</span>");
+        return new MarkupString(html);
     }
 
     private void StartExcel()
@@ -134,9 +138,9 @@
 
     private void BackToOptions()
     {
-        Picker = false;
         Errors.Clear();
         Headers.Clear();
+        Picker = false;
         ExcelFile = null;
         ExcelBytes = null;
     }
@@ -144,7 +148,6 @@
     private async Task CancelImport()
     {
         BackToOptions();
-        Errors.Clear();
         Processing = false;
 
         await OnClose.InvokeAsync(true);

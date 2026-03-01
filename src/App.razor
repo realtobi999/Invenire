@@ -1,6 +1,18 @@
 ﻿<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    <Found Context="data">
+        <RouteView RouteData="@data" />
     </Found>
+
+    <NotFound>
+        @{ Redirect("/login"); }
+    </NotFound>
 </Router>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private void Redirect(string url)
+    {
+        Navigation.NavigateTo(url, replace: true);
+    }
+}

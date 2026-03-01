@@ -29,12 +29,12 @@ public record SendPasswordRecoveryResponse
         // General.
         new ErrorTranslation
         {
-            Pattern = new Regex(@"Admin was not found in the system."),
+            Pattern = new Regex(@"The admin was not found in the system."),
             Translate = _ => "Admin s touto adresou nebyl nalezen."
         },
         new ErrorTranslation
         {
-            Pattern = new Regex(@"Employee was not found in the system."),
+            Pattern = new Regex(@"The employee was not found in the system."),
             Translate = _ => "Zaměstnanec s touto adresou nebyl nalezen."
         },
         new ErrorTranslation

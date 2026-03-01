@@ -1,11 +1,11 @@
 @using Invenire.Api.Properties
 
-<div class="section-heading">
-    <h4>Přehled návrhů</h4>
-</div>
-
 @if (Property?.SuggestionsSummary is PropertyDtoSuggestionsSummary summary)
 {
+    <div class="section-heading">
+        <h4>Přehled návrhů</h4>
+    </div>
+
     <div class="stat-grid">
         <div class="stat-card">
             <span class="stat-label">Celkový počet</span>
@@ -32,7 +32,14 @@
 else
 {
     <div class="empty-state">
-        <p>Zatím nebyly přidány žádné návrhy.</p>
+        @if (Property?.ItemsSummary is not null)
+        {
+            <p>Zatím nebyly přidány žádné návrhy.</p>
+        }
+        else
+        {
+            <p>Zatím nebyly přidané žádné položky.</p>
+        }
     </div>
 }
 

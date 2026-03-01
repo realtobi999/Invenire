@@ -1,13 +1,10 @@
-from faker import Faker
-from datetime import timedelta, timezone
-import uuid
 import random
 import json
+from faker import Faker
+from datetime import timedelta, timezone
 
 PROPERTY_ID = "9a1b0126-710d-47c1-aa76-8f140a9f34b6"
 EMPLOYEES_IDS = ["c3fd30f8-89e0-48a3-a156-80bbdf67860c"]
-
-fake = Faker("cs_CZ")
 
 
 def iso_datetimeoffset(dt):
@@ -17,6 +14,8 @@ def iso_datetimeoffset(dt):
 
 
 def fake_property_item():
+    fake = Faker("cs_CZ")
+
     purchase_date = fake.date_time_this_decade(tzinfo=timezone.utc)
     sale_date = purchase_date + timedelta(days=random.randint(30, 1000)) if random.choice([True, False]) else None
 

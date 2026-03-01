@@ -1,3 +1,5 @@
+name: "invenire-frontend"
+
 services:
   blazor-client:
     build:

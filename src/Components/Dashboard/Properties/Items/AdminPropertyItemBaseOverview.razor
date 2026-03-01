@@ -3,6 +3,7 @@
 @using Invenire.Api.Properties.Items
 @using Invenire.Api.Properties.Items.IndexByAdmin
 @using Invenire.Components.Forms.Properties.Items
+@using System.Globalization
 
 <div class="section-heading">
     <h4>Přehled položek</h4>
@@ -30,7 +31,7 @@
     </div>
 
     <div class="action-row">
-        <button class="btn-secondary" @onclick="() => { ItemsOpen = true; }">Spravovat položky</button>
+        <button class="btn-secondary" @onclick="() => { ItemsOpen = true; }">Spravovat</button>
         <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat</button>
         <button class="btn-secondary" @onclick="() => { ExportOpen = true; }">Exportovat</button>
         <button class="btn-destructive" @onclick="() => { DeleteOpen = true; }" disabled="@(summary.TotalItems == 0)">Smazat všechny položky</button>
@@ -41,7 +42,7 @@ else
     <div class="empty-state">
         <p>Zatím nebyly přidány žádné položky.</p>
         <div class="action-row">
-            <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat položky</button>
+            <button class="btn-secondary" @onclick="() => { ImportOpen = true; }">Importovat</button>
         </div>
     </div>
 }
@@ -121,6 +122,6 @@ else
 
     private static string FormatCurrency(double? value)
     {
-        return value is null ? "—" : $"{value.Value:0.##} Kč";
+    return value is null ? "—" : string.Format(CultureInfo.GetCultureInfo("cs-CZ"), "{0:N0} Kč", value);
     }
 }

@@ -1,12 +1,12 @@
 @using Invenire.Api.Properties
 @using Invenire.Components.Forms.Properties.Scans
 
-<div class="section-heading">
-    <h4>Přehled inventur</h4>
-</div>
-
 @if (Property?.ScansSummary is PropertyDtoScansSummary summary)
 {
+    <div class="section-heading">
+        <h4>Přehled inventur</h4>
+    </div>
+
     <div class="stat-grid">
         <div class="stat-card">
             <span class="stat-label">Celkový počet</span>
@@ -41,10 +41,17 @@
 else
 {
     <div class="empty-state">
-        <p>Zatím nebyly zhotovené žádné inventury.</p>
-        <div class="action-row">
-            <button class="btn-secondary" @onclick="OpenCreationModal">Spustit první inventuru</button>
-        </div>
+        @if (Property?.ItemsSummary is not null)
+        {
+            <p>Zatím nebyly zhotovené žádné inventury.</p>
+            <div class="action-row">
+                <button class="btn-secondary" @onclick="OpenCreationModal">Spustit první inventuru</button>
+            </div>
+        }
+        else
+        {
+            <p>Zatím nebyly přidané žádné položky.</p>
+        }
     </div>
 }
 
