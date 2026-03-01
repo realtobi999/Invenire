@@ -134,9 +134,7 @@ dotnet user-secrets init --project src/InvenireServer.Presentation/InvenireServe
 4. Spusťte backend:
 
 ```bash
-ASPNETCORE_ENVIRONMENT=Development dotnet run \
-  --project src/InvenireServer.Presentation/InvenireServer.Presentation.csproj \
-  --urls http://127.0.0.1:5071
+dotnet run --project src/InvenireServer.Presentation/InvenireServer.Presentation.csproj
 ```
 
 ## Komunikace frontendu a backendu
