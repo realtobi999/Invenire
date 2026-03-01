@@ -1,3 +1,5 @@
+![main_gif](./doc/readme.gif)
+
 # Invenire
 
 Invenire je full-stack aplikace pro **správu a inventarizaci majetku**. Umožňuje generování a tisk QR kódů, inventurní kontroly pomocí skenování, import majetku z externích systémů (JSON/XML) a sledování uživatelů s přiděleným majetkem. Systém dále podporuje evidenci chybějících kusů, reporty, návrhy na vyřazení či opravu a vyhodnocování rozdílů mezi inventurami.

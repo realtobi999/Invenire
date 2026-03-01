@@ -1,24 +1,63 @@
 @using Invenire.Api.Users
-@using Invenire.Common.Extensions
 @using Microsoft.AspNetCore.WebUtilities
-@using System.Threading.Tasks
 @using System.Net
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@using System.Text.Json.Serialization
 
 @page "/verify-email"
 
 <div class="auth-layout verification-page">
     <section class="surface-card verification-hero">
-        <div class="success-banner">
-            <div>
-                <h2>Vítejte zpět!</h2>
-                <p>Váš účet je aktivní a připravený k použití.</p>
+        @if (Loading)
+        {
+            <div class="loading-state">
+                <div class="pulse-bar"></div>
+                <p>Ověřujeme váš e-mail…</p>
             </div>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#2dd4bf" stroke-width="2" />
-                <path d="M8 12.5l2.5 2.5L16 9" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-        </div>
-        <button class="btn-secondary" @onclick="() => { NavigateToLogin(); }">Přihlásit se</button>
+        }
+        else if (GeneralError is null)
+        {
+            <div class="success-banner">
+                <div>
+                    <h2>Vítejte zpět!</h2>
+                    <p>Váš účet je aktivní a připravený k použití.</p>
+                </div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="#2dd4bf" stroke-width="2" />
+                    <path d="M8 12.5l2.5 2.5L16 9" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+        }
+        else
+        {
+            <div class="error-banner">
+                @GeneralError
+            </div>
+
+            <div class="info-grid">
+                <div>
+                    <span class="label">Potřebujete pomoc?</span>
+                    <p>Požádejte o nový ověřovací e-mail a použijte nejnovější odkaz.</p>
+                </div>
+                <div class="info-action">
+                    <span class="label">Ověřovací e-mail</span>
+                    <button class="btn-secondary"
+                            type="button"
+                            disabled="@(!CanResend || Resending || ResendSent)"
+                            @onclick="ResendVerificationEmailAsync">
+                        @(Resending ? "Odesíláme…" : ResendSent ? "Odesláno" : "Poslat znovu")
+                    </button>
+                    @if (ResendMessage is not null)
+                    {
+                        <p>@ResendMessage</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <button class="btn-secondary" type="button" @onclick="NavigateToLogin">Přihlásit se</button>
     </section>
 </div>
 
@@ -28,37 +67,151 @@
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     private bool Loading { get; set; }
+    private bool Resending { get; set; }
+    private bool ResendSent { get; set; }
     private string? Token { get; set; }
     private JwtRole? Role { get; set; }
+    private string? GeneralError { get; set; }
+    private string? ResendMessage { get; set; }
+
+    private bool CanResend => !string.IsNullOrWhiteSpace(Token) && Role is not null;
 
     protected override async Task OnInitializedAsync()
     {
         Loading = true;
+        GeneralError = null;
 
-        if (Role is null)
-        {
-            Role = (await (await Client.GetAsync("/api/server/auth/role")).Content.ReadAsStringAsync()).ToEnum<JwtRole>();
-        }
-
-        if (Token is null)
+        try
         {
             var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
 
-            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("token", out var token))
+            if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("token", out var tokenValue) || string.IsNullOrWhiteSpace(tokenValue))
             {
-                Token = token;
+                GeneralError = "V odkazu chybí ověřovací token. Požádejte prosím o nový ověřovací e-mail.";
+                return;
+            }
+
+            Token = tokenValue.ToString();
+
+            if (!TryParseTokenPayload(Token, out var payload))
+            {
+                GeneralError = "Nepodařilo se zpracovat data ověřovacího odkazu. Požádejte prosím o nový.";
+                return;
+            }
+
+            if (!Enum.TryParse<JwtRole>(payload.Role, true, out var role))
+            {
+                GeneralError = "Nepodařilo se zpracovat data ověřovacího odkazu. Požádejte prosím o nový.";
+                return;
+            }
+
+            Role = role;
+
+            if (!string.Equals(payload.Purpose, "email_verification", StringComparison.Ordinal))
+            {
+                GeneralError = "Ověřovací odkaz není platný nebo byl změněn. Požádejte prosím o nový.";
+                return;
+            }
+
+            var segment = Role.Value == JwtRole.Admin ? "admins" : "employees";
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/{segment}/email-verification/confirm");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+            var response = await Client.SendAsync(request);
+
+            if (response.StatusCode != HttpStatusCode.NoContent)
+            {
+                GeneralError = "Nepodařilo se ověřit e-mail. Požádejte prosím o nový ověřovací e-mail.";
             }
         }
+        catch
+        {
+            GeneralError = "Nepodařilo se ověřit e-mail. Požádejte prosím o nový ověřovací e-mail.";
+        }
+        finally
+        {
+            Loading = false;
+        }
+    }
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/{(Role == JwtRole.Admin ? "admins" : "employees")}/email-verification/confirm");
-        request.Headers.Add("Authorization", $"Bearer {Token}");
-        var response = await Client.SendAsync(request);
+    private async Task ResendVerificationEmailAsync()
+    {
+        if (!CanResend || Resending || ResendSent)
+        {
+            return;
+        }
 
-        Loading = false;
+        Resending = true;
+        ResendMessage = null;
+
+        try
+        {
+            var segment = Role!.Value == JwtRole.Admin ? "admins" : "employees";
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/{segment}/email-verification/send");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+            var response = await Client.SendAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                ResendSent = true;
+                ResendMessage = "Nový ověřovací e-mail jsme odeslali.";
+            }
+            else
+            {
+                GeneralError = "Nepodařilo se znovu odeslat ověřovací e-mail. Zkuste to prosím znovu později.";
+            }
+        }
+        catch
+        {
+            GeneralError = "Nepodařilo se znovu odeslat ověřovací e-mail. Zkuste to prosím znovu později.";
+        }
+        finally
+        {
+            Resending = false;
+        }
+    }
+
+    private static bool TryParseTokenPayload(string token, out VerificationTokenPayload payload)
+    {
+        payload = new VerificationTokenPayload();
+        var segments = token.Split('.');
+
+        if (segments.Length < 2 || string.IsNullOrWhiteSpace(segments[1]))
+        {
+            return false;
+        }
+
+        try
+        {
+            var payloadJson = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(segments[1]));
+            var parsedPayload = JsonSerializer.Deserialize<VerificationTokenPayload>(payloadJson);
+
+            if (parsedPayload is null || string.IsNullOrWhiteSpace(parsedPayload.Role) || string.IsNullOrWhiteSpace(parsedPayload.Purpose))
+            {
+                return false;
+            }
+
+            payload = parsedPayload;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private void NavigateToLogin()
     {
         Navigation.NavigateTo("/login");
+    }
+
+    private sealed class VerificationTokenPayload
+    {
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
+
+        [JsonPropertyName("purpose")]
+        public string? Purpose { get; set; }
     }
 }

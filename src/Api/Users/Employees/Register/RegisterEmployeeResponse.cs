@@ -104,6 +104,12 @@ public record RegisterEmployeeResponse
         {
             Pattern = new Regex(@"An unexpected internal error occurred\."),
             Translate = _ => "Objevila se nečekaná chyba."
+        },
+        // Fallback translation for any unmatched errors.
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@".*"),
+            Translate = _ => "Objevila se nečekaná chyba. Zkuste to prosím později."
         }
     ];
 

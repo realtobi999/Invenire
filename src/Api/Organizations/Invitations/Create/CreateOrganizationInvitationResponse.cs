@@ -46,6 +46,12 @@ public record CreateOrganizationInvitationResponse
         {
             Pattern = new Regex(@"The organization already has a invitation for the employee\."),
             Translate = _ => "Tento zaměstnanec už byl pozvaný."
+        },
+        // Fallback translation for any unmatched errors.
+        new ErrorTranslation
+        {
+            Pattern = new Regex(@".*"),
+            Translate = _ => "Objevila se nečekaná chyba. Zkuste to prosím později."
         }
     ];
 

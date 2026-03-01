@@ -22,6 +22,7 @@ public record GenerateCodesPropertyItemsResponse
             Pattern = new Regex(@"'size' must be less than or equal to '(\d+)'\."),
             Translate = m => $"Velikost musí být menší než {m.Groups[1].Value} pixelů."
         },
+        // Fallback translation for any unmatched errors.
         new ErrorTranslation
         {
             Pattern = new Regex(@".*"),

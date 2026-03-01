@@ -37,6 +37,7 @@ public record RecoverPasswordResponse
         },
 
         // General
+        // Fallback translation for any unmatched errors.
         new ErrorTranslation
         {
             Pattern = new Regex(@".*"),

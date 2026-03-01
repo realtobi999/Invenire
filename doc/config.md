@@ -8,7 +8,7 @@
 
 Docker běh backendu používá soubor `.env`.
 
-#### Povinné proměnné v `.env`
+#### Povinné proměnné v `backend/.env`
 
 | Proměnná | Účel | Příklad |
 |---|---|---|
@@ -83,6 +83,15 @@ SMTP__Password=change_me
 ### 1.2 Backend manuálně (`dotnet run`)
 
 Při manuálním běhu se povinné proměnné ukládají do **User Secrets**, ne do `.env`. Mimo to se nic, co se týče konfigurace nemění.
+
+#### Důležité hodnoty z `backend/src/InvenireServer.Presentation/Properties/launchSettings.json`
+
+Pro manuální běh backendu jsou důležité pouze tyto hodnoty:
+
+| Proměnná | Hodnota (aktuálně v backendu) |
+|---|---|
+| `applicationUrl` | `http://localhost:5071` (profil `http`), `https://localhost:7086;http://localhost:5071` (profil `https`) |
+| `ASPNETCORE_ENVIRONMENT` | `Development` |
 
 #### vzor `secrets.json`
 
@@ -161,3 +170,11 @@ Tyto hodnoty jsou defaultně nastaveny v `src/Properties/launchSettings.json`,  
   }
 }
 ```
+
+## 3. Kontrolní seznam funkční aplikace
+
+1. Backend běží na stejné URL, jakou má frontend v `ApiConfiguration:BaseAddress`.
+2. Backend CORS obsahuje frontend adresu (`http://127.0.0.1:5170` a/nebo `http://localhost:5170`).
+3. `Frontend:BaseAddress` na backendu odpovídá adrese frontendu.
+4. Databáze je dostupná podle `ConnectionStrings:Connection`.
+5. `GET http://127.0.0.1:5071/api/server/health-check` vrací `200 OK`.

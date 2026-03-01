@@ -37,6 +37,7 @@ public record SendPasswordRecoveryResponse
             Pattern = new Regex(@"The employee was not found in the system."),
             Translate = _ => "Zaměstnanec s touto adresou nebyl nalezen."
         },
+        // Fallback translation for any unmatched errors.
         new ErrorTranslation
         {
             Pattern = new Regex(@".*"),
