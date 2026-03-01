@@ -8,7 +8,7 @@
 
 Docker běh backendu používá soubor `.env`.
 
-#### Povinné proměnné v `backend/.env`
+#### Povinné proměnné v `.env`
 
 | Proměnná | Účel | Příklad |
 |---|---|---|
@@ -161,11 +161,3 @@ Tyto hodnoty jsou defaultně nastaveny v `src/Properties/launchSettings.json`,  
   }
 }
 ```
-
-## 3. Kontrolní seznam funkční aplikace
-
-1. Backend běží na stejné URL, jakou má frontend v `ApiConfiguration:BaseAddress`.
-2. Backend CORS obsahuje frontend adresu (`http://127.0.0.1:5170` a/nebo `http://localhost:5170`).
-3. `Frontend:BaseAddress` na backendu odpovídá adrese frontendu.
-4. Databáze je dostupná podle `ConnectionStrings:Connection`.
-5. `GET http://127.0.0.1:5071/api/server/health-check` vrací `200 OK`.

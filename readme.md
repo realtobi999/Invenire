@@ -1,103 +1,89 @@
 # Invenire
 
-Full-stack aplikace pro správu a inventarizaci majetku, která umožňuje **generování a tisk QR kódů pro označení majetku**, **inventurní kontroly pomocí skenování**, **import majetku z externích systémů (JSON/XML)** a **sledování uživatelů a jejich přiděleného majetku**.  
-Systém podporuje **evidenci chybějících kusů**, **reporty a statistiky**, **návrhy na vyřazení, opravu nebo úpravu údajů**, **archivaci předchozích kontrol** a **vyhodnocování rozdílů mezi inventurami**.
+Invenire je full-stack aplikace pro **správu a inventarizaci majetku**. Umožňuje generování a tisk QR kódů, inventurní kontroly pomocí skenování, import majetku z externích systémů (JSON/XML) a sledování uživatelů s přiděleným majetkem. Systém dále podporuje evidenci chybějících kusů, reporty, návrhy na vyřazení či opravu a vyhodnocování rozdílů mezi inventurami.
 
-> ⚠️ **Důležité:** Tento repozitář obsahuje **frontend** (Blazor WebAssembly) aplikace Invenire. Backend je veden v samostatném repozitáři: [InvenireServer](https://github.com/realtobi999/InvenireServer).
+> **Důležité:** Tento repozitář obsahuje pouze **frontend** (Blazor WebAssembly). Backend je veden samostatně v repozitáři [InvenireServer](https://github.com/realtobi999/InvenireServer).
 
 ## Obsah
 
 - [Účel projektu](#účel-projektu)
-- [Oficiální technická práce](#oficiální-technická-práce)
-- [Přehled architektury](#přehled-architektury)
-- [Použitý technologický stack](#použitý-technologický-stack)
+- [Technická práce](#technická-práce)
+- [Architektura](#architektura)
+- [Technologický stack](#technologický-stack)
 - [Klíčové funkce](#klíčové-funkce)
 - [Rychlý start](#rychlý-start)
 - [Komunikace frontendu a backendu](#komunikace-frontendu-a-backendu)
 - [Struktura složek](#struktura-složek)
-- [Repozitář backendu a backend dokumentace](#repozitář-backendu-a-backend-dokumentace)
+- [Backend](#backend)
 - [Jak přispět](#jak-přispět)
 - [Licence](#licence)
 
 ## Účel projektu
 
-Invenire je navrženo pro organizace, které potřebují jednotný a auditovatelný proces pro:
+Invenire je určeno pro organizace, které potřebují jednotný a auditovatelný proces pro:
 
-- správu organizace,
-- onboarding zaměstnanců pomocí pozvánek,
-- evidenci majetku a životního cyklu položek,
-- inventurní skenování,
-- řízené návrhy změn.
+- Správu organizace
+- Onboarding zaměstnanců pomocí pozvánek
+- Evidenci majetku a životního cyklu položek
+- Inventurní skenování
+- Řízené návrhy změn
 
-Aplikace je postavená na modelu rolí:
+Aplikace pracuje s dvěma rolemi:
 
-- **Admin** spravuje organizaci, zaměstnance, majetek, inventury a rozhodování o návrzích.
-- **Employee** pracuje s přiřazenými položkami, aktivními inventurami a návrhy změn.
+- **Admin** — spravuje organizaci, zaměstnance, majetek, inventury a rozhoduje o návrzích změn.
+- **Employee** — pracuje s přiřazenými položkami, aktivními inventurami a podává návrhy změn.
 
-Záměr projektu a doménový model jsou podrobně popsány v oficiální technické práci.
+## Technická práce
 
-## Oficiální technická práce
+Podrobná technická dokumentace projektu se nachází v souboru `seminarka.md`. Obsahuje architektonická rozhodnutí, teoretické pozadí, popis chování funkcí, chronologii vývoje a bezpečnostní kontext.
 
-Oficiální technická práce k aplikaci je:
+## Architektura
 
-- `frontend/seminarka.md`
-
-Najdete v ní:
-
-- architektonická rozhodnutí,
-- teoretické pozadí,
-- chování funkcí,
-- chronologii vývoje,
-- bezpečnostní a testovací kontext.
-
-## Přehled architektury
-
-Invenire používá klient-server architekturu s odděleným frontendem a backendem.
+Invenire využívá klient-server architekturu s důsledně odděleným frontendem a backendem.
 
 ```mermaid
 flowchart LR
-    U[Prohlížeč uživatele] --> F[Frontend - Blazor WebAssembly]
-    F -->|HTTP /api/*| B[Backend - ASP.NET Core]
+    U[Prohlížeč uživatele] --> F[Frontend — Blazor WebAssembly]
+    F -->|HTTP /api/*| B[Backend — ASP.NET Core]
     B -->|EF Core| DB[(PostgreSQL)]
     B --> SMTP[SMTP poskytovatel]
-
-    B --> BG[Background služby - úklidové joby]
+    B --> BG[Background služby]
 ```
 
 ### Odpovědnosti vrstev
 
-| Vrstva | Odpovědnost |
-|---|---|
-| Frontend (`/frontend`) | UI, dashboardy podle rolí, formuláře, orchestraci API, klientské úložiště |
-| Backend (`/backend`) | REST API, autentizace/autorizace, doménová logika, validace, persistence |
-| Databáze | Trvalé ukládání uživatelů, organizací, majetku, inventur a návrhů |
+| Vrstva   | Odpovědnost |
+|----------|-------------|
+| Frontend | UI, dashboardy podle rolí, formuláře, volání API, klientské úložiště |
+| Backend  | REST API, autentizace a autorizace, doménová logika, validace, persistence |
+| Databáze | Ukládání uživatelů, organizací, majetku, inventur a návrhů |
 
-## Použitý technologický stack
+## Technologický stack
 
 | Oblast | Technologie | Popis |
-|---|---|---|
-| Frontend runtime | .NET 9, Blazor WebAssembly | Klientská SPA aplikace běžící v prohlížeči pomocí Blazor WebAssembly. |
-| Frontend storage | Blazored.LocalStorage | Ukládání uživatelských dat a nastavení do LocalStorage prohlížeče. |
-| Frontend QR skener | BlazorBarcodeScanner.ZXing.JS, ZXingBlazor | Skenování QR a čárových kódů pomocí kamery přímo v prohlížeči. |
-| API klient | HttpClient + vlastní CookieHandler | Komunikace s backend API včetně automatického předávání autentizačních cookies. |
-| Backend runtime | .NET 9, ASP.NET Core Web API | Backend poskytující REST API pro frontend aplikaci. |
-| Architektonický styl | CQRS + MediatR + FluentValidation | Oddělení aplikační logiky, zpracování požadavků a validace vstupních dat. |
-| Persistence | EF Core + Npgsql (PostgreSQL) | Přístup k databázi přes ORM a PostgreSQL provider. |
-| Databáze | PostgreSQL 15 | Relační databáze běžící v kontejneru pro ukládání aplikačních dat. |
-| Logování | Serilog | Strukturované logování aplikace pro ladění a monitoring. |
-| Infrastruktura | Docker + Docker Compose | Kontejnerizované prostředí pro frontend, backend a databázi. |
+|--------|-------------|-------|
+| Frontend runtime | .NET 9, Blazor WebAssembly | Klientská SPA aplikace běžící v prohlížeči. |
+| Frontend storage | Blazored.LocalStorage | Ukládání uživatelských dat do LocalStorage. |
+| QR skener | BlazorBarcodeScanner.ZXing.JS, ZXingBlazor | Skenování QR a čárových kódů přímo v prohlížeči. |
+| API klient | HttpClient + vlastní CookieHandler | Komunikace s backendem včetně správy autentizačních cookies. |
+| Backend runtime | .NET 9, ASP.NET Core Web API | REST API pro frontend aplikaci. |
+| Architektonický styl | CQRS + MediatR + FluentValidation | Oddělení logiky, zpracování požadavků a validace vstupů. |
+| Persistence | EF Core + Npgsql | Přístup k PostgreSQL přes ORM. |
+| Databáze | PostgreSQL 15 | Relační databáze běžící v kontejneru. |
+| Logování | Serilog | Strukturované logování pro ladění a monitoring. |
+| Infrastruktura | Docker + Docker Compose | Kontejnerizované prostředí pro celý stack. |
 
 ## Klíčové funkce
 
-- autentizace a autorizace podle rolí (`Admin`, `Employee`)
-- tvorba a správa organizace
-- workflow pozvánek zaměstnanců (včetně importu)
-- správa majetku a majetkových položek
-- import/export položek (JSON a Excel)
-- generování QR kódů pro identifikaci položek
-- inventurní workflow (aktivní a dokončené inventury)
-- workflow návrhů změn pro kontrolované úpravy
-- dashboard přizpůsobený podle role uživatele
+- Autentizace a autorizace podle rolí (`Admin`, `Employee`)
+- Tvorba a správa organizace
+- Workflow pozvánek a importu zaměstnanců
+- Správa majetku a majetkových položek
+- Import a export položek (JSON, Excel)
+- Generování QR kódů pro identifikaci položek
+- Inventurní workflow (aktivní i dokončené inventury)
+- Workflow návrhů změn pro kontrolované úpravy
+- Dashboard přizpůsobený roli přihlášeného uživatele
 
 ## Rychlý start
 
@@ -105,127 +91,119 @@ flowchart LR
 
 - .NET SDK 9.0+
 - Docker a Docker Compose
-- přístup do obou repozitářů:
-  - frontend (tento repozitář)
-  - backend: [InvenireServer](https://github.com/realtobi999/InvenireServer)
+- Přístup do obou repozitářů (frontend + [backend](https://github.com/realtobi999/InvenireServer))
 
-### 🚀 Rychlý start (Docker)
+### Spuštění přes Docker
 
-Frontend a backend se spouští nezávisle, každý ve svém repozitáři.
+Frontend a backend se spouštějí nezávisle, každý ve vlastním repozitáři.
 
-1. Nastavte hodnoty konfigurace frontendu a backendu (viz `frontend/doc/config.md`).
+1. Nastavte konfiguraci dle `doc/config.md`.
 2. Spusťte backend:
 
 ```bash
-cd backend
 docker compose -f docker-compose.dev.yml up --build
 ```
 
 3. Spusťte frontend:
 
 ```bash
-cd frontend
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-4. Otevřete:
+4. Aplikace poběží na:
+   - Frontend: `http://127.0.0.1:5170`
+   - Backend API: `http://127.0.0.1:5071`
 
-- Frontend: `http://127.0.0.1:5170`
-- Backend API: `http://127.0.0.1:5071`
+### Manuální spuštění (bez Dockeru)
 
-### 🛠️ Manuální start (bez Dockeru)
-
-#### Frontend
+1. Nastavte konfiguraci dle `doc/config.md`.
+2. Spusťte frontend:
 
 ```bash
-cd frontend/src
 dotnet run
 ```
 
-Frontend čte základní URL API z:
+Frontend čte adresu backendu ze souboru `src/wwwroot/appsettings.json`.
 
-- `frontend/src/wwwroot/appsettings.json`
-
-#### Backend
-
-Backend konfigurace v režimu development používá pro citlivé hodnoty **User Secrets**.
+3. Backend v development režimu používá **User Secrets**. Inicializujte je příkazem:
 
 ```bash
-dotnet user-secrets init --project backend/src/InvenireServer.Presentation/InvenireServer.Presentation.csproj
-ASPNETCORE_ENVIRONMENT=Development dotnet run --project backend/src/InvenireServer.Presentation/InvenireServer.Presentation.csproj --urls http://127.0.0.1:5071
+dotnet user-secrets init --project src/InvenireServer.Presentation/InvenireServer.Presentation.csproj
 ```
 
-Podrobné nastavení konfigurace viz `frontend/doc/config.md`.
+4. Spusťte backend:
+
+```bash
+ASPNETCORE_ENVIRONMENT=Development dotnet run \
+  --project src/InvenireServer.Presentation/InvenireServer.Presentation.csproj \
+  --urls http://127.0.0.1:5071
+```
 
 ## Komunikace frontendu a backendu
 
-Frontend komunikuje s backendem přes REST endpointy pod `/api/*`.
+Frontend volá backend přes REST endpointy pod `/api/*`.
 
 ### Request pipeline
 
-1. Frontend nastaví `ApiConfiguration:BaseAddress` (v klientském appsettings).
-2. `Program.cs` vytvoří scoped `HttpClient` s touto base address.
-3. `CookieHandler` přidá browser credentials (`include`), pokud není explicitně nastaven `Authorization` header.
-4. Backend přijímá JWT:
-   - z cookie `JWT`, nebo
-   - z `Authorization: Bearer <token>` headeru.
+1. `ApiConfiguration:BaseAddress` nastaví cílovou adresu backendu.
+2. `Program.cs` vytvoří scoped `HttpClient` s touto adresou.
+3. `CookieHandler` automaticky přidá browser credentials, pokud není nastaven `Authorization` header.
+4. Backend přijímá JWT token:
+   - z HttpOnly cookie `JWT`, nebo
+   - z hlavičky `Authorization: Bearer <token>`
 
-### Shrnutí autentizačního chování
+### Autentizační chování
 
-- Login/register endpointy vrací JWT a nastavují jej jako HttpOnly cookie.
-- Chráněné backend endpointy používají role/policy autorizaci.
-- Povolené CORS originy jsou konfigurované na backendu (`CORS:AllowedOrigins`).
+- Endpointy pro přihlášení a registraci vrací JWT a nastavují jej jako HttpOnly cookie.
+- Chráněné endpointy vyžadují příslušnou roli nebo policy.
+- Povolené CORS originy se konfigurují na backendu (`CORS:AllowedOrigins`).
 
 ## Struktura složek
 
 ```text
 frontend/
-├─ readme.md
-├─ seminarka.md
-├─ doc/
-│  └─ config.md
-├─ scripts/
-├─ docker-compose.dev.yml
-├─ Dockerfile.dev
-├─ Makefile
-└─ src/
-   ├─ Api/
-   ├─ Common/
-   ├─ Components/
-   ├─ Configurations/
-   ├─ Extensions/
-   ├─ Layout/
-   ├─ Pages/
-   ├─ Properties/
-   ├─ Program.cs
-   ├─ Invenire.csproj
-   └─ wwwroot/
+├── readme.md
+├── seminarka.md
+├── doc/
+│   └── config.md
+├── scripts/
+├── docker-compose.dev.yml
+├── Dockerfile.dev
+├── Makefile
+└── src/
+    ├── Api/
+    ├── Common/
+    ├── Components/
+    ├── Configurations/
+    ├── Extensions/
+    ├── Layout/
+    ├── Pages/
+    ├── Properties/
+    ├── Program.cs
+    ├── Invenire.csproj
+    └── wwwroot/
 ```
 
-## Repozitář backendu a backend dokumentace
+## Backend
 
-- repozitář backendu: [InvenireServer](https://github.com/realtobi999/InvenireServer)
-- backend README v tomto workspace: `backend/readme.md`
-- reference pro backend konfiguraci ve frontend dokumentaci: `frontend/doc/config.md`
+- Repozitář: [InvenireServer](https://github.com/realtobi999/InvenireServer)
+- Dokumentace backendu: `readme.md` v repozitáři backendu.
+- Konfigurační reference: `doc/config.md` v tomto repozitáři.
 
 ## Jak přispět
 
-Příspěvky jsou vítané.
+Příspěvky jsou vítány. Oceníme věcně zaměřené návrhy, které respektují stávající styl kódu a obsahují ověření dotčené funkcionality.
 
 1. Forkněte repozitář.
 2. Vytvořte feature branch.
-3. Udržujte změny věcně vymezené a zdokumentované.
-4. Lokálně spusťte aplikaci/testy pro dotčené části.
+3. Udržujte změny věcně ohraničené a zdokumentované.
+4. Lokálně ověřte funkčnost dotčených částí.
 5. Otevřete pull request s:
    - popisem problému,
    - shrnutím implementace,
    - ověřovacími kroky.
 
-<!-- TODO: doplnit issue templates, PR template a checklist code stylu -->
-
 ## Licence
 
-- backend je licencovaný pod MIT (`backend/LICENSE`)
-- deklarace licence pro frontend část v tomto repozitáři aktuálně chybí
-
-<!-- TODO: přidat frontend LICENSE soubor a aktualizovat tuto sekci -->
+- Backend je licencován pod [MIT](https://github.com/realtobi999/InvenireServer/blob/main/LICENSE).
+- Frontend aktuálně nemá samostatnou licenci — bude doplněna.
